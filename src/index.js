@@ -168,6 +168,10 @@ async function log(env, roomId, email, side, action, targetType, targetId) {
 }
 
 
+// 置ける資料の大きさの上限と、題名（長すぎる題名は切る）
+const DOC_MAX = 50 * 1024 * 1024;
+const docTitle = (form, file) => String(form.get("title") || file.name || "資料").slice(0, 200);
+
 // ブラウザの中で開いてよい資料の種類（画面側の room.html にも同じ一覧がある）
 const INLINE_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "text/plain"];
 
@@ -323,6 +327,16 @@ export default {
     if (!path.startsWith("/api/")) return env.ASSETS.fetch(request);
 
     const email = await getEmail(request, env);
+
+    // よそのサイトからの送信（CSRF）を受けない。書き込みは Atrium 自身の画面からだけ。
+    // ブラウザが付ける Sec-Fetch-Site / Origin で判定する（Access のクッキーの設定に頼らない）。
+    if (!["GET", "HEAD"].includes(request.method)) {
+      const site = request.headers.get("sec-fetch-site");
+      const origin = request.headers.get("origin");
+      if ((site && !["same-origin", "none"].includes(site)) || (origin && origin !== url.origin)) {
+        return json({ error: "forbidden" }, 403);
+      }
+    }
 
     // Access が効いていなければ、ここから先は一切動かさない。
     // 設定漏れで丸裸になるくらいなら、止まったほうがいい。
@@ -972,14 +986,23 @@ export default {
 
       // POST /api/rooms/:slug/messages — 伝言を置く
       if (rest === "/messages" && request.method === "POST") {
-        const { body, document_id, case_id } = await request.json();
-        if (!body || !body.trim()) return json({ error: "empty_body" }, 400);
+        const b = await request.json().catch(() => ({}));
+        const body = typeof b.body === "string" ? b.body : "";
+        if (!body.trim()) return json({ error: "empty_body" }, 400);
+        if (body.length > 4000) return json({ error: "too_long" }, 400);
+        // 結びつける資料・案件は、この部屋のものだけ受け付ける
+        const document_id = b.document_id
+          ? (await env.DB.prepare(`SELECT id FROM documents WHERE id = ? AND room_id = ?`).bind(String(b.document_id), room.id).first())?.id ?? null
+          : null;
+        const case_id = b.case_id
+          ? (await env.DB.prepare(`SELECT id FROM cases WHERE id = ? AND room_id = ?`).bind(String(b.case_id), room.id).first())?.id ?? null
+          : null;
 
         const id = crypto.randomUUID();
         await env.DB.prepare(
           `INSERT INTO messages (id, room_id, body, author_email, author_side, document_id, case_id, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(id, room.id, body.trim(), email, side, document_id ?? null, case_id ?? null, now()).run();
+        ).bind(id, room.id, body.trim(), email, side, document_id, case_id, now()).run();
 
         await log(env, room.id, email, side, "message", "message", id);
         return json({ id }, 201);
@@ -990,6 +1013,7 @@ export default {
         const form = await request.formData();
         const file = form.get("file");
         if (!file || typeof file === "string") return json({ error: "no_file" }, 400);
+        if (file.size > DOC_MAX) return json({ error: "file_too_big", detail: "1ファイル50MBまでです" }, 400);
 
         // 案件のページから置いたときは、その案件に結びつける（この部屋の案件だけ受け付ける）。
         // 2026-09-23 本番テストで発覚：以前は case_id を捨てていて、置いた資料が案件の中に出なかった
@@ -1010,13 +1034,13 @@ export default {
               uploaded_by, uploaded_by_side, confidential, case_id, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`
         ).bind(
-          id, room.client_id, room.id, form.get("title") || file.name,
-          key, file.type || null, file.size ?? null, form.get("category") || null,
+          id, room.client_id, room.id, docTitle(form, file),
+          key, file.type || null, file.size ?? null, String(form.get("category") || "").slice(0, 50) || null,
           email, side, caseId, now(), now()
         ).run();
 
         await log(env, room.id, email, side, "upload", "document", id);
-        return json({ id, title: form.get("title") || file.name }, 201);
+        return json({ id, title: docTitle(form, file) }, 201);
       }
 
       // 相談ロボを使わない設定なら、ロボの入口はすべて「無い」
