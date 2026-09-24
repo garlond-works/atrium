@@ -188,6 +188,7 @@ npm run dev
 - 版ごとのプレビュー URL は出さない設定です（`preview_urls: false`）
 - 執務室は、オーナー以外には「存在しない（404）」と返します
 - ほかの応接室を推測で開こうとしても、「無い」と「入れない」を区別せず 404 を返します（取引先の一覧が漏れないように）
+- 置かれた資料をブラウザの中で開くのは PDF・画像（PNG／JPEG／GIF／WebP）・テキストだけです。HTML や SVG など中でスクリプトが動きうるものは、必ずダウンロードになります
 
 ---
 
@@ -195,7 +196,7 @@ npm run dev
 
 MIT License です。自由に使って、改造して、配ってかまいません。**無保証** で、サポートはしていません。
 
-右下の「Originally built by GARLOND WORKS」は、残してもらえるとうれしいです（ライセンス上は消してもかまいません。`LICENSE` ファイルの著作権表示は残してください）。
+画面のすみの「Originally built by GARLOND WORKS」は、残してもらえるとうれしいです（ライセンス上は消してもかまいません。`LICENSE` ファイルの著作権表示は残してください）。
 
 使っているもの：
 - フォント：Noto Sans JP・Be Vietnam Pro（Google Fonts・SIL Open Font License）
