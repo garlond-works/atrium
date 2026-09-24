@@ -1498,4 +1498,10 @@ body.room .nav a[aria-current="page"] { background: var(--acc-bg); }
 }
 .credit b { font-weight: 700; }
 .credit:hover { color: #191919; text-decoration: underline; }
+/* 中身に重ならない場所へ：広い画面は左メニューの下のすみ、狭い画面はページのいちばん下 */
+.credit { left: 12px; right: auto; max-width: calc(var(--nav-w) - 24px); }
+.nav { padding-bottom: 56px; }
+@media (max-width: 899px) {
+  .credit { position: static; display: block; width: max-content; max-width: none; margin: 0 16px 16px auto; }
+}
 @media print { .credit { display: none; } }

@@ -7,6 +7,14 @@ Cloudflare（Workers・D1・R2・Access）の上で動きます。サーバー�
 
 > Originally built by [GARLOND WORKS](https://garlondworks.com)
 
+![執務室（Office）：予定・要対応・先方の動きを1画面で](docs/office.png)
+
+| 応接室（Guest Room） | 案件のページ | スマホ |
+|---|---|---|
+| ![応接室のホーム](docs/guest-room.png) | ![案件のページ：やること・資料・やりとり](docs/guest-case.png) | ![スマホで見た応接室](docs/mobile.png) |
+
+<sub>画面の会社名・取引先・予定はすべて架空の見本データです。</sub>
+
 ---
 
 ## できること

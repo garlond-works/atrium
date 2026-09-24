@@ -132,6 +132,10 @@
 const slug = new URLSearchParams(location.search).get("r");
 let d = null, me = null, sig = "";
 let ORG = "オーナー", AI = true;   // 会社名と相談ロボの有無（サーバーの設定から）
+// 英字の社名のときだけ前後に空白を入れる（「GarlondWorks に」／「山田商店に」）
+const ascii = () => /[\x21-\x7e]$/.test(ORG);
+const ot = () => ascii() ? ORG + " " : ORG;              // 後ろだけ
+const ob = () => ascii() ? " " + ORG + " " : ORG;        // 前後
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const when = s => new Date(s).toLocaleString("ja-JP", { month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" });
@@ -217,7 +221,7 @@ function drawFrame() {
   $("robo-door").innerHTML = ROBOT;
   document.querySelector(".robo-door").hidden = !AI;
   $("greet").textContent = me.side === "us"
-    ? ORG + " として入室しています"
+    ? ot() + "として入室しています"
     : "いらっしゃいませ。資料・やりとり・お願いごとをこちらに揃えています。";
   $("avatar").title = me.email;
   $("exit").innerHTML = me.side === "us"
@@ -232,7 +236,7 @@ function drawFrame() {
 function updates() {
   const other = s => s && s !== me.side;
   // 英字の社名のあとだけ空白を入れる（「オーナーから」／「御社から」）
-  const who = s => s === "us" ? ORG + " " : sideName("client");
+  const who = s => s === "us" ? ot() : sideName("client");
   const caseName = id => { const c = id && caseOf(id); return c ? `（${c.title}）` : ""; };
   const items = [
     ...(d.announcements || []).filter(a => a.published_at).map(a => ({ at: a.published_at, href: "#/home", text: "お知らせ：" + a.body })),
@@ -252,7 +256,7 @@ function updates() {
         at: c.created_at, href: "#/case/" + c.id, text: `新しい案件「${c.title}」ができました` })),
       ...(d.tasks || []).filter(t => t.created_at).map(t => ({
         at: t.created_at, href: t.case_id ? "#/case/" + t.case_id : "#/home", text: `やることが追加されました${caseName(t.case_id)}：「${t.title}」` })),
-      ...(d.room.memo_updated_at ? [{ at: d.room.memo_updated_at, href: "#/home", text: ORG + " がメモを更新しました" }] : []),
+      ...(d.room.memo_updated_at ? [{ at: d.room.memo_updated_at, href: "#/home", text: ot() + "がメモを更新しました" }] : []),
     ] : []),
   ].sort((a, b) => b.at.localeCompare(a.at));
   return items;
@@ -503,7 +507,7 @@ function pageCase(id) {
             <input class="in" id="rt-title" required placeholder="先方にお願いすること" autocomplete="off">
             <label class="sr" for="rt-due">期限</label><input class="in" id="rt-due" type="date">
             <button class="btn" type="submit">${ic("i-plus")}足す</button>
-            <p class="task-add-note">${esc(ORG)} だけに見える欄です。足したやることは先方にもすぐ見えます。</p>
+            <p class="task-add-note">${esc(ot())}だけに見える欄です。足したやることは先方にもすぐ見えます。</p>
           </form>` : ""}
         </section>
         <section class="card drop" data-drop="${c.id}" aria-labelledby="h-docs">
@@ -591,8 +595,8 @@ function pageAsk() {
         <div class="who">相談ロボ · ${when(m.created_at)}</div>
         <div class="bubble">${mdLite(m.body)}</div>
         <div class="robo-acts">${m.forwarded_at
-          ? `<span class="sent">${ic("i-ok")}${esc(ORG)} に伝えました</span>`
-          : `<button type="button" class="btn subtle" data-forward="${m.id}">${ic("i-send")}この内容を ${esc(ORG)} に伝える</button>`}</div>
+          ? `<span class="sent">${ic("i-ok")}${esc(ot())}に伝えました</span>`
+          : `<button type="button" class="btn subtle" data-forward="${m.id}">${ic("i-send")}この内容を${esc(ob())}に伝える</button>`}</div>
       </div></div>`;
 
   return `
@@ -603,11 +607,11 @@ function pageAsk() {
         <h1 class="ptitle">相談ロボ</h1>
         <p class="psum">AI に気軽に聞いてみてください。資料を渡すと、その中身をもとに答えます。</p>
         <p class="ask-caution">${ic("i-warn")}<span><b>個人情報やプライベートなご相談は書かないでください。</b>
-          <span class="l">ここでの会話は記録され、${esc(ORG)} も読めます。</span>
-          <span class="l">消した会話は ${esc(ORG)} からも見えなくなります。</span></span></p>
+          <span class="l">ここでの会話は記録され、${esc(ot())}も読めます。</span>
+          <span class="l">消した会話は${esc(ob())}からも見えなくなります。</span></span></p>
         <ul class="ask-notes">
           <li>${ic("i-clock")}<span>今日あと <b>${left}</b> 回（1日 ${ask.per_day} 回まで・毎朝0時に戻ります）</span></li>
-          <li>${ic("i-flag")}<span>AI は間違えることがあります。金額・納期・契約など大事なことは ${esc(ORG)} にご確認ください</span></li>
+          <li>${ic("i-flag")}<span>AI は間違えることがあります。金額・納期・契約など大事なことは${esc(ob())}にご確認ください</span></li>
         </ul>
       </div>
     </section>
@@ -840,7 +844,7 @@ document.addEventListener("click", async e => {
     fw.disabled = true;
     const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/ask/" + fw.dataset.forward + "/forward", { method: "POST" });
     if (!r.ok) { fw.disabled = false; toast("うまく伝えられませんでした"); return; }
-    toast(ORG + " に伝えました（やりとりに入りました）");
+    toast(ot() + "に伝えました（やりとりに入りました）");
     await loadAsk(); load(); return;
   }
 
