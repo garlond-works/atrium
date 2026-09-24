@@ -183,7 +183,10 @@ const INLINE_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/gif",
 // そもそも SQL の段階で取り出さない。
 // ─────────────────────────────────────────
 const ASK_MODEL = "@cf/google/gemma-4-26b-a4b-it";
-const ASK_PER_DAY = 20;               // 1部屋あたり1日の質問数（無料枠を全取引先で分け合うため）
+// 1部屋あたり1日の質問数の上限。wrangler.jsonc の ASK_PER_DAY で決める（空・0なら上限なし）。
+// Workers AI の無料枠をどう使うかは、使う人ごとに違うので決め打ちしない
+const askPerDay = env => { const n = parseInt(env.ASK_PER_DAY, 10); return n > 0 ? n : null; };
+const askLeft = (env, used) => askPerDay(env) === null ? null : Math.max(0, askPerDay(env) - used);
 const ASK_DOC_CHARS = 20000;          // 資料1つあたりロボに渡す文字数の上限
 const ASK_TOTAL_CHARS = 60000;        // 1回の質問でロボに渡す資料の合計上限
 const ASK_FILE_MAX = 10 * 1024 * 1024;
@@ -293,7 +296,7 @@ ${now}
 - 伝える：案件のページの下の欄に書いて送る。${ORG} に届く。
 - お便り：${ORG} からの新しい伝言は、封筒のマークと「お便りが届いています」で知らせる。
 - やること：${ORG} からのお願い。期限つきのものは期限を確認する。
-- 相談ロボ：資料を渡すと中身をもとに答える。「この内容を ${ORG} に伝える」で、ロボとの話を伝言として送れる。1日20回まで。
+- 相談ロボ：資料を渡すと中身をもとに答える。「この内容を ${ORG} に伝える」で、ロボとの話を伝言として送れる。${askPerDay(env) ? `1日${askPerDay(env)}回まで。` : ""}
 - 見た目：右上で「やわらか／クール」を切り替えられる。
 
 # 資料を渡されたとき
@@ -1054,12 +1057,12 @@ export default {
             ORDER BY created_at ASC`
         ).bind(room.id, email).all();
         const used = await askUsedToday(env, room.id);
-        return json({ messages: rows.results ?? [], left: Math.max(0, ASK_PER_DAY - used), per_day: ASK_PER_DAY });
+        return json({ messages: rows.results ?? [], left: askLeft(env, used), per_day: askPerDay(env) });
       }
 
       // POST /api/rooms/:slug/ask — 相談ロボに聞く（multipart：question, document_ids, file）
       if (rest === "/ask" && request.method === "POST") {
-        if ((await askUsedToday(env, room.id)) >= ASK_PER_DAY) return json({ error: "limit" }, 429);
+        if (askPerDay(env) !== null && (await askUsedToday(env, room.id)) >= askPerDay(env)) return json({ error: "limit" }, 429);
 
         const form = await request.formData();
         const question = String(form.get("question") ?? "").trim();
@@ -1153,7 +1156,7 @@ export default {
 
         await log(env, room.id, email, side, "ask", "ask", qid);
         const used = await askUsedToday(env, room.id);
-        return json({ question_id: qid, answer_id: aid, answer, left: Math.max(0, ASK_PER_DAY - used) }, 201);
+        return json({ question_id: qid, answer_id: aid, answer, left: askLeft(env, used) }, 201);
       }
 
       // DELETE /api/rooms/:slug/ask — 自分とロボの会話をすべて消す

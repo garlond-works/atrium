@@ -581,7 +581,7 @@ const ASK_EXAMPLES = [
 function pageAsk() {
   if (!ask) { loadAsk(); return '<div class="ask-loading">' + ROBOT + '<p>相談ロボを呼んでいます…</p></div>'; }
   const docs = d.documents;
-  const left = ask.left;
+  const left = ask.left ?? Infinity;   // 上限なしの設定なら null が来る
   const msgs = ask.messages;
   const docName = id => (d.documents.find(x => x.id === id) || {}).title;
 
@@ -610,7 +610,7 @@ function pageAsk() {
           <span class="l">ここでの会話は記録され、${esc(ot())}も読めます。</span>
           <span class="l">消した会話は${esc(ob())}からも見えなくなります。</span></span></p>
         <ul class="ask-notes">
-          <li>${ic("i-clock")}<span>今日あと <b>${left}</b> 回（1日 ${ask.per_day} 回まで・毎朝0時に戻ります）</span></li>
+          ${ask.per_day ? `<li>${ic("i-clock")}<span>今日あと <b>${left}</b> 回（1日 ${ask.per_day} 回まで・毎朝0時に戻ります）</span></li>` : ""}
           <li>${ic("i-flag")}<span>AI は間違えることがあります。金額・納期・契約など大事なことは${esc(ob())}にご確認ください</span></li>
         </ul>
       </div>

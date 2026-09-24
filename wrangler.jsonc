@@ -28,7 +28,11 @@
     //    チームのドメイン（例：yourteam.cloudflareaccess.com）
     "ACCESS_TEAM_DOMAIN": "yourteam.cloudflareaccess.com",
     //    Access アプリケーションの「Application Audience (AUD) Tag」
-    "ACCESS_AUD": "paste-your-aud-tag-here"
+    "ACCESS_AUD": "paste-your-aud-tag-here",
+
+    // 相談ロボを使うとき：1つの応接室で1日に聞ける回数（空か 0 なら上限なし）。
+    // Workers AI の無料枠（1日 10,000 Neurons）をどう配るかに合わせて、自由に決めてください
+    "ASK_PER_DAY": ""
   },
 
   // ④ `npx wrangler d1 create atrium` で出た database_id を貼る
