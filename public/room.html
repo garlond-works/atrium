@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guest Room — Atrium</title>
+<link rel="stylesheet" href="/portal.css">
+<script src="/look.js"></script>
+</head>
+<body class="room">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 自前のアイコン。24x24／線1.5px。色は currentColor で継承させる。
+         形は「誰でも一度は見た印」に寄せる（家・虫眼鏡・下向き矢印・ゴミ箱・吹き出し）。 -->
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9v11.5h5v-6h3v6h5V9"/></symbol>
+    <symbol id="i-files" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M2.5 5.5h7l2 2.5h10v12.5h-19z"/><path d="M2.5 10.5h19"/></symbol>
+    <symbol id="i-case" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V4.5h7V7"/><path d="M2.5 12.5h19"/><path d="M10.5 12.5v2h3v-2"/></symbol>
+    <symbol id="i-news" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 10v4h3l8 4.5v-13l-8 4.5z"/><path d="M6.5 14l1.5 5.5h2.5L9.5 15"/><path d="M18 9.5a3.5 3.5 0 0 1 0 5" stroke-linecap="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M12 15.5V4"/><path d="M7 8.5L12 3.5l5 5"/><path d="M3.5 15v5.5h17V15"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M12 3.5V15"/><path d="M7 10l5 5 5-5"/><path d="M3.5 15v5.5h17V15"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 4.5h17v12H9l-5.5 4v-16z"/><path d="M7.5 9h9M7.5 12.5h6"/></symbol>
+    <symbol id="i-task" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M7.5 12l3 3 6-6.5"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 3.5l17 8.5-17 8.5 2.5-8.5z"/><path d="M6 12h8"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M4 6.5h16"/><path d="M9.5 6.5V3.5h5v3"/><path d="M6 6.5l1 14h10l1-14"/><path d="M10 10.5v6M14 10.5v6"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M14 3.5H4.5v17H14"/><path d="M10 12h10.5"/><path d="M16.5 8l4 4-4 4"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="4" y="4" width="4" height="4" rx="1"/><rect x="10" y="4" width="4" height="4" rx="1"/><rect x="16" y="4" width="4" height="4" rx="1"/>
+      <rect x="4" y="10" width="4" height="4" rx="1"/><rect x="10" y="10" width="4" height="4" rx="1"/><rect x="16" y="10" width="4" height="4" rx="1"/>
+      <rect x="4" y="16" width="4" height="4" rx="1"/><rect x="10" y="16" width="4" height="4" rx="1"/><rect x="16" y="16" width="4" height="4" rx="1"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 12H5"/><path d="M11 6l-6 6 6 6"/></symbol>
+    <!-- 状態の丸。○ これから／◐ 動いている／✓ 終わった。色が無くても形で読める -->
+    <symbol id="i-st-open" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75">
+      <circle cx="10" cy="10" r="7.5"/></symbol>
+    <symbol id="i-st-waiting" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.75"/>
+      <path d="M10 2.5a7.5 7.5 0 0 1 0 15z" fill="currentColor"/></symbol>
+    <symbol id="i-st-done" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="8.5" fill="currentColor"/>
+      <path d="M6 10.2l2.7 2.7L14 7.6" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 11.5l-7.8 7.8a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4L15 7"/></symbol>
+    <symbol id="i-memo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M5 3.5h10l4 4v13H5z"/><path d="M15 3.5v4h4M8 11h8M8 14.5h8M8 18h5"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".6" fill="currentColor"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="9" cy="8.5" r="3.2"/><path d="M3 19c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><circle cx="16.5" cy="9.5" r="2.5"/><path d="M16 14.2c2.6-.2 4.6 1.4 5 4.3"/></symbol>
+    <!-- 相談ロボ（AI） -->
+    <symbol id="i-robot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M12 3.5V6"/><circle cx="12" cy="3" r=".9" fill="currentColor"/><rect x="4.5" y="6" width="15" height="11" rx="4"/>
+      <circle cx="9.5" cy="11" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="11" r="1" fill="currentColor" stroke="none"/>
+      <path d="M10 14c1.2.8 2.8.8 4 0M8 20h8M2.5 10v3M21.5 10v3"/></symbol>
+    <!-- 相手から届いた伝言＝お便り（封筒） -->
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6.5L20.5 7"/></symbol>
+    <!-- 対応をお願いしたい案件＝手を挙げる旗 -->
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M5 21V3.5"/><path d="M5 4h12.5l-3 4.5 3 4.5H5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  </defs>
+</svg>
+
+<!-- 上の帯：ここはどこ／探す／自分 -->
+<header class="suite">
+  <button class="suite-btn menu-btn only-narrow" id="menuBtn" aria-label="メニューを開く" aria-expanded="false" aria-controls="nav">
+    <svg class="ic"><use href="#i-menu"/></svg></button>
+  <span class="wordmark"><span>Atrium</span><small class="name">Guest Room</small></span>
+  <span style="flex:1"></span>
+  <span id="exit"></span>
+  <span id="look"></span>
+  <span class="avatar" id="avatar"><img src="/logo.svg" alt=""></span>
+</header>
+
+<!-- サイトの見出し：どこの部屋か -->
+<div class="site">
+  <a class="robo-door" href="#/ask" title="相談ロボに聞いてみる">
+    <span class="robo-slot" id="robo-door"></span>
+    <span class="robo-tag">AIに相談</span>
+  </a>
+  <div>
+    <h1 id="place"></h1>
+    <p id="greet"></p>
+  </div>
+</div>
+
+<div class="ticker" id="ticker" hidden aria-label="この部屋の最新の動き"></div>
+
+<div class="shell">
+  <nav class="nav" id="nav" aria-label="この部屋のメニュー"></nav>
+  <div class="scrim" id="scrim"></div>
+  <main id="main" aria-live="polite"></main>
+</div>
+
+<dialog class="dlg" id="askdlg" aria-labelledby="askdlg-h">
+  <h2 id="askdlg-h"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg><span id="askdlg-t">この質問を消しますか？</span></h2>
+  <p id="askdlg-p"></p>
+  <p class="note">消すと元に戻せません。<span class="org"></span> からも見えなくなります（「<span class="org"></span> に伝える」で送った伝言は残ります）。</p>
+  <div class="acts">
+    <button class="btn" data-askdlg="no" autofocus>やめる</button>
+    <button class="btn danger" data-askdlg="yes"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>消す</button>
+  </div>
+</dialog>
+
+<input type="file" id="picker" hidden>
+<input type="file" id="askpicker" hidden>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const slug = new URLSearchParams(location.search).get("r");
+let d = null, me = null, sig = "";
+let ORG = "オーナー", AI = true;   // 会社名と相談ロボの有無（サーバーの設定から）
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const when = s => new Date(s).toLocaleString("ja-JP", { month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" });
+const day  = s => new Date(s).toLocaleDateString("ja-JP", { month:"numeric", day:"numeric" });
+const $ = id => document.getElementById(id);
+const ic = (n, cls = "ic") => `<svg class="${cls}" aria-hidden="true"><use href="#${n}"/></svg>`;
+
+/* ───────── 状態：絵・言葉・色の3つで同時に言う（色だけに預けない） ───────── */
+const STATE = { open: "これから", waiting: "進行中", done: "終わった" };
+const stIcon = s => ic("i-st-" + (STATE[s] ? s : "open"), "st st-" + (STATE[s] ? s : "open"));
+const sideName = s => s === "us" ? ORG : (me.side === "us" ? "先方" : "御社");
+// 「誰の番か」は見る人から見た言葉にする。自分の番なら目立たせる。
+// 取引先には「ご対応のお願い」、オーナー側には「要対応」（2026-09-23 オーナー判断）
+const turnWord = () => me.side === "us" ? "要対応" : "ご対応のお願い";
+const myTurn = c => c.status !== "done" && c.waiting_on && c.waiting_on === me.side;
+const turnPill = c => {
+  if (c.status === "done" || !c.waiting_on) return "";
+  return myTurn(c)
+    ? `<span class="pill attn">${ic("i-flag")}${turnWord()}</span>`
+    : `<span class="pill">${ic("i-clock")}${sideName(c.waiting_on)} が対応中</span>`;
+};
+const statePill = c => `<span class="pill ${c.status === "done" ? "ok" : ""}">${stIcon(c.status)}${STATE[c.status] || ""}</span>`;
+const duePill = c => c.due_on && c.status !== "done" ? `<span class="pill">${ic("i-cal")}${day(c.due_on)}まで</span>` : "";
+
+/* ───────── ファイルの種類：誰でも知っている印 ───────── */
+function ftype(x) {
+  const ext = (x.title.match(/\.([a-z0-9]+)$/i) || [])[1]?.toLowerCase() || "";
+  const m = (x.mime_type || "").toLowerCase();
+  if (ext === "pdf" || m === "application/pdf") return ["pdf", "PDF", "PDF"];
+  if (/^docx?$/.test(ext) || m.includes("wordprocessing") || m === "application/msword") return ["word", "W", "Word 文書"];
+  if (/^(xlsx?|csv)$/.test(ext) || m.includes("spreadsheet") || m.includes("excel")) return ["excel", "X", "Excel ブック"];
+  if (/^pptx?$/.test(ext) || m.includes("presentation") || m.includes("powerpoint")) return ["ppt", "P", "PowerPoint"];
+  if (m.startsWith("image/")) return ["img", "IMG", "画像"];
+  return ["other", (ext || "FILE").slice(0, 4).toUpperCase(), "ファイル"];
+}
+const ficon = (x, sm) => {
+  const [k, t, n] = ftype(x);
+  return `<span class="ft ft-${k}${sm ? " sm" : ""}" title="${n}"><svg viewBox="0 0 32 32" aria-hidden="true">
+    <path class="pg" d="M7.5 2.5h12l6 6v21h-18z"/><path class="fold" d="M19.5 2.5v6h6"/></svg><b aria-hidden="true">${t}</b><span class="sr">${n}</span></span>`;
+};
+
+const caseOf  = id => (d.cases || []).find(c => c.id === id);
+const docsOf  = id => d.documents.filter(x => id === null ? !x.case_id : x.case_id === id);
+const talkOf  = id => d.messages.filter(x => x.case_id === id);
+const tasksOf = id => (d.tasks || []).filter(x => x.case_id === id);
+/* お便り：その案件の最後の伝言が相手からで、3日以内なら「届いている」 */
+const lastLive = id => talkOf(id).filter(m => !m.withdrawn_at).pop();
+const newLetter = id => { const m = lastLive(id); return m && m.author_side !== me.side && Date.parse(m.created_at) >= Date.now() - 3 * 864e5 ? m : null; };
+const leftOf  = id => tasksOf(id).filter(t => t.status !== "done").length;
+const mine    = x => x.uploaded_by && me.email && x.uploaded_by.toLowerCase() === me.email.toLowerCase();
+
+/* ───────── 行き先（#/home ・ #/files ・ #/case/k1 ・ #/doc/d1）─────────
+   URL に持たせる。ブラウザの「戻る」がそのまま効く＝説明が要らない。 */
+function route() {
+  const [page, ...rest] = location.hash.replace(/^#\/?/, "").split("/");
+  return { page: page || "home", arg: decodeURIComponent(rest.join("/")) };
+}
+
+async function load() {
+  const res = await fetch("/api/rooms/" + encodeURIComponent(slug));
+  if (!res.ok) {
+    $("main").innerHTML = '<div class="notfound">この Guest Room は開けませんでした。お手数ですが、ご案内のリンクからもう一度お試しください。</div>';
+    return;
+  }
+  const text = await res.text();
+  if (text === sig) return;          // 変わっていなければ描き直さない（入力中の文字を消さない）
+  const first = !d;
+  sig = text; d = JSON.parse(text); me = d.me;
+  ORG = d.site?.org || ORG; AI = d.site?.ai !== false;
+  document.querySelectorAll(".org").forEach(e => e.textContent = ORG);
+  if (first) drawFrame();
+  drawNav(); drawTicker();
+  // 伝言を書きかけているときは中身を描き直さない。書いた文字が消えるため
+  const typing = document.activeElement && ["body", "askq", "rt-title", "memo-in"].includes(document.activeElement.id) && document.activeElement.value;
+  if (!typing) drawMain();
+}
+
+/* ───────── 枠（帯とサイトの見出し）。最初の一回だけ ───────── */
+function drawFrame() {
+  if (typeof d.room.hue === "number") document.documentElement.style.setProperty("--h", d.room.hue);
+  const name = d.room.client_name || d.room.name;
+  $("place").textContent = name;
+  $("robo-door").innerHTML = ROBOT;
+  document.querySelector(".robo-door").hidden = !AI;
+  $("greet").textContent = me.side === "us"
+    ? ORG + " として入室しています"
+    : "いらっしゃいませ。資料・やりとり・お願いごとをこちらに揃えています。";
+  $("avatar").title = me.email;
+  $("exit").innerHTML = me.side === "us"
+    ? `<a class="suite-btn exit" href="/office.html#/clients" title="執務室へ戻る">${ic("i-grid")}<span class="t">Office</span></a>`
+    : `<a class="suite-btn exit" href="/cdn-cgi/access/logout" title="退室する">${ic("i-exit")}<span class="t">退室する</span></a>`;
+}
+
+/* 流れる帯：この部屋の最新の動き
+   お知らせ／資料が置かれた／伝言／やることが終わった／案件が終わった を新しい順に8件。
+   自分がやったことは流さない（知っているので）。3日以内のものに NEW。押すとそこへ飛ぶ。 */
+/* 相手側の動き（新しい順）。流れる帯と、ホームの「お知らせ」の両方で使う */
+function updates() {
+  const other = s => s && s !== me.side;
+  // 英字の社名のあとだけ空白を入れる（「オーナーから」／「御社から」）
+  const who = s => s === "us" ? ORG + " " : sideName("client");
+  const caseName = id => { const c = id && caseOf(id); return c ? `（${c.title}）` : ""; };
+  const items = [
+    ...(d.announcements || []).filter(a => a.published_at).map(a => ({ at: a.published_at, href: "#/home", text: "お知らせ：" + a.body })),
+    ...d.documents.filter(x => other(x.uploaded_by_side)).map(x => ({
+      at: x.updated_at && x.updated_at > x.created_at ? x.updated_at : x.created_at,
+      href: "#/doc/" + x.id, text: `${who(x.uploaded_by_side)}が資料を置きました${caseName(x.case_id)}：「${x.title}」` })),
+    ...d.messages.filter(m => other(m.author_side) && !m.withdrawn_at).map(m => ({
+      at: m.created_at, href: m.case_id ? "#/case/" + m.case_id : "#/home",
+      text: `${who(m.author_side)}から伝言${caseName(m.case_id)}：${m.body.length > 40 ? m.body.slice(0, 40) + "…" : m.body}` })),
+    ...(d.tasks || []).filter(t => t.status === "done" && t.done_at).map(t => ({
+      at: t.done_at, href: t.case_id ? "#/case/" + t.case_id : "#/home", text: `やることが終わりました${caseName(t.case_id)}：「${t.title}」` })),
+    ...(d.cases || []).filter(c => c.status === "done" && c.closed_at).map(c => ({
+      at: c.closed_at, href: "#/case/" + c.id, text: `案件「${c.title}」が終わりました` })),
+    // ここから下は オーナーがすること。先方の画面にだけ出す（自分のしたことは流さない）
+    ...(me.side === "client" ? [
+      ...(d.cases || []).filter(c => c.created_at).map(c => ({
+        at: c.created_at, href: "#/case/" + c.id, text: `新しい案件「${c.title}」ができました` })),
+      ...(d.tasks || []).filter(t => t.created_at).map(t => ({
+        at: t.created_at, href: t.case_id ? "#/case/" + t.case_id : "#/home", text: `やることが追加されました${caseName(t.case_id)}：「${t.title}」` })),
+      ...(d.room.memo_updated_at ? [{ at: d.room.memo_updated_at, href: "#/home", text: ORG + " がメモを更新しました" }] : []),
+    ] : []),
+  ].sort((a, b) => b.at.localeCompare(a.at));
+  return items;
+}
+
+function drawTicker() {
+  const items = updates().slice(0, 8);
+
+  $("ticker").hidden = !items.length;
+  document.body.style.setProperty("--ticker-h", items.length ? "45px" : "0px");
+  if (!items.length) return;
+  const fresh = Date.now() - 3 * 864e5;
+  const one = items.map(x => {
+    const t = new Date(x.at);
+    return `<a href="${x.href}">${Date.parse(x.at) >= fresh ? '<b class="new">NEW</b>' : ""}<time>${t.getMonth() + 1}.${String(t.getDate()).padStart(2, "0")}</time>${esc(x.text)}</a>`;
+  }).join("");
+  // 同じ並びを2回つないで切れ目なく流す。2回目は読み上げ・Tab 移動の対象から外す
+  $("ticker").innerHTML = `<div class="track">${one}<span aria-hidden="true" style="display:contents">${one}</span></div>`;
+  $("ticker").querySelectorAll('[aria-hidden="true"] a').forEach(a => a.tabIndex = -1);
+  $("ticker").setAttribute("aria-label", "この部屋の最新の動き");
+}
+
+/* ───────── 左ナビ ───────── */
+function drawNav() {
+  const r = route();
+  const cur = (p, a) => (r.page === p && (a === undefined || r.arg === a)) ? ' aria-current="page"' : "";
+  const cases = d.cases || [];
+  const openCases = cases.filter(c => c.status !== "done");
+  const doneCases = cases.filter(c => c.status === "done");
+  const item = c => `<li><a href="#/case/${c.id}"${cur("case", c.id)}>
+      ${stIcon(c.status)}<span class="t">${esc(c.title)}</span>
+      ${newLetter(c.id) ? `<span class="mail" title="お便りが届いています">${ic("i-mail")}<span class="sr">お便りが届いています</span></span>` : ""}
+      ${myTurn(c) ? `<span class="flag" title="${turnWord()}">${ic("i-flag")}<span class="sr">${turnWord()}</span></span>` : ""}</a></li>`;
+  $("nav").innerHTML = `
+    <ul>
+      <li><a href="#/home"${cur("home")}>${ic("i-home")}<span class="t">ホーム</span></a></li>
+      <li><a href="#/files"${r.page === "files" ? ' aria-current="page"' : ""}>${ic("i-files")}<span class="t">すべての資料</span><span class="n">${d.documents.length}</span></a></li>
+      ${AI ? `<li><a href="#/ask"${cur("ask")}>${ic("i-robot")}<span class="t">相談ロボ</span></a></li>` : ""}
+    </ul>
+    <h2 class="nav-h">進行中の案件</h2>
+    <ul>${openCases.map(item).join("") || '<li><p class="empty" style="padding:0 20px">ありません</p></li>'}</ul>
+    ${doneCases.length ? `<h2 class="nav-h">終わった案件</h2><ul>${doneCases.map(item).join("")}</ul>` : ""}`;
+}
+
+
+// 時刻つきの記録（ISO・UTC）を、日本時間の「9/23」に
+const dayOf = iso => { const t = new Date(iso); return `${t.getMonth() + 1}/${t.getDate()}`; };
+
+/* メンバー：この部屋に招かれて、実際に入った人。まだ入っていない人は オーナーにだけ見せる */
+function memberCard() {
+  const ms = d.members || [];
+  const joined = ms.filter(m => m.joined_at), waiting = ms.filter(m => !m.joined_at);
+  if (!joined.length && !(me.side === "us" && waiting.length)) return "";
+  const row = m => `<li><span class="mb-av" aria-hidden="true">${esc(m.name.slice(0, 1))}</span>
+      <span class="mb-t"><b>${esc(m.name)}</b>${m.joined_at ? `<small>${dayOf(m.joined_at)} から参加</small>` : "<small>招待中（まだ入っていません）</small>"}</span></li>`;
+  return `<section class="card" aria-labelledby="h-members">
+    <header class="card-h">${ic("i-people")}<h2 id="h-members">メンバー</h2><span class="count">${joined.length}人</span></header>
+    ${joined.length ? `<ul class="members">${joined.map(row).join("")}</ul>` : '<p class="empty">まだ誰も入っていません。</p>'}
+    ${me.side === "us" && waiting.length ? `<ul class="members waiting">${waiting.map(row).join("")}</ul>` : ""}
+  </section>`;
+}
+
+/* 部屋のメモ：オーナーが書き、取引先が読む1枚のホワイトボード */
+let memoEditing = false;
+function memoCard() {
+  const m = d.room.memo, us = me.side === "us";
+  if (!m && !us) return "";
+  const when = d.room.memo_updated_at ? `${dayOf(d.room.memo_updated_at)} 更新` : "";
+  return `<section class="card memo-card" aria-labelledby="h-memo">
+    <header class="card-h">${ic("i-memo")}<h2 id="h-memo">メモ</h2><span class="count">${when}</span>
+      ${us && !memoEditing ? `<button type="button" class="more" data-memo-edit>${ic("i-memo")}${m ? "書き直す" : "書く"}</button>` : ""}</header>
+    ${memoEditing ? `<form id="memoform">
+        <label class="sr" for="memo-in">メモ</label>
+        <textarea class="in" id="memo-in" rows="6" maxlength="4000" placeholder="例）9/28〜10/2 は出張のため、お返事が遅れます">${esc(m || "")}</textarea>
+        <p class="task-add-note">先方にそのまま見えます。保存すると「お知らせ」に「メモを更新しました」と出ます。空にして保存すると消えます。</p>
+        <div class="acts"><button type="button" class="btn" data-memo-cancel>やめる</button><button class="btn primary" type="submit">${ic("i-ok")}保存する</button></div>
+      </form>`
+      : m ? `<div class="memo-body">${esc(m)}</div>` : '<p class="empty">まだメモはありません。「書く」から、先方へのお知らせを残せます。</p>'}
+  </section>`;
+}
+
+/* ───────── 中身 ───────── */
+function drawMain() {
+  const r = route();
+  const view = { home: pageHome, files: pageFiles, case: pageCase, doc: pageDoc, ...(AI ? { ask: pageAsk } : {}) }[r.page] || pageHome;
+  $("main").innerHTML = `<div class="page">${view(r.arg)}</div>`;
+}
+
+const crumb = parts => `<nav class="crumb" aria-label="現在地">${parts.map((p, i) =>
+  (i ? ic("i-chev") : "") + (p[1] ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span>${esc(p[0])}</span>`)).join("")}</nav>`;
+
+/* 資料の表（SharePoint のドキュメントライブラリ）。
+   案件は「フォルダ」ではなく列（属性）として持つ（README「設計の原則」3）。 */
+function docTable(docs, withCase, emptyText) {
+  if (!docs.length) return `<p class="empty">${emptyText || "まだ資料はありません。"}</p>`;
+  const by = x => x.uploaded_by_side === "us" ? ORG : sideName("client");
+  return `<div class="list${withCase ? " with-case" : ""}" role="table" aria-label="資料">
+    <div class="lrow lhead" role="row">
+      <span role="columnheader"><span class="sr">種類</span></span><span role="columnheader">名前</span>
+      ${withCase ? '<span role="columnheader">案件</span>' : ""}
+      <span role="columnheader">置いた人</span><span role="columnheader">日付</span><span role="columnheader"><span class="sr">操作</span></span>
+    </div>
+    ${docs.map(x => {
+      const c = x.case_id && caseOf(x.case_id);
+      return `<div class="lrow" role="row">
+        <span role="cell">${ficon(x)}</span>
+        <a class="c-name" role="cell" href="#/doc/${x.id}" title="${esc(x.title)}"><span>${esc(x.title)}</span>
+          <small class="c-sub">${withCase && c ? esc(c.title) + "・" : ""}${by(x)}・${day(x.created_at)}</small></a>
+        ${withCase ? (c ? `<a class="c-case" role="cell" href="#/case/${c.id}">${esc(c.title)}</a>` : '<span class="c-case" role="cell">—</span>') : ""}
+        <span class="c-by" role="cell">${by(x)}</span>
+        <span class="c-date" role="cell" title="${when(x.created_at)}">${day(x.created_at)}</span>
+        <span class="c-act" role="cell">
+          <a class="iconbtn" href="/api/documents/${x.id}" download title="ダウンロード" aria-label="「${esc(x.title)}」をダウンロード">${ic("i-download")}</a>
+          ${mine(x) ? `<button class="iconbtn danger" data-pull="${x.id}" title="この資料を引き取る（相手からも見えなくなります）" aria-label="「${esc(x.title)}」を引き取る">${ic("i-trash")}</button>` : '<span class="iconbtn slot" aria-hidden="true"></span>'}
+        </span>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+/* ホーム：SharePoint のサイトのトップ。「情報は向こうから来る」（原則7）を一番上に */
+function pageHome() {
+  const cases = d.cases || [];
+  const turns = cases.filter(myTurn);
+  const letters = cases.filter(c => newLetter(c.id));
+  const news = d.announcements || [];
+  const ups = updates().slice(0, 6), fresh = Date.now() - 3 * 864e5;
+  const recent = d.documents.slice().sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 5);
+  const tile = c => `<a class="tile${c.status === "done" ? " done" : ""}${myTurn(c) ? " attn" : ""}" href="#/case/${c.id}">
+      <span class="top"><span class="icbox">${c.status === "done" ? ic("i-ok") : ic("i-case")}</span>
+        <span class="ttl">${esc(c.title)}</span></span>
+      <span class="tags">${newLetter(c.id) ? `<span class="pill mail">${ic("i-mail")}お便り</span>` : ""}${statePill(c)}${turnPill(c)}${duePill(c)}</span>
+      <span class="nums">
+        <span title="資料">${ic("i-files")}${docsOf(c.id).length}<span class="sr">件の資料</span></span>
+        <span title="やりとり">${ic("i-chat")}${talkOf(c.id).length}<span class="sr">件のやりとり</span></span>
+        <span title="残りのやること">${ic("i-task")}${leftOf(c.id)}<span class="sr">件のやること</span></span>
+      </span></a>`;
+
+  // 知らせを DOM の先頭に置く。スマホでは一番上に来て、PC では右の列に回る（原則7）
+  return `
+    <div class="cols side-first">
+      <aside class="col">
+        ${letters.length ? `
+        <section class="card letters" aria-labelledby="h-letters">
+          <header class="card-h">${ENVELOPE}<h2 id="h-letters">お便りが届いています</h2><span class="count">${letters.length}件</span></header>
+          <ul class="turns">${letters.map(c => { const m = newLetter(c.id); return `<li><a href="#/case/${c.id}">
+            <span class="t"><b>${esc(c.title)}</b>
+            <small class="snip">${esc(m.body)}</small>
+            <small>${sideName(m.author_side)}から・${when(m.created_at)}</small></span>
+            <span class="go">読む${ic("i-chev")}</span></a></li>`; }).join("")}</ul>
+        </section>` : ""}
+        ${turns.length ? `
+        <section class="card attn" aria-labelledby="h-turn">
+          <header class="card-h">${ic("i-flag")}<h2 id="h-turn">${turnWord()}</h2></header>
+          <ul class="turns">${turns.map(c => `<li><a href="#/case/${c.id}">
+            ${stIcon(c.status)}<span class="t"><b>${esc(c.title)}</b>
+            <small>${leftOf(c.id) ? `やること ${leftOf(c.id)}件` : "ご確認ください"}${c.due_on ? `・${day(c.due_on)}まで` : ""}</small></span>
+            <span class="go">${ic("i-chev")}</span></a></li>`).join("")}</ul>
+        </section>` : ""}
+        <section class="card" aria-labelledby="h-news">
+          <header class="card-h">${ic("i-news")}<h2 id="h-news">お知らせ</h2></header>
+          ${news.length ? `<ul class="news">${news.map(a => `<li><div class="body">${esc(a.body)}</div>
+            ${a.published_at ? `<div class="when">${ic("i-cal", "ic")}${day(a.published_at)}</div>` : ""}</li>`).join("")}</ul>` : ""}
+          ${ups.length ? `<ul class="ups">${ups.map(x => `<li><a href="${x.href}">
+              <span class="ups-when">${Date.parse(x.at) >= fresh ? '<b class="new">NEW</b>' : ""}${dayOf(x.at)}</span>
+              <span class="ups-t">${esc(x.text)}</span></a></li>`).join("")}</ul>`
+            : news.length ? "" : '<p class="empty">まだ更新はありません。</p>'}
+        </section>
+        ${memoCard()}
+        ${memberCard()}
+      </aside>
+      <div class="col">
+        <section class="card" aria-labelledby="h-cases">
+          <header class="card-h">${ic("i-case")}<h2 id="h-cases">案件</h2>
+            <span class="count">${cases.filter(c => c.status !== "done").length}件 進行中</span></header>
+          ${cases.length ? `<div class="tiles">${cases.map(tile).join("")}</div>` : '<p class="empty">まだ案件がありません。</p>'}
+        </section>
+        <section class="card" aria-labelledby="h-recent">
+          <header class="card-h">${ic("i-files")}<h2 id="h-recent">最近の資料</h2>
+            <a class="more" href="#/files">すべて見る${ic("i-chev")}</a></header>
+          ${docTable(recent, true)}
+        </section>
+      </div>
+    </div>`;
+}
+
+/* すべての資料：案件で絞り込める1本の棚 */
+function pageFiles(filter) {
+  const cases = d.cases || [];
+  const loose = docsOf(null);
+  let docs = d.documents, target = null;
+  if (filter === "none") { docs = loose; target = ""; }
+  else if (filter && caseOf(filter)) { docs = docsOf(filter); target = filter; }
+  const chip = (href, label, n, on) => `<a class="chip" href="${href}" aria-current="${on}">${label}<span class="n">${n}</span></a>`;
+  return `
+    ${crumb([["ホーム", "#/home"], ["すべての資料"]])}
+    <h1 class="ptitle">${ic("i-files")}すべての資料</h1>
+    <div class="cmdbar" role="toolbar" aria-label="資料の操作">
+      <button class="cmd" data-upload="${target === null ? "" : target}">${ic("i-upload")}資料を置く</button>
+    </div>
+    <section class="card drop" data-drop="${target === null ? "" : target}" aria-label="資料の一覧">
+      <div class="chips" aria-label="案件で絞り込む">
+        ${chip("#/files", "すべて", d.documents.length, !filter)}
+        ${cases.map(c => chip("#/files/" + c.id, esc(c.title), docsOf(c.id).length, filter === c.id)).join("")}
+        ${loose.length ? chip("#/files/none", "どの案件でもない", loose.length, filter === "none") : ""}
+      </div>
+      ${docTable(docs, !filter)}
+      <p class="drop-hint only-wide">${ic("i-upload")}ここにファイルをドラッグしても置けます</p>
+    </section>`;
+}
+
+/* 案件：資料（主役）＋ やること・やりとり（横）。三つが一枚に並んで繋がる */
+/* やりとりは枠の中でスクロールさせず、ページ一本で流す（二重スクロールにしない）。
+   長くなりすぎないよう、最初は新しい方から TALK_SHOW 件だけ。前の分は押すと開く。 */
+const TALK_SHOW = 8;
+const talkOpen = new Set();
+
+function pageCase(id) {
+  const c = caseOf(id);
+  if (!c) return '<div class="notfound">この案件は見つかりませんでした。</div>';
+  const docs = docsOf(id), tasks = tasksOf(id), talk = talkOf(id);
+  return `
+    ${crumb([["ホーム", "#/home"], ["案件"], [c.title]])}
+    <h1 class="ptitle">${stIcon(c.status)}${esc(c.title)}</h1>
+    ${c.summary ? `<p class="psum">${esc(c.summary)}</p>` : ""}
+    <div class="pmeta">${newLetter(c.id) ? `<button type="button" class="pill mail" data-jump="msgs">${ic("i-mail")}お便りが届いています・読む</button>` : ""}${statePill(c)}${turnPill(c)}${duePill(c)}</div>
+
+    <div class="cmdbar" role="toolbar" aria-label="この案件の操作">
+      <button class="cmd" data-upload="${c.id}">${ic("i-upload")}資料を置く</button>
+      ${c.status !== "done" ? `<button class="cmd" data-focus="body">${ic("i-chat")}伝える</button>` : ""}
+      <span class="sep only-wide" aria-hidden="true"></span>
+      <a class="cmd only-wide" href="#/files">${ic("i-files")}すべての資料</a>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+        <section class="card" aria-labelledby="h-tasks">
+          <header class="card-h">${ic("i-task")}<h2 id="h-tasks">やること</h2><span class="count">残り ${tasks.filter(t => t.status !== "done").length}</span></header>
+          ${tasks.length ? `<ul class="tasks">${tasks.map(t => `<li class="${t.status === "done" ? "done" : ""}">
+              ${me.side === "us"
+                ? `<button type="button" class="tcheck-r" data-mscheck="${t.id}" data-done="${t.status === "done"}" title="${t.status === "done" ? "まだにもどす" : "終わったにする"}" aria-label="「${esc(t.title)}」を${t.status === "done" ? "まだにもどす" : "終わったにする"}">${stIcon(t.status === "done" ? "done" : "open")}</button>`
+                : stIcon(t.status === "done" ? "done" : "open")}
+              <span class="ttl">${esc(t.title)}<span class="sr">（${t.status === "done" ? "終わった" : "まだ"}）</span></span>
+              ${t.due_on ? `<span class="due">${ic("i-cal")}${day(t.due_on)}まで</span>` : ""}</li>`).join("")}</ul>`
+            : '<p class="empty">いまお願いしていることはありません。</p>'}
+          ${me.side === "us" && c.status !== "done" ? `<form class="task-add" data-roomtask="${c.id}">
+            <label class="sr" for="rt-title">やることを足す</label>
+            <input class="in" id="rt-title" required placeholder="先方にお願いすること" autocomplete="off">
+            <label class="sr" for="rt-due">期限</label><input class="in" id="rt-due" type="date">
+            <button class="btn" type="submit">${ic("i-plus")}足す</button>
+            <p class="task-add-note">${esc(ORG)} だけに見える欄です。足したやることは先方にもすぐ見えます。</p>
+          </form>` : ""}
+        </section>
+        <section class="card drop" data-drop="${c.id}" aria-labelledby="h-docs">
+          <header class="card-h">${ic("i-files")}<h2 id="h-docs">資料</h2><span class="count">${docs.length}</span></header>
+          ${docTable(docs, false)}
+          <p class="drop-hint only-wide">${ic("i-upload")}ここにファイルをドラッグしても置けます</p>
+        </section>
+      </div>
+      <aside class="col">
+        <section class="card" aria-labelledby="h-talk">
+          <header class="card-h">${ic("i-chat")}<h2 id="h-talk">やりとり</h2><span class="count">${talk.length}</span></header>
+          ${letter(talk)}
+          ${talk.length > TALK_SHOW && !talkOpen.has(c.id) ? `<button type="button" class="talk-more" data-talk-more="${c.id}">${ic("i-chat")}前のやりとりを見る（${talk.length - TALK_SHOW}件）</button>` : ""}
+          <div class="msgs" id="msgs">${talk.length ? (talkOpen.has(c.id) ? talk : talk.slice(-TALK_SHOW)).map(m => {
+            const doc = m.document_id && d.documents.find(x => x.id === m.document_id);
+            const own = m.author_side === me.side;
+            return `<div class="msg ${own ? "mine" : ""}">
+              <div class="who">${own ? "あなた" : sideName(m.author_side)} · ${when(m.created_at)}</div>
+              ${doc ? `<a class="ref" href="#/doc/${doc.id}" title="この資料を開く">${ficon(doc, true)}<span>${esc(doc.title)}</span></a>` : ""}
+              <div class="bubble">${m.withdrawn_at ? '<em class="gone">この伝言は取り消されました</em>' : esc(m.body)}</div>
+            </div>`;
+          }).join("") : ""}</div>
+          <form class="composer" id="say" data-case="${c.id}">
+            <label for="body">この案件について伝える</label>
+            <textarea id="body" required placeholder="例）記入フォーマットを置きました"></textarea>
+            <div class="row"><button class="btn primary" type="submit">${ic("i-send")}送る</button></div>
+          </form>
+        </section>
+      </aside>
+    </div>`;
+}
+
+
+/* ───────── 相談ロボ（Gemma 4）─────────
+   取引先に AI を触ってもらう入口。サイト見出しのロボを押すとここへ来る。
+   読むのは「この部屋で共有している資料」と「ここで渡したファイル」だけ。
+   会話は残り、オーナーも読める（画面に書いておく）。 */
+const ROBOT = `<svg class="robot" viewBox="0 0 64 64" aria-hidden="true">
+  <path d="M32 6v7" class="rb-line"/><circle cx="32" cy="5" r="3.6" class="rb-pink"/>
+  <rect x="4" y="26" width="6" height="11" rx="3" class="rb-yellow"/><rect x="54" y="26" width="6" height="11" rx="3" class="rb-yellow"/>
+  <rect x="9" y="13" width="46" height="33" rx="13" class="rb-head"/>
+  <rect x="15" y="19.5" width="34" height="20" rx="8.5" class="rb-face"/>
+  <g class="rb-eyes"><ellipse cx="26" cy="28.5" rx="2.7" ry="3.3"/><ellipse cx="38" cy="28.5" rx="2.7" ry="3.3"/></g>
+  <circle cx="20.5" cy="34" r="2.2" class="rb-cheek"/><circle cx="43.5" cy="34" r="2.2" class="rb-cheek"/>
+  <path d="M28.5 33.5q3.5 3 7 0" class="rb-line"/>
+  <rect x="19" y="48" width="26" height="13" rx="6" class="rb-yellow"/><circle cx="32" cy="54.5" r="2.6" class="rb-pink"/></svg>`;
+
+let ask = null;                 // { messages, left, per_day }
+let askBusy = false;
+const askDocs = new Set();      // ロボに渡す部屋の資料（ページを離れても覚えておく）
+let askFile = null;             // 添えるファイル（送ったら外す）
+
+async function loadAsk() {
+  const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/ask");
+  if (r.ok) ask = await r.json();
+  if (route().page === "ask") drawMain();
+}
+
+// ロボの答えは Markdown まじりで来る。太字と箇条書きだけ拾って、あとは文字のまま。
+function mdLite(t) {
+  return esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^\s*[-*]\s+/gm, "・").replace(/^#{1,4}\s*/gm, "");
+}
+
+const ASK_EXAMPLES = [
+  "この資料を3行でまとめてください",
+  "この資料で、こちらが確認・準備すべきことは？",
+  "うちの仕事で、AIに任せられそうなことは？",
+  "取引先へのお礼メールの下書きを手伝って",
+];
+
+function pageAsk() {
+  if (!ask) { loadAsk(); return '<div class="ask-loading">' + ROBOT + '<p>相談ロボを呼んでいます…</p></div>'; }
+  const docs = d.documents;
+  const left = ask.left;
+  const msgs = ask.messages;
+  const docName = id => (d.documents.find(x => x.id === id) || {}).title;
+
+  const bubble = m => m.role === "user"
+    ? `<div class="msg mine"><div class="who">あなた · ${when(m.created_at)}
+          ${m.id !== "tmp" ? `<button type="button" class="askdel" data-askdel="${m.id}" title="この質問と答えを消す" aria-label="この質問と、ロボの答えを消す">${ic("i-trash")}</button>` : ""}</div>
+        ${(m.document_ids ? JSON.parse(m.document_ids) : []).map(docName).filter(Boolean).map(t => `<span class="ref">${ic("i-files")}<span>${esc(t)}</span></span>`).join("")}
+        ${m.file_name ? `<span class="ref">${ic("i-clip")}<span>${esc(m.file_name)}</span></span>` : ""}
+        <div class="bubble">${esc(m.body)}</div></div>`
+    : `<div class="msg robo"><span class="robo-av">${ROBOT}</span><div>
+        <div class="who">相談ロボ · ${when(m.created_at)}</div>
+        <div class="bubble">${mdLite(m.body)}</div>
+        <div class="robo-acts">${m.forwarded_at
+          ? `<span class="sent">${ic("i-ok")}${esc(ORG)} に伝えました</span>`
+          : `<button type="button" class="btn subtle" data-forward="${m.id}">${ic("i-send")}この内容を ${esc(ORG)} に伝える</button>`}</div>
+      </div></div>`;
+
+  return `
+    ${crumb([["ホーム", "#/home"], ["相談ロボ"]])}
+    <section class="ask-hero">
+      <span class="robo-big">${ROBOT}</span>
+      <div>
+        <h1 class="ptitle">相談ロボ</h1>
+        <p class="psum">AI に気軽に聞いてみてください。資料を渡すと、その中身をもとに答えます。</p>
+        <p class="ask-caution">${ic("i-warn")}<span><b>個人情報やプライベートなご相談は書かないでください。</b>
+          <span class="l">ここでの会話は記録され、${esc(ORG)} も読めます。</span>
+          <span class="l">消した会話は ${esc(ORG)} からも見えなくなります。</span></span></p>
+        <ul class="ask-notes">
+          <li>${ic("i-clock")}<span>今日あと <b>${left}</b> 回（1日 ${ask.per_day} 回まで・毎朝0時に戻ります）</span></li>
+          <li>${ic("i-flag")}<span>AI は間違えることがあります。金額・納期・契約など大事なことは ${esc(ORG)} にご確認ください</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="cols">
+      <div class="col">
+        <section class="card ask-talk" aria-labelledby="h-ask">
+          <header class="card-h">${ic("i-chat")}<h2 id="h-ask">ロボとの会話</h2><span class="count">${msgs.filter(m => m.role === "user").length}</span>
+            ${msgs.length ? `<button type="button" class="more" data-askdel-all>${ic("i-trash")}会話をすべて消す</button>` : ""}</header>
+          <div class="msgs" id="askmsgs">${msgs.length ? msgs.map(bubble).join("")
+            : `<div class="ask-empty"><p><b>まずは下の例を押してみてください。</b>文が入るので、そのまま送れます。</p></div>`}
+            ${askBusy ? `<div class="msg robo"><span class="robo-av thinking">${ROBOT}</span><div><div class="who">相談ロボ</div><div class="bubble"><span class="dots" aria-label="考えています"><i></i><i></i><i></i></span></div></div></div>` : ""}
+          </div>
+          <div class="ask-ex" role="group" aria-label="聞き方の例">${ASK_EXAMPLES.map(t => `<button type="button" class="chip" data-example="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+          <form class="composer" id="askform" data-drop-ask>
+            <label for="askq">ロボに聞く</label>
+            ${askDocs.size || askFile ? `<div class="ask-with">ロボに渡すもの：
+              ${[...askDocs].filter(docName).map(id => `<span class="ref">${ic("i-files")}<span>${esc(docName(id))}</span><button type="button" class="x" data-undoc="${id}" title="渡すのをやめる" aria-label="${esc(docName(id))} を渡すのをやめる">×</button></span>`).join("")}
+              ${askFile ? `<span class="ref">${ic("i-clip")}<span>${esc(askFile.name)}</span><button type="button" class="x" data-unfile title="渡すのをやめる" aria-label="${esc(askFile.name)} を渡すのをやめる">×</button></span>` : ""}</div>` : ""}
+            <textarea id="askq" required maxlength="4000" placeholder="例）この見積もりの前提をわかりやすく教えて" ${left ? "" : "disabled"}></textarea>
+            <div class="row">
+              <button type="button" class="btn" data-goto-give>${ic("i-files")}資料を選ぶ</button>
+              <button class="btn primary" type="submit" ${left && !askBusy ? "" : "disabled"}>${ic("i-send")}${left ? "聞いてみる" : "今日の分は終わりました"}</button>
+            </div>
+          </form>
+        </section>
+      </div>
+      <aside class="col">
+        <section class="card" id="givecard" aria-labelledby="h-askdocs">
+          <header class="card-h">${ic("i-files")}<h2 id="h-askdocs">ロボに渡す資料</h2></header>
+          <button type="button" class="btn give" data-attach>${ic("i-upload")}ファイルを渡す</button>
+          ${askFile ? `<ul class="pick"><li><span class="pickrow on">${ic("i-clip")}<span class="t">${esc(askFile.name)}</span>
+              <button type="button" class="x" data-unfile title="渡すのをやめる" aria-label="${esc(askFile.name)} を渡すのをやめる">×</button></span></li></ul>` : ""}
+          <p class="sub ask-sub">この部屋の資料から選ぶ（5つまで・押すと選べます）</p>
+          ${docs.length ? `<ul class="pick">${docs.map(x => `<li><button type="button" class="pickrow${askDocs.has(x.id) ? " on" : ""}" data-askdoc="${x.id}" aria-pressed="${askDocs.has(x.id)}">
+              ${ficon(x, true)}<span class="t">${esc(x.title)}</span><span class="ck">${ic("i-ok")}</span></button></li>`).join("")}</ul>`
+            : '<p class="empty">この部屋にはまだ資料がありません。</p>'}
+          <p class="sub ask-note">${ic("i-clip")}<span>「ファイルを渡す」で渡したものはロボが読むだけで、部屋の資料には置かれません。PDF・Word・Excel・画像など（10MBまで）。</span></p>
+        </section>
+      </aside>
+    </div>`;
+}
+
+/* PDF の文字はブラウザで取り出して一緒に送る（2026-09-23）。
+   Mac の Pages などで作った日本語 PDF は、サーバーの変換（toMarkdown）では本文が0文字になることがあった。
+   pdf.js に日本語の文字表（cMap）を渡すと読める。サーバー側は無料プランの CPU 上限（10ms）があるのでブラウザでやる。 */
+const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/";
+let pdfjsReady = null;
+async function pdfText(blob) {
+  try {
+    pdfjsReady ??= import(PDFJS + "build/pdf.min.mjs").then(m => { m.GlobalWorkerOptions.workerSrc = PDFJS + "build/pdf.worker.min.mjs"; return m; });
+    const pdfjs = await pdfjsReady;
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), cMapUrl: PDFJS + "cmaps/", cMapPacked: true }).promise;
+    const pages = [];
+    for (let i = 1; i <= Math.min(doc.numPages, 50); i++) {
+      const c = await (await doc.getPage(i)).getTextContent();
+      pages.push(c.items.map(x => x.str + (x.hasEOL ? "\n" : "")).join(""));
+    }
+    return pages.join("\n\n").slice(0, 20000);
+  } catch (e) { console.warn("PDF を読めませんでした", e); return ""; }
+}
+const isPdf = (name, type) => /pdf/i.test(type || "") || /\.pdf$/i.test(name || "");
+
+async function sendAsk(q) {
+  if (askBusy) return;
+  const fd = new FormData();
+  fd.append("question", q);
+  fd.append("document_ids", JSON.stringify([...askDocs]));
+  if (askFile) fd.append("file", askFile);
+  askBusy = true;
+  ask.messages.push({ id: "tmp", role: "user", body: q, document_ids: JSON.stringify([...askDocs]), file_name: askFile?.name || null, created_at: new Date().toISOString() });
+  drawMain(); scrollAsk();
+  // 選んだ部屋の資料と、渡したファイルのうち PDF は、ここで文字にしてから送る
+  const texts = {};
+  for (const id of askDocs) {
+    const x = d.documents.find(v => v.id === id);
+    if (!x || !isPdf(x.title, x.mime_type)) continue;
+    const r = await fetch("/api/documents/" + id);
+    if (r.ok) texts[id] = await pdfText(await r.blob());
+  }
+  fd.append("doc_texts", JSON.stringify(texts));
+  if (askFile && isPdf(askFile.name, askFile.type)) fd.append("file_text", await pdfText(askFile));
+  const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/ask", { method: "POST", body: fd });
+  askBusy = false;
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    ask.messages.pop();
+    toast({ limit: "今日の分は終わりました。また明日どうぞ。", file_too_big: "ファイルが大きすぎます（10MBまで）", file_unreadable: "このファイルは読めませんでした" }[e.error] || "うまく送れませんでした");
+    drawMain(); return;
+  }
+  askFile = null;
+  await loadAsk(); scrollAsk();
+}
+function scrollAsk() { const m = $("askmsgs"); m?.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+
+document.addEventListener("submit", e => {
+  if (e.target.id !== "askform") return;
+  e.preventDefault();
+  const q = $("askq").value.trim();
+  if (q) sendAsk(q);
+});
+
+/* お便り：やりとりの「いま」を一目で。相手から届いた／返事待ち／まだ無し の3つ。
+   届いたかどうかがこのページのいちばんの関心事なので、絵つきで一番上に置く。 */
+const ENVELOPE = `<svg class="env" viewBox="0 0 64 48" aria-hidden="true">
+  <rect x="3" y="7" width="58" height="38" rx="5" class="env-body"/>
+  <path d="M5 10 L32 30 L59 10" class="env-line"/>
+  <path d="M5 43 L24 25 M59 43 L40 25" class="env-line"/>
+  <circle cx="52" cy="10" r="7" class="env-seal"/></svg>`;
+function letter(talk) {
+  const live = talk.filter(m => !m.withdrawn_at);
+  const last = live[live.length - 1];
+  if (!last) return `<div class="letter is-empty">${ENVELOPE}<p><b>まだお便りはありません</b><small>下の欄から最初のひとことをどうぞ</small></p></div>`;
+  const theirs = last.author_side !== me.side;
+  const fresh = Date.parse(last.created_at) >= Date.now() - 3 * 864e5;
+  if (theirs) return `<button type="button" class="letter is-in${fresh ? " is-fresh" : ""}" data-jump="msgs">${ENVELOPE}
+    <p><b>${fresh ? "お便りが届いています" : "最後のお便り"}</b><small><span class="nw">${sideName(last.author_side)}から</span> <span class="nw">${when(last.created_at)}</span></small></p>
+    ${fresh ? '<span class="new">NEW</span>' : ""}<span class="go">${ic("i-chev")}<span class="sr">読む</span></span></button>`;
+  return `<div class="letter is-out">${ENVELOPE}<p><b>お返事待ち</b><small>${when(last.created_at)} に送りました</small></p></div>`;
+}
+
+/* 資料を画面の中で開く（別タブに飛ばさない・原則4） */
+function pageDoc(id) {
+  const x = d.documents.find(v => v.id === id);
+  if (!x) return '<div class="notfound">この資料は見つかりませんでした（引き取られた可能性があります）。</div>';
+  const c = x.case_id && caseOf(x.case_id);
+  const kind = (x.mime_type || "").toLowerCase();
+  const inline = kind.startsWith("image/") || kind === "application/pdf" || kind.startsWith("text/");
+  const [, , kname] = ftype(x);
+  return `
+    ${crumb([["ホーム", "#/home"], c ? [c.title, "#/case/" + c.id] : ["すべての資料", "#/files"], [x.title]])}
+    <h1 class="ptitle">${ficon(x)}${esc(x.title)}</h1>
+    <div class="cmdbar" role="toolbar" aria-label="資料の操作">
+      <a class="cmd" href="${c ? "#/case/" + c.id : "#/files"}">${ic("i-back")}${c ? "案件に戻る" : "一覧に戻る"}</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a class="cmd" href="/api/documents/${x.id}" download>${ic("i-download")}ダウンロード</a>
+      ${mine(x) ? `<button class="cmd" data-pull="${x.id}">${ic("i-trash")}引き取る</button>` : ""}
+    </div>
+    <div class="viewer">
+      ${inline
+        ? `<div class="viewer-body"><iframe src="/api/documents/${x.id}" title="${esc(x.title)}"></iframe></div>`
+        : `<div class="viewer-note">${ficon(x)}
+            <p>${kname}は、この画面の中では開けません。<br>ダウンロードして、お手元のアプリで開いてください。</p>
+            <a class="btn primary" href="/api/documents/${x.id}" download>${ic("i-download")}ダウンロードして開く</a></div>`}
+    </div>`;
+}
+
+/* ───────── 操作 ───────── */
+function toast(msg) {
+  const t = $("toast");
+  t.innerHTML = ic("i-ok") + esc(msg); t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.hidden = true, 2600);
+}
+function setNav(open) {
+  document.body.classList.toggle("nav-open", open);
+  $("menuBtn").setAttribute("aria-expanded", open);
+}
+
+async function upload(file, caseId) {
+  const fd = new FormData();
+  fd.append("file", file);
+  if (caseId) fd.append("case_id", caseId);
+  const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/documents", { method: "POST", body: fd });
+  if (!r.ok) { alert("置けませんでした。もう一度お試しください。"); return; }
+  toast("「" + file.name + "」を置きました");
+  load();
+}
+
+window.addEventListener("hashchange", () => { setNav(false); drawNav(); drawMain(); window.scrollTo(0, 0); if (route().page === "ask" && AI) loadAsk(); });
+$("menuBtn").addEventListener("click", () => setNav(!document.body.classList.contains("nav-open")));
+$("scrim").addEventListener("click", () => setNav(false));
+document.addEventListener("keydown", e => { if (e.key === "Escape") setNav(false); });
+
+document.addEventListener("click", async e => {
+  const up = e.target.closest("[data-upload]");
+  if (up) { $("picker").dataset.case = up.dataset.upload; $("picker").click(); return; }
+
+  const f = e.target.closest("[data-focus]");
+  if (f) { const el = $(f.dataset.focus); el.scrollIntoView({ behavior: "smooth", block: "center" }); el.focus({ preventScroll: true }); return; }
+
+  if (e.target.closest("[data-memo-edit]")) { memoEditing = true; drawMain(); $("memo-in")?.focus(); return; }
+  if (e.target.closest("[data-memo-cancel]")) { memoEditing = false; drawMain(); return; }
+  const mc = e.target.closest("[data-mscheck]");
+  if (mc) {
+    const done = mc.dataset.done !== "true";
+    const r = await fetch("/api/admin/milestones/" + mc.dataset.mscheck + "/status", {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: done ? "done" : "todo" }) });
+    if (!r.ok) { toast("変えられませんでした"); return; }
+    toast(done ? "終わったにしました" : "まだにもどしました"); load(); return;
+  }
+  const ad1 = e.target.closest("[data-askdel], [data-askdel-all]");
+  if (ad1) {
+    const dlg = $("askdlg"), all = ad1.dataset.askdelAll !== undefined;
+    dlg.dataset.target = all ? "" : ad1.dataset.askdel;
+    $("askdlg-t").textContent = all ? "ロボとの会話をすべて消しますか？" : "この質問を消しますか？";
+    $("askdlg-p").textContent = all ? "あなたとロボの会話がすべて消えます。" : "この質問と、それへのロボの答えが消えます。";
+    dlg.showModal(); return;
+  }
+  const ad2 = e.target.closest("[data-askdlg]");
+  if (ad2) {
+    const dlg = $("askdlg"); dlg.close();
+    if (ad2.dataset.askdlg !== "yes") return;
+    const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/ask" + (dlg.dataset.target ? "/" + dlg.dataset.target : ""), { method: "DELETE" });
+    if (!r.ok) { toast("うまく消せませんでした"); return; }
+    toast("消しました"); await loadAsk(); return;
+  }
+  const ex = e.target.closest("[data-example]");
+  if (ex) { const t = $("askq"); t.value = ex.dataset.example; t.focus(); return; }
+  const ad = e.target.closest("[data-askdoc]");
+  if (ad) {
+    const id = ad.dataset.askdoc;
+    if (askDocs.has(id)) askDocs.delete(id); else if (askDocs.size < 5) askDocs.add(id); else toast("渡せる資料は5つまでです");
+    const q = $("askq")?.value; drawMain(); if (q) $("askq").value = q; return;
+  }
+  if (e.target.closest("[data-goto-give]")) {
+    const c = $("givecard");
+    c.scrollIntoView({ behavior: "smooth", block: "center" });
+    c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash");
+    setTimeout(() => c.classList.remove("flash"), 1500);
+    c.querySelector("[data-attach]")?.focus({ preventScroll: true });
+    return;
+  }
+  if (e.target.closest("[data-attach]")) { $("askpicker").click(); return; }
+  const ud = e.target.closest("[data-undoc]");
+  if (ud) { askDocs.delete(ud.dataset.undoc); const q = $("askq")?.value; drawMain(); if (q) $("askq").value = q; return; }
+  if (e.target.closest("[data-unfile]")) { askFile = null; const q = $("askq")?.value; drawMain(); if (q) $("askq").value = q; return; }
+  const fw = e.target.closest("[data-forward]");
+  if (fw) {
+    fw.disabled = true;
+    const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/ask/" + fw.dataset.forward + "/forward", { method: "POST" });
+    if (!r.ok) { fw.disabled = false; toast("うまく伝えられませんでした"); return; }
+    toast(ORG + " に伝えました（やりとりに入りました）");
+    await loadAsk(); load(); return;
+  }
+
+  const more = e.target.closest("[data-talk-more]");
+  if (more) { talkOpen.add(more.dataset.talkMore); drawMain(); return; }
+
+  const j = e.target.closest("[data-jump]");
+  if (j) { const m = $(j.dataset.jump); m.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+
+  const pull = e.target.closest("[data-pull]");
+  if (pull) {
+    if (!confirm("この資料を引き取りますか？ 相手からも見えなくなります。")) return;
+    const r = await fetch("/api/documents/" + pull.dataset.pull + "/withdraw", { method: "POST" });
+    if (!r.ok) { alert("引き取れませんでした。"); return; }
+    toast("資料を引き取りました");
+    if (route().page === "doc") history.back();
+    load();
+  }
+});
+
+$("askpicker").addEventListener("change", e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  if (f.size > 10 * 1024 * 1024) { toast("ファイルが大きすぎます（10MBまで）"); return; }
+  askFile = f; const q = $("askq")?.value; drawMain(); if (q) $("askq").value = q;
+});
+
+$("picker").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (file) upload(file, e.target.dataset.case);
+  e.target.value = "";
+});
+
+// ドラッグして置く
+document.addEventListener("dragover", e => {
+  const z = e.target.closest("[data-drop]"); if (!z) return;
+  e.preventDefault(); z.classList.add("over");
+});
+document.addEventListener("dragleave", e => {
+  const z = e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("over");
+});
+document.addEventListener("drop", e => {
+  const z = e.target.closest("[data-drop]"); if (!z) return;
+  e.preventDefault(); z.classList.remove("over");
+  const file = e.dataTransfer.files[0];
+  if (file) upload(file, z.dataset.drop);
+});
+
+document.addEventListener("submit", async e => {
+  if (e.target.id === "memoform") {
+    e.preventDefault();
+    const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/memo", {
+      method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ memo: $("memo-in").value }) });
+    if (!r.ok) { toast("保存できませんでした"); return; }
+    memoEditing = false; toast("メモを保存しました"); await load(); drawMain();
+    return;
+  }
+  if (e.target.dataset.roomtask) {
+    e.preventDefault();
+    const btn = e.target.querySelector("button"); btn.disabled = true;
+    const r = await fetch("/api/admin/cases/" + e.target.dataset.roomtask + "/tasks", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: $("rt-title").value, due_on: $("rt-due").value || null }) });
+    btn.disabled = false;
+    if (!r.ok) { toast("足せませんでした"); return; }
+    toast("やることを足しました"); await load(); $("rt-title")?.focus();
+    return;
+  }
+  if (e.target.id !== "say") return;
+  e.preventDefault();
+  const input = $("body"), body = input.value;
+  const btn = e.target.querySelector("button"); btn.disabled = true;
+  const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/messages", {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ body, case_id: e.target.dataset.case || null }) });
+  btn.disabled = false;
+  if (!r.ok) { alert("送れませんでした。"); return; }
+  input.value = "";
+  toast("送りました");
+  await load();
+});
+
+load();
+setInterval(() => { if (route().page !== "doc") load(); }, 15000);
+</script>
+<a class="credit" href="https://garlondworks.com" target="_blank" rel="noopener">Originally built by <b>GARLOND WORKS</b></a>
+</body>
+</html>

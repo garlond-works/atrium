@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Office — Atrium</title>
+<link rel="stylesheet" href="/portal.css">
+<script src="/look.js"></script>
+</head>
+<body class="office">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 応接室と同じ作り。24x24／線1.5px／色は currentColor を継承。 -->
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 10.5L12 3.5l8.5 7"/><path d="M5.5 9v11.5h5v-6h3v6h5V9"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+    <!-- Google カレンダーに共有＝カレンダー＋外へ出す矢印 -->
+    <symbol id="i-gshare" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M11 20.5H3.5V5h17v6"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M15 18.5h6.5M18.5 15.5l3 3-3 3"/></symbol>
+    <symbol id="i-task" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M7.5 12l3 3 6-6.5"/></symbol>
+    <symbol id="i-case" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V4.5h7V7"/><path d="M2.5 12.5h19"/><path d="M10.5 12.5v2h3v-2"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="9" cy="8" r="3.5"/><path d="M2.5 20.5c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/>
+      <path d="M16 5.2a3.5 3.5 0 0 1 0 6.6"/><path d="M17.5 14.4c2.4.8 4 3.1 4 6.1"/></symbol>
+    <symbol id="i-door" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M4 3.5h12v17H4z"/><path d="M16 8.5h4v12h-4"/><circle cx="12.5" cy="12" r="1"/></symbol>
+    <symbol id="i-desk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M2.5 7.5h19v3h-19z"/><path d="M4.5 10.5v10M19.5 10.5v10"/><path d="M8 14h8"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M5.5 10.5h13v10h-13z"/><path d="M8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M5.5 10.5h13v10h-13z"/><path d="M8.5 10.5V7a3.5 3.5 0 0 1 7 0"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M12 15.5V4"/><path d="M7 8.5L12 3.5l5 5"/><path d="M3.5 15v5.5h17V15"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 4.5h17v12H9l-5.5 4v-16z"/><path d="M7.5 9h9M7.5 12.5h6"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 7.5 4.5 12 9 16.5"/><path d="M4.5 12H15a4.5 4.5 0 0 1 0 9h-2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M4 6.5h16"/><path d="M9.5 6.5V3.5h5v3"/><path d="M6 6.5l1 14h10l1-14"/><path d="M10 10.5v6M14 10.5v6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M5 21V3.5"/><path d="M5 4h12.5l-3 4.5 3 4.5H5"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-chevl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M3.5 11.5L20.5 4l-7.5 17-2.5-7z"/><path d="M10.5 14L20.5 4"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-st-open" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75">
+      <circle cx="10" cy="10" r="7.5"/></symbol>
+    <symbol id="i-st-done" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="8.5" fill="currentColor"/>
+      <path d="M6 10.2l2.7 2.7L14 7.6" fill="none" stroke="#fff" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="suite">
+  <button class="suite-btn menu-btn only-narrow" id="menuBtn" aria-label="メニューを開く" aria-expanded="false" aria-controls="nav">
+    <svg class="ic"><use href="#i-menu"/></svg></button>
+  <span class="wordmark"><span>Atrium</span><small class="name">Office</small></span>
+  <span style="flex:1"></span>
+  <span class="clock" id="clock" aria-hidden="true"></span>
+  <span id="look"></span>
+  <span class="avatar" id="avatar"><img src="/logo.svg" alt=""></span>
+</header>
+
+<div class="ticker" id="ticker" hidden aria-label="先方の動き"></div>
+
+<div class="shell">
+  <nav class="nav" id="nav" aria-label="執務室のメニュー"></nav>
+  <div class="scrim" id="scrim"></div>
+  <main id="main" aria-live="polite"></main>
+</div>
+
+<dialog class="dlg" id="share" aria-labelledby="share-h">
+  <h2 id="share-h"><svg class="ic" aria-hidden="true"><use href="#i-gshare"/></svg>Googleカレンダーにも共有しますか？</h2>
+  <p id="share-what"></p>
+  <p class="note">「共有する」を押すと、入力済みの Google カレンダーが新しいタブで開きます。そこで保存すると登録されます。
+    あとで Atrium 側を直しても、Google 側は自動では直りません。</p>
+  <div class="acts">
+    <button class="btn" data-share="no">しない</button>
+    <button class="btn primary" data-share="yes"><svg class="ic" aria-hidden="true"><use href="#i-gshare"/></svg>共有する</button>
+  </div>
+</dialog>
+
+<dialog class="dlg" id="delc" aria-labelledby="delc-h">
+  <h2 id="delc-h"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>取引先を消しますか？</h2>
+  <p><b id="delc-name"></b></p>
+  <ul class="note">
+    <li>一覧と左のメニューから消えます</li>
+    <li>Guest Room を閉じます。招いている人は入れなくなります</li>
+    <li>資料・伝言・案件の記録は消さずに残します</li>
+  </ul>
+  <div class="acts">
+    <button class="btn" data-delc="no" autofocus>やめる</button>
+    <button class="btn danger" data-delc="yes"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>消す</button>
+  </div>
+</dialog>
+
+<input type="file" id="picker" hidden>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ic = (n, cls = "ic") => `<svg class="${cls}" aria-hidden="true"><use href="#${n}"/></svg>`;
+const pad = n => String(n).padStart(2, "0");
+
+/* ───────── 日付：すべて日本時間の 'YYYY-MM-DD' で扱う ───────── */
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+const ymd = t => `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`;
+const toDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const plus = (s, n) => { const t = toDate(s); t.setDate(t.getDate() + n); return ymd(t); };
+const today = () => ymd(new Date());
+const md = s => { const t = toDate(s); return `${t.getMonth() + 1}/${t.getDate()}`; };
+const longDay = s => { const t = toDate(s); return `${t.getMonth() + 1}月${t.getDate()}日（${WD[t.getDay()]}）`; };
+const rel = s => s === today() ? "今日" : s === plus(today(), 1) ? "明日" : s === plus(today(), -1) ? "昨日" : "";
+const timeOf = e => e.start_time ? e.start_time + (e.end_time ? "–" + e.end_time : "") : "終日";
+
+const STATUS = { active: "進行中", following: "フォロー中", archived: "休眠" };
+
+/* 予定の「いま」との関係。今日の予定は、終わったもの・次に来るものを見分ける */
+const nowHM = () => { const t = new Date(); return `${pad(t.getHours())}:${pad(t.getMinutes())}`; };
+const isPast = e => e.day < today() || (e.day === today() && e.start_time && (e.end_time || e.start_time) < nowHM());
+function nextEvent(evs) {
+  // いま進行中のもの、なければこれから始まるもの。終日の予定は時刻のある予定より後回し
+  return evs.find(e => e.start_time && !isPast(e)) || evs.find(e => !isPast(e)) || null;
+}
+function untilText(e) {
+  // 明日以降は「明日」「10/2」が既に言っているので、残り時間は今日の予定にだけ出す
+  if (!e.start_time || e.day !== today()) return "";
+  const [h, m] = e.start_time.split(":").map(Number);
+  const start = toDate(e.day); start.setHours(h, m);
+  const min = Math.round((start - new Date()) / 60000);
+  if (min <= 0) return "進行中";
+  if (min < 60) return `あと${min}分`;
+  if (min < 24 * 60) return `あと${Math.floor(min / 60)}時間${min % 60 ? (min % 60) + "分" : ""}`;
+  return `あと${Math.round(min / 1440)}日`;
+}
+
+let H = null;            // /api/admin/home のひと揃い
+let MONTH = { key: "", events: [] };   // カレンダーで表示中の月の予定
+let HOL = {};            // 祝日（取れなければ空のまま。無くても動く）
+let editing = null;      // カレンダーで直している予定の id（"new" = 新しい予定）
+let pending = null;      // 共有を聞いている予定
+
+async function api(p, opt) {
+  const r = await fetch(p, opt);
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    alert(e.detail || "できませんでした（" + r.status + "）");
+    return null;
+  }
+  return r.json().catch(() => ({}));
+}
+const send = (p, method, body) => api(p, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body || {}) });
+
+const client = id => (H?.clients || []).find(c => c.id === id);
+const cname = c => c ? (c.short_name || c.name) : "";
+const swatch = c => c && typeof c.hue === "number" ? `<span class="sw" style="--sh:${c.hue}" aria-hidden="true"></span>` : '<span class="sw none" aria-hidden="true"></span>';
+const initial = c => (c.short_name || c.name).replace(/^(株式会社|有限会社|合同会社)\s*/, "").slice(0, 1);
+
+function route() {
+  const [page, ...rest] = location.hash.replace(/^#\/?/, "").split("/");
+  return { page: page || "today", rest: rest.map(decodeURIComponent) };
+}
+
+async function loadHome() {
+  H = await api("/api/admin/home?today=" + today());
+}
+
+/* ───────── 帯の時計 ───────── */
+function tick() {
+  const t = new Date();
+  // 日付の組み方（大きな「09 23」＋小さく年と曜日）。時刻は右に添える
+  const EN = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  $("clock").innerHTML = `<b>${pad(t.getMonth() + 1)} ${pad(t.getDate())}</b><span>${t.getFullYear()}\n${EN[t.getDay()]}</span><b style="margin-left:8px">${pad(t.getHours())}:${pad(t.getMinutes())}</b>`;
+}
+
+/* ───────── 左ナビ ───────── */
+function drawNav() {
+  const r = route();
+  const cur = (p, a) => r.page === p && (a === undefined || r.rest[0] === a) ? ' aria-current="page"' : "";
+  const due = openTasks().filter(t => t.due_on && t.due_on <= today()).length;
+  const todayEv = (H.events || []).filter(e => e.day === today()).length;
+  $("nav").innerHTML = `
+    <ul>
+      <li><a href="#/today"${cur("today")}>${ic("i-home")}<span class="t">ホーム</span></a></li>
+      <li><a href="#/calendar"${cur("calendar")}>${ic("i-cal")}<span class="t">カレンダー</span>${todayEv ? `<span class="n">今日 ${todayEv}</span>` : ""}</a></li>
+      <li><a href="#/tasks"${cur("tasks")}>${ic("i-task")}<span class="t">タスク</span>${due ? `<span class="n">${due}</span>` : ""}</a></li>
+      <li><a href="#/clients"${cur("clients")}>${ic("i-people")}<span class="t">取引先</span></a></li>
+    </ul>
+    <h2 class="nav-h">取引先の部屋</h2>
+    <ul>${H.clients.map(c => `<li><a href="#/client/${encodeURIComponent(c.id)}"${cur("client", c.id)}>
+      ${swatch(c)}<span class="t">${esc(cname(c))}</span>
+      ${c.my_turn ? `<span class="flag" title="要対応の案件 ${c.my_turn}件">${ic("i-flag")}<span class="sr">要対応の案件 ${c.my_turn}件</span></span>` : ""}</a></li>`).join("")}</ul>`;
+}
+
+/* ───────── 中身 ───────── */
+async function drawMain() {
+  const r = route();
+  const view = { today: pageToday, calendar: pageCalendar, tasks: pageTasks, clients: pageClients, client: pageClient }[r.page] || pageToday;
+  const html = await view(...r.rest);
+  $("main").innerHTML = `<div class="page">${html}</div>`;
+}
+const crumb = parts => `<nav class="crumb" aria-label="現在地">${parts.map((p, i) =>
+  (i ? ic("i-chev") : "") + (p[1] ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span>${esc(p[0])}</span>`)).join("")}</nav>`;
+
+/* 予定1行。押すとカレンダーのその日を開いて直せる */
+function evRow(e, opt = {}) {
+  const c = client(e.client_id);
+  const st = opt.next === e.id ? " next" : isPast(e) ? " past" : "";
+  return `<div class="ev${st}">
+    <span class="tm">${e.start_time || "終日"}${e.end_time ? `<small>–${e.end_time}</small>` : ""}</span>
+    <span class="bar${c && typeof c.hue === "number" ? " c" : ""}"${c && typeof c.hue === "number" ? ` style="--sh:${c.hue}"` : ""} aria-hidden="true"></span>
+    <a class="body" href="#/calendar/${e.day}/${e.id}" style="color:inherit;text-decoration:none">
+      <b>${esc(e.title)}</b>
+      <small>
+        ${c ? `<span>${swatch(c)}${esc(cname(c))}</span>` : ""}
+        ${e.place ? `<span>${ic("i-pin")}${esc(e.place)}</span>` : ""}
+        ${e.gcal_shared_at ? `<span class="gmark">${ic("i-ok")}Google に共有済み</span>` : ""}
+      </small></a>
+    <span class="ops">
+      <button class="iconbtn" data-gshare="${e.id}" title="Googleカレンダーに共有" aria-label="「${esc(e.title)}」をGoogleカレンダーに共有">${ic("i-gshare")}</button>
+      ${opt.del ? `<button class="iconbtn danger" data-evdel="${e.id}" title="この予定を消す" aria-label="「${esc(e.title)}」を消す">${ic("i-trash")}</button>` : ""}
+    </span></div>`;
+}
+
+/* タスク：自分の用事（todos）と取引先の「やること」（milestones）を1本にする */
+function openTasks() {
+  return [
+    ...(H.todos || []).filter(t => !t.done_at).map(t => ({ ...t, kind: "todo" })),
+    ...(H.milestones || []).map(m => ({ ...m, kind: "ms" })),
+  ];
+}
+function taskRow(t) {
+  const c = client(t.client_id), done = t.kind === "todo" ? !!t.done_at : t.status === "done";
+  const due = t.due_on
+    ? (t.due_on < today() && !done ? `<span class="late">${ic("i-cal")}期限切れ ${md(t.due_on)}</span>`
+      : t.due_on === today() ? `<span class="today">${ic("i-cal")}今日まで</span>` : `<span>${ic("i-cal")}${md(t.due_on)}まで</span>`) : "";
+  const urg = done || !t.due_on ? "" : t.due_on < today() ? " is-late" : t.due_on === today() ? " is-today" : "";
+  return `<li class="titem${done ? " done" : ""}${urg}">
+    <button class="tcheck" data-check="${t.kind}:${t.id}" aria-pressed="${done}"
+      title="${done ? "まだにもどす" : "済みにする"}" aria-label="「${esc(t.title)}」を${done ? "まだにもどす" : "済みにする"}">
+      ${ic(done ? "i-st-done" : "i-st-open", "st")}</button>
+    <div class="tt"><b>${esc(t.title)}</b>
+      <small>${due}
+        ${c ? `<span>${swatch(c)}${esc(cname(c))}${t.case_title ? "・" + esc(t.case_title) : ""}</span>` : ""}
+        ${t.kind === "ms" ? `<span class="shared" title="Guest Room で先方にも見えています">${ic("i-door")}先方にも見えています</span>` : ""}
+      </small></div>
+    ${t.kind === "todo" ? `<button class="iconbtn danger" data-tdel="${t.id}" title="このタスクを消す" aria-label="「${esc(t.title)}」を消す">${ic("i-trash")}</button>` : "<span></span>"}
+  </li>`;
+}
+const clientOptions = sel => `<option value="">（なし）</option>` +
+  H.clients.map(c => `<option value="${esc(c.id)}"${c.id === sel ? " selected" : ""}>${esc(cname(c))}</option>`).join("");
+
+/* 先方の動き1行 */
+function feedRow(a) {
+  const c = client(a.client_id), who = `<b>${esc(cname(c) || "先方")}</b>`;
+  const [icon, text] = a.action === "upload" ? ["i-upload", `${who} が資料を置きました${a.doc_title ? `：「${esc(a.doc_title)}」` : ""}`]
+    : a.action === "message" ? ["i-chat", `${who} から伝言${a.message ? `：<q>${esc(a.message)}</q>` : ""}`]
+    : ["i-trash", `${who} が資料を引き取りました`];
+  const t = new Date(a.created_at);
+  // 1件まるごとを押せるようにする（小さな「開く」リンクは指で押しにくい）
+  const inner = `${ic(icon)}<span>${text}</span>
+    <small>${t.getMonth() + 1}/${t.getDate()} ${pad(t.getHours())}:${pad(t.getMinutes())}${a.slug ? "・Guest Room で見る" : ""}</small>`;
+  return `<li>${a.slug ? `<a class="fi" href="/room.html?r=${encodeURIComponent(a.slug)}">${inner}</a>` : `<div class="fi">${inner}</div>`}
+    <button type="button" class="fi-seen" data-seen="${a.id}" title="確認済みにする（ここから消えます）" aria-label="確認済みにする">${ic("i-ok")}</button></li>`;
+}
+
+/* 流れる帯：先方の動きの直近 */
+function drawTicker() {
+  const items = (H.activity || []).slice(0, 6);
+  $("ticker").hidden = !items.length;
+  document.body.style.setProperty("--ticker-h", items.length ? "45px" : "0px");
+  if (!items.length) return;
+  const one = items.map(a => {
+    const t = new Date(a.created_at), c = client(a.client_id);
+    const what = a.action === "upload" ? `が資料を置きました${a.doc_title ? "「" + esc(a.doc_title) + "」" : ""}`
+      : a.action === "message" ? `から伝言${a.message ? "：" + esc(a.message) : ""}` : "が資料を引き取りました";
+    return `<a href="${a.slug ? "/room.html?r=" + encodeURIComponent(a.slug) : "#/today"}"><time>${t.getMonth() + 1}.${pad(t.getDate())}</time>${esc(cname(c) || "先方")} ${what}</a>`;
+  }).join("");
+  // 同じ並びを2回つないで、半分流れたら頭に戻す（切れ目なく流れる）。2回目は読み上げない
+  $("ticker").innerHTML = `<div class="track">${one}<span aria-hidden="true" style="display:contents">${one}</span></div>`;
+  $("ticker").querySelectorAll('[aria-hidden="true"] a').forEach(a => a.tabIndex = -1);
+}
+
+/* ═══════ 今日 ═══════ */
+function pageToday() {
+  const t0 = today();
+  const evs = H.events || [];
+  const todayEv = evs.filter(e => e.day === t0);
+  const tasks = openTasks();
+  const late = tasks.filter(t => t.due_on && t.due_on < t0);
+  const dueNow = tasks.filter(t => t.due_on && t.due_on <= t0);
+  const turn = H.clients.filter(c => c.my_turn);
+  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString();
+  const recent = (H.activity || []).filter(a => a.created_at >= weekAgo);
+
+  const nx = nextEvent(evs);
+  // 予定：今日から2週間を日ごとに束ねる
+  const days = [...new Set(evs.map(e => e.day))];
+  const agenda = days.length ? days.map(dy => `
+      <div class="dayh${dy === t0 ? " today" : ""}">${longDay(dy)}<small>${rel(dy)}</small></div>
+      ${evs.filter(e => e.day === dy).map(e => evRow(e, { next: nx?.id })).join("")}`).join("")
+    : '<p class="empty">この2週間の予定はありません。</p>';
+
+  // タスク：期限切れと今日を先に、そのあと近いもの。多すぎたら「タスク」画面へ
+  const sorted = tasks.slice().sort((a, b) => (a.due_on || "9999").localeCompare(b.due_on || "9999"));
+  const shown = sorted.slice(0, 8);
+
+  // 札の強弱：急ぎで件数があるものは塗る／普通は白／ゼロは引っ込める
+  const turnN = turn.reduce((s, c) => s + c.my_turn, 0);
+  const kcls = (n, loud, clear) => n === 0 ? " zero" + (clear ? " clear" : "") : loud;
+
+  return `
+    <section class="hero" aria-labelledby="h-hero">
+      <div class="hero-day">
+        <small>TODAY</small>
+        <h1 id="h-hero" class="bigdate"><span class="sr">${longDay(t0)}</span>
+          <b aria-hidden="true">${t0.slice(5).replace("-", ".")}</b><span aria-hidden="true">${t0.slice(0, 4)}<br>${["SUN","MON","TUE","WED","THU","FRI","SAT"][toDate(t0).getDay()]}</span></h1>
+        <p>${late.length ? `<span class="pill alarm">${ic("i-task")}期限切れ ${late.length}件</span>` : ""}
+           ${turnN ? `<span class="pill hot">${ic("i-flag")}要対応 ${turnN}件</span>` : ""}
+           ${!late.length && !turnN ? "急ぎの用事はありません" : ""}</p>
+      </div>
+      <a class="hero-next" href="${nx ? `#/calendar/${nx.day}/${nx.id}` : `#/calendar/${t0}/new`}">
+        <small>${ic("i-clock")}次の予定</small>
+        ${nx ? `<b>${nx.day === t0 ? "" : rel(nx.day) || md(nx.day) + " "}${nx.start_time || "終日"}${untilText(nx) ? `<span>${untilText(nx)}</span>` : ""}</b>
+          <strong>${esc(nx.title)}</strong>
+          <em>${[cname(client(nx.client_id)), nx.place].filter(Boolean).map(esc).join("・")}</em>`
+          : `<strong>この2週間の予定はありません</strong><em>押すと予定を入れられます</em>`}
+      </a>
+    </section>
+    <div class="kpis">
+      <a class="kpi${kcls(late.length, " alarm", true)}" href="#/tasks"><span class="icbox">${ic(late.length ? "i-task" : "i-ok")}</span><span><b>${late.length}</b><small>期限切れのタスク</small></span></a>
+      <a class="kpi${kcls(turnN, " hot", true)}" href="#/clients"><span class="icbox">${ic(turnN ? "i-flag" : "i-ok")}</span><span><b>${turnN}</b><small>要対応の案件</small></span></a>
+      <a class="kpi${kcls(todayEv.length, " soft")}" href="#/calendar"><span class="icbox">${ic("i-cal")}</span><span><b>${todayEv.length}</b><small>今日の予定</small></span></a>
+      <a class="kpi${kcls(recent.length, "")}" href="#feed"><span class="icbox">${ic("i-bolt")}</span><span><b>${recent.length}</b><small>先方の動き（7日）</small></span></a>
+    </div>
+    <div class="cols side-first">
+      <aside class="col">
+        ${turn.length ? `<section class="card attn" aria-labelledby="h-turn">
+          <header class="card-h">${ic("i-flag")}<h2 id="h-turn">要対応</h2></header>
+          <ul class="clist">${turn.map(c => `<li><a href="${c.slug ? "/room.html?r=" + encodeURIComponent(c.slug) : "#/client/" + c.id}">
+            ${swatch(c)}<span class="t">${esc(cname(c))}</span><span class="pill attn">案件 ${c.my_turn}</span>${ic("i-chev")}</a></li>`).join("")}</ul>
+        </section>` : ""}
+        <section class="card" id="feed" aria-labelledby="h-feed">
+          <header class="card-h">${ic("i-bolt")}<h2 id="h-feed">先方の動き</h2>
+            ${(H.activity || []).length > 1 ? `<button type="button" class="more" data-seen-all>${ic("i-ok")}すべて確認済み</button>` : ""}</header>
+          ${(H.activity || []).length ? `<ul class="feed">${H.activity.map(feedRow).join("")}</ul>` : '<p class="empty">まだ動きはありません。</p>'}
+        </section>
+      </aside>
+      <div class="col">
+        <section class="card" aria-labelledby="h-ag">
+          <header class="card-h">${ic("i-cal")}<h2 id="h-ag">予定</h2><span class="count">今日から2週間</span>
+            <a class="more" href="#/calendar/${t0}/new">${ic("i-plus")}予定を入れる</a></header>
+          <div class="agenda">${agenda}</div>
+        </section>
+        <section class="card" aria-labelledby="h-tk">
+          <header class="card-h">${ic("i-task")}<h2 id="h-tk">タスク</h2><span class="count">残り ${tasks.length}</span>
+            <a class="more" href="#/tasks">すべて見る${ic("i-chev")}</a></header>
+          ${quickAdd()}
+          ${shown.length ? `<ul class="titems" style="margin-top:var(--s-3)">${shown.map(taskRow).join("")}</ul>` : '<p class="empty" style="margin-top:var(--s-3)">残っているタスクはありません。</p>'}
+        </section>
+      </div>
+    </div>`;
+}
+
+function quickAdd() {
+  return `<form class="addbar" id="addtask" aria-label="タスクを足す">
+    <div class="field"><label for="tk-title">タスクを足す</label><input class="in" id="tk-title" required placeholder="例）請求書を送る" autocomplete="off"></div>
+    <div class="field"><label for="tk-due">期限 <small>任意</small></label><input class="in" id="tk-due" type="date"></div>
+    <div class="field"><label for="tk-client">取引先 <small>任意</small></label><select class="in" id="tk-client">${clientOptions("")}</select></div>
+    <button class="btn primary" type="submit">${ic("i-plus")}足す</button>
+  </form>`;
+}
+
+/* ═══════ カレンダー ═══════ */
+async function pageCalendar(sel, evId) {
+  sel = sel && /^\d{4}-\d{2}-\d{2}$/.test(sel) ? sel : today();
+  editing = evId || null;
+  const s = toDate(sel), first = new Date(s.getFullYear(), s.getMonth(), 1);
+  const startDay = ymd(new Date(first.getFullYear(), first.getMonth(), 1 - first.getDay()));
+  const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  const weeks = Math.ceil((first.getDay() + days) / 7);
+  const endDay = plus(startDay, weeks * 7 - 1);
+  const key = startDay + endDay;
+  if (MONTH.key !== key) {
+    const r = await api(`/api/admin/events?from=${startDay}&to=${endDay}`);
+    MONTH = { key, events: r ? r.events : [] };
+  }
+  const evs = MONTH.events;
+  const mkey = `${first.getFullYear()}-${pad(first.getMonth() + 1)}`;
+  const prev = ymd(new Date(first.getFullYear(), first.getMonth() - 1, 1));
+  const next = ymd(new Date(first.getFullYear(), first.getMonth() + 1, 1));
+
+  let cells = "";
+  for (let i = 0; i < weeks * 7; i++) {
+    const dy = plus(startDay, i), t = toDate(dy), list = evs.filter(e => e.day === dy);
+    const cls = ["cell", dy.slice(0, 7) !== mkey && "out", dy === today() && "today", dy === sel && "sel",
+      t.getDay() === 0 && "sun", t.getDay() === 6 && "sat", HOL[dy] && "hol"].filter(Boolean).join(" ");
+    cells += `<button class="${cls}" data-day="${dy}" aria-label="${longDay(dy)}${HOL[dy] ? " " + HOL[dy] : ""} 予定${list.length}件"${dy === sel ? ' aria-current="date"' : ""}>
+      <span class="dn"><i>${t.getDate()}</i>${HOL[dy] ? `<span class="hn">${esc(HOL[dy])}</span>` : ""}</span>
+      ${list.slice(0, 3).map(e => { const c = client(e.client_id); const hue = c && typeof c.hue === "number";
+        return `<span class="chipev${hue ? " c" : ""}"${hue ? ` style="--sh:${c.hue}"` : ""}>${e.start_time ? `<time>${e.start_time}</time>` : ""}<span>${esc(e.title)}</span></span>`; }).join("")}
+      ${list.length > 3 ? `<span class="more">他 ${list.length - 3} 件</span>` : ""}
+      ${list.length ? `<span class="dots">${list.slice(0, 3).map(e => { const c = client(e.client_id);
+        return `<i${c && typeof c.hue === "number" ? ` class="c" style="--sh:${c.hue}"` : ""}></i>`; }).join("")}</span>` : ""}
+    </button>`;
+  }
+
+  const dayList = evs.filter(e => e.day === sel);
+  const e = editing && editing !== "new" ? evs.find(x => x.id === editing) : null;
+  const f = e || { title: "", day: sel, start_time: "", end_time: "", place: "", memo: "", client_id: "" };
+
+  return `
+    <div class="cal-head">
+      <a class="btn" href="#/calendar/${prev}" aria-label="前の月">${ic("i-chevl")}</a>
+      <a class="btn" href="#/calendar/${today()}">今日</a>
+      <a class="btn" href="#/calendar/${next}" aria-label="次の月">${ic("i-chev")}</a>
+      <h2>${first.getFullYear()}年${first.getMonth() + 1}月</h2>
+      <span class="grow"></span>
+      <a class="btn primary" href="#/calendar/${sel}/new">${ic("i-plus")}予定を入れる</a>
+    </div>
+    <div class="cols">
+      <div class="col">
+        <section class="card" style="padding:0;overflow:hidden" aria-label="${first.getFullYear()}年${first.getMonth() + 1}月">
+          <div class="month">${WD.map((w, i) => `<div class="wd"${i === 0 ? ' style="color:var(--danger)"' : i === 6 ? ' style="color:var(--brand)"' : ""}>${w}</div>`).join("")}${cells}</div>
+        </section>
+      </div>
+      <aside class="col">
+        <section class="card" aria-labelledby="h-day">
+          <header class="card-h">${ic("i-cal")}<h2 id="h-day">${longDay(sel)}</h2><span class="count">${HOL[sel] ? esc(HOL[sel]) : rel(sel)}</span></header>
+          ${dayList.length ? `<div class="agenda">${dayList.map(x => evRow(x, { del: true })).join("")}</div>` : '<p class="empty">予定はありません。</p>'}
+        </section>
+        ${editing ? `<section class="card" aria-labelledby="h-form">
+          <header class="card-h">${ic(e ? "i-cal" : "i-plus")}<h2 id="h-form">${e ? "予定を直す" : "予定を入れる"}</h2></header>
+          <form class="form" id="evform" data-id="${e ? e.id : ""}">
+            <div class="field"><label for="ev-title">件名</label><input class="in" id="ev-title" required value="${esc(f.title)}" autocomplete="off"></div>
+            <div class="field"><label for="ev-day">日付</label><input class="in" id="ev-day" type="date" required value="${f.day}"></div>
+            <div class="row2">
+              <div class="field"><label for="ev-start">開始 <small>空＝終日</small></label><input class="in" id="ev-start" type="time" value="${f.start_time || ""}"></div>
+              <div class="field"><label for="ev-end">終了</label><input class="in" id="ev-end" type="time" value="${f.end_time || ""}"></div>
+            </div>
+            <div class="field"><label for="ev-client">取引先 <small>任意</small></label><select class="in" id="ev-client">${clientOptions(f.client_id)}</select></div>
+            <div class="field"><label for="ev-place">場所 <small>任意</small></label><input class="in" id="ev-place" value="${esc(f.place || "")}" autocomplete="off"></div>
+            <div class="field"><label for="ev-memo">メモ <small>任意</small></label><textarea class="in" id="ev-memo">${esc(f.memo || "")}</textarea></div>
+            <div class="acts">
+              <a class="btn" href="#/calendar/${sel}">やめる</a>
+              <button class="btn primary" type="submit">${ic("i-ok")}${e ? "直す" : "入れる"}</button>
+            </div>
+          </form>
+        </section>` : ""}
+      </aside>
+    </div>`;
+}
+
+/* ═══════ タスク ═══════ */
+function pageTasks() {
+  const t0 = today();
+  const all = openTasks();
+  const doneTodos = (H.todos || []).filter(t => t.done_at).map(t => ({ ...t, kind: "todo" }));
+  const by = f => all.filter(f).sort((a, b) => (a.due_on || "").localeCompare(b.due_on || ""));
+  const groups = [
+    ["late", "期限切れ", by(t => t.due_on && t.due_on < t0)],
+    ["", "今日まで", by(t => t.due_on === t0)],
+    ["", "これから", by(t => t.due_on && t.due_on > t0)],
+    ["", "期限なし", by(t => !t.due_on)],
+    ["", "済み（この7日）", doneTodos],
+  ].filter(g => g[2].length);
+  return `
+    ${crumb([["今日", "#/today"], ["タスク"]])}
+    <h1 class="ptitle" style="margin-bottom:var(--s-4)">${ic("i-task")}タスク</h1>
+    <section class="card" style="margin-bottom:var(--s-6)">${quickAdd()}</section>
+    <section class="card" aria-label="タスクの一覧">
+      ${groups.length ? groups.map(([cls, name, list]) => `
+        <div class="tgroup ${cls}"><h3>${name}<span class="n">${list.length}</span></h3>
+          <ul class="titems">${list.map(taskRow).join("")}</ul></div>`).join("")
+        : '<p class="empty">残っているタスクはありません。</p>'}
+      <p class="drop-hint">${ic("i-door")}「先方にも見えています」は Guest Room の「やること」です。済みにすると先方の画面でも終わった表示になります。</p>
+    </section>`;
+}
+
+/* ═══════ 取引先 ═══════ */
+async function pageClients(sub) {
+  if (sub === "new") return pageNewClient();
+  if (sub === "deleted") return pageDeletedClients();
+  const gone = (await api("/api/admin/clients/deleted"))?.clients || [];
+  return `
+    ${crumb([["今日", "#/today"], ["取引先"]])}
+    <div class="phead">
+      <h1 class="ptitle">${ic("i-people")}取引先</h1>
+      <a class="btn primary" href="#/clients/new">${ic("i-plus")}新しい取引先</a>
+    </div>
+    <div class="ctiles">${H.clients.map(c => `<div class="ctile-wrap">
+      <a class="ctile${c.my_turn ? " attn" : ""}" href="#/client/${encodeURIComponent(c.id)}">
+        <span class="top"><span class="logo${typeof c.hue === "number" ? "" : " none"}"${typeof c.hue === "number" ? ` style="--sh:${c.hue}"` : ""} aria-hidden="true">${esc(initial(c))}</span>
+          <span class="nm">${esc(c.name)}</span>${ic("i-chev")}</span>
+        <span class="tags">
+          <span class="pill">${STATUS[c.status] || esc(c.status)}</span>
+          <span class="pill">${ic("i-case")}進行中の案件 ${c.open_cases}</span>
+          ${c.my_turn ? `<span class="pill attn">${ic("i-flag")}要対応 ${c.my_turn}</span>` : ""}
+        </span>
+      </a>
+      <button type="button" class="ctile-del" data-delclient="${esc(c.id)}" data-name="${esc(c.name)}" title="この取引先を消す" aria-label="${esc(c.name)} を消す">${ic("i-trash")}</button>
+      </div>`).join("") || '<p class="empty">まだ取引先がありません。</p>'}</div>
+    ${gone.length ? `<p class="gone-link"><a href="#/clients/deleted">${ic("i-trash")}消した取引先（${gone.length}）</a></p>` : ""}`;
+}
+
+
+
+/* 案件：Guest Room に出る「用件」。ここで作り、番（どちらが動くか）を切り替え、終わったら閉じる。
+   中の「やること」は先方にお願いすること。Guest Room の案件ページにそのまま出る。 */
+function casesCard(d) {
+  const open = d.cases.filter(k => k.status !== "done"), done = d.cases.filter(k => k.status === "done");
+  const turn = k => k.status === "done" ? `<span class="pill ok">${ic("i-ok")}終わった</span>`
+    : k.waiting_on === "us" ? `<span class="pill attn">${ic("i-flag")}要対応（こちら）</span>`
+    : k.waiting_on === "client" ? `<span class="pill">${ic("i-clock")}先方が対応中</span>` : `<span class="pill">進行中</span>`;
+  const row = k => {
+    const ts = d.tasks.filter(t => t.case_id === k.id).map(t => ({ ...t, kind: "ms", client_id: null }));
+    return `<li class="kase${k.status === "done" ? " is-done" : ""}">
+      <div class="k-head">
+        <div class="k-t"><b>${esc(k.title)}</b>${k.summary ? `<small>${esc(k.summary)}</small>` : ""}
+          <span class="k-tags">${turn(k)}${k.due_on ? `<span class="pill">${ic("i-cal")}${md(k.due_on)}まで</span>` : ""}
+            <span class="pill">やること 残り ${ts.filter(t => t.status !== "done").length}</span></span></div>
+        <div class="k-act">${k.status === "done"
+          ? `<button class="btn" data-case="${k.id}" data-set='{"status":"open"}'>${ic("i-undo")}開き直す</button>`
+          : `${k.waiting_on !== "client" ? `<button class="btn" data-case="${k.id}" data-set='{"waiting_on":"client"}'>${ic("i-send")}先方の番にする</button>` : ""}
+             ${k.waiting_on !== "us" ? `<button class="btn" data-case="${k.id}" data-set='{"waiting_on":"us"}'>${ic("i-flag")}こちらの番にする</button>` : ""}
+             <button class="btn" data-case="${k.id}" data-set='{"status":"done"}'>${ic("i-ok")}終わった</button>`}</div>
+      </div>
+      ${k.status !== "done" || ts.length ? `<ul class="tasks-in">${ts.map(taskRow).join("")}</ul>` : ""}
+      ${k.status !== "done" ? `<form class="k-add" data-addtask="${k.id}">
+        <label class="sr" for="kt-${k.id}">やることを足す</label><input class="in" id="kt-${k.id}" required placeholder="先方にお願いすること（例：単価表を記入して置く）" autocomplete="off">
+        <label class="sr" for="kd-${k.id}">期限</label><input class="in" id="kd-${k.id}" type="date">
+        <button class="btn" type="submit">${ic("i-plus")}足す</button></form>` : ""}
+    </li>`;
+  };
+  return `<section class="card cases-card" aria-labelledby="h-cases">
+    <header class="card-h">${ic("i-case")}<h2 id="h-cases">案件</h2><span class="count">${open.length}件 進行中</span></header>
+    <p class="sub">ここで作った案件とやることは、Guest Room にそのまま出ます。</p>
+    <details class="newcase"${d.cases.length ? "" : " open"}><summary>${ic("i-plus")}案件を作る</summary>
+      <form class="form" id="newcase">
+        <div class="field"><label for="nk-title">案件の名前</label><input class="in" id="nk-title" required placeholder="例）見積もり自動化" autocomplete="off"></div>
+        <div class="field"><label for="nk-sum">ひとこと <small>（任意・先方にも見えます）</small></label><input class="in" id="nk-sum" placeholder="例）単価マスターから概算を自動で作る" autocomplete="off"></div>
+        <div class="row2">
+          <div class="field"><label for="nk-due">期日 <small>（任意）</small></label><input class="in" id="nk-due" type="date"></div>
+          <div class="field"><label for="nk-turn">いま動くのは</label>
+            <select class="in" id="nk-turn"><option value="">決めない</option><option value="client">先方</option><option value="us">${esc(ORG)}</option></select></div>
+        </div>
+        <div class="acts"><button class="btn primary" type="submit">${ic("i-plus")}作る</button></div>
+      </form>
+    </details>
+    ${open.length ? `<ul class="kases">${open.map(row).join("")}</ul>` : '<p class="empty">進行中の案件はありません。</p>'}
+    ${done.length ? `<details class="gone"><summary>終わった案件（${done.length}）</summary><ul class="kases">${done.map(row).join("")}</ul></details>` : ""}
+  </section>`;
+}
+
+/* 部屋の色を選ぶ（12色）。ほかの部屋が使っている色には印を付け、かぶりが見えるようにする */
+function huePicker(d, id) {
+  const cur = d.room.hue;
+  const others = new Map();
+  (H.clients || []).filter(c => c.id !== id && typeof c.hue === "number").forEach(c => others.set(c.hue, [...(others.get(c.hue) || []), cname(c)]));
+  return `<div class="huepick" role="group" aria-label="部屋の色">
+    <span class="hp-label">部屋の色</span>
+    ${Array.from({ length: 12 }, (_, i) => i * 30).map(h => {
+      const who = others.get(h);
+      return `<button type="button" class="hp${h === cur ? " on" : ""}${who ? " used" : ""}" data-hue="${h}" style="--sh:${h}"
+        aria-pressed="${h === cur}" title="${who ? esc(who.join("・")) + " が使っている色" : "この色にする"}" aria-label="色 ${h}${who ? "（" + esc(who.join("・")) + " が使用中）" : ""}"></button>`;
+    }).join("")}
+    ${others.get(cur) ? `<span class="hp-warn">${ic("i-flag")}${esc(others.get(cur).join("・"))} と同じ色です</span>` : ""}
+  </div>`;
+}
+
+/* 消した取引先。ここから戻せる（行は消していないので、資料も伝言も名簿もそのまま戻る） */
+async function pageDeletedClients() {
+  const xs = (await api("/api/admin/clients/deleted"))?.clients || [];
+  return `
+    ${crumb([["今日", "#/today"], ["取引先", "#/clients"], ["消した取引先"]])}
+    <h1 class="ptitle" style="margin-bottom:var(--s-2)">${ic("i-trash")}消した取引先</h1>
+    <p class="psum" style="margin-bottom:var(--s-4)">戻すと一覧と左のメニューに戻り、Guest Room も開き直します。招いていた人はまた入れるようになります。</p>
+    <section class="card" style="max-width:760px">
+      ${xs.length ? `<ul class="guests">${xs.map(c => `<li class="guest">
+          <span class="g-who"><b>${esc(c.name)}</b><small>消した日 ${md(ymd(new Date(c.deleted_at)))}・招いている人 ${c.members}人</small></span>
+          <span class="g-act"><button class="btn" data-restore="${esc(c.id)}" data-name="${esc(c.name)}">${ic("i-undo")}戻す</button></span></li>`).join("")}</ul>`
+        : '<p class="empty">消した取引先はありません。</p>'}
+    </section>`;
+}
+
+/* 取引先を登録する。Guest Room も一緒にできて、登録後はその取引先の台帳へ飛ぶ */
+function pageNewClient() {
+  return `
+    ${crumb([["今日", "#/today"], ["取引先", "#/clients"], ["新しい取引先"]])}
+    <h1 class="ptitle" style="margin-bottom:var(--s-4)">${ic("i-plus")}新しい取引先</h1>
+    <section class="card" style="max-width:640px">
+      <form class="form" id="newclient">
+        <div class="field"><label for="nc-name">会社名</label><input class="in" id="nc-name" required placeholder="例）株式会社デモ商事" autocomplete="off"></div>
+        <div class="field"><label for="nc-short">呼び名 <small>（左のメニューや一覧に出る短い名前。空欄なら会社名）</small></label>
+          <input class="in" id="nc-short" placeholder="例）デモ商事" autocomplete="off"></div>
+        <div class="field"><label for="nc-slug">Guest Room のURL名 <small>（空欄なら推測されにくい8文字を自動で決めます）</small></label>
+          <input class="in" id="nc-slug" pattern="[a-z0-9][a-z0-9\\-]{2,39}" placeholder="例）demo-shoji" autocomplete="off" inputmode="url"></div>
+        <p class="sub">登録すると Guest Room が1室できます。次の画面で、招待する担当者のメールアドレスを足せます。</p>
+        <div class="acts"><a class="btn" href="#/clients">やめる</a><button class="btn primary" type="submit">${ic("i-ok")}登録する</button></div>
+      </form>
+    </section>`;
+}
+
+/* ───────── 招待 ─────────
+   Atrium はメールを送らない。いつものメールアプリの作成画面を、宛先・件名・本文を入れた状態で開くだけ。
+   入口の本人確認は Cloudflare Access のメールコード。部屋に入れるかは room_members の名簿で決まる。
+   ※ 招いた人のアドレスは、Cloudflare Access のポリシー（入れる人の一覧）にも足すこと（README 参照）。 */
+let ORG = "オーナー";      // 会社名（サーバーの設定から）
+let CUR = null;           // いま開いている取引先の台帳（招待メールの宛名・URL づくりに使う）
+let ME = { email: "" };   // ログイン中の自分
+function inviteMail(members) {
+  const url = `${location.origin}/room.html?r=${encodeURIComponent(CUR.room.slug)}`;
+  const one = members.length === 1 ? members[0] : null;
+  const who = one?.display_name ? `${one.display_name} 様` : "ご担当者様";
+  const body = [
+    CUR.client.name, who, "",
+    `いつもお世話になっております。${ORG}です。`, "",
+    "資料ややりとりを一か所にまとめておける「Guest Room」をご用意しました。",
+    "下のURLからお入りください。", "",
+    url, "",
+    "【入り方】",
+    "1. URLを開くと、メールアドレスを入れる画面が出ます",
+    `2. ${one ? `このメールを受け取ったアドレス（${one.email}）` : "このメールを受け取ったご自身のアドレス"}を入れてください`,
+    "3. そのアドレスに届く確認コードを入れると、Guest Room に入れます", "",
+    "パスワードの登録は要りません。",
+    ...(ME.site?.ai ? ["中の「相談ロボ」では、AI に気軽に質問もできます。よろしければ触ってみてください。", ""] : []),
+    "ご不明な点があれば、このメールにご返信ください。", "",
+    ORG,
+  ].join("\n");
+  return `mailto:${members.map(m => encodeURIComponent(m.email)).join(",")}`
+    + `?subject=${encodeURIComponent(`【${ORG}】Guest Room へのご案内`)}&body=${encodeURIComponent(body)}`;
+}
+
+function guestsCard(d) {
+  const live = d.members.filter(m => !m.revoked_at), gone = d.members.filter(m => m.revoked_at);
+  const notYet = live.filter(m => !m.mailed_at);
+  const row = m => `<li class="guest${m.revoked_at ? " off" : ""}">
+      <span class="g-who"><b>${esc(m.display_name || m.email)}</b>${m.display_name ? `<small>${esc(m.email)}</small>` : ""}
+        <span class="g-st">${m.revoked_at ? `<span class="tag">解除 ${md(ymd(new Date(m.revoked_at)))}</span>`
+          : m.joined_at ? `<span class="tag ok">${ic("i-ok")}参加 ${md(ymd(new Date(m.joined_at)))}</span>`
+          : m.mailed_at ? `<span class="tag">招待メール ${md(ymd(new Date(m.mailed_at)))}・まだ入っていません</span>`
+          : `<span class="tag warn">まだ招待していません</span>`}</span></span>
+      <span class="g-act">${m.revoked_at
+        ? `<button class="btn" data-mem="restore" data-email="${esc(m.email)}">戻す</button>`
+        : `<button class="btn${m.mailed_at ? "" : " primary"}" data-invite="${esc(m.email)}">${ic("i-send")}${m.mailed_at ? "もう一度" : "招待メール"}</button>
+           <button class="iconbtn danger" data-mem="revoke" data-email="${esc(m.email)}" title="解除する（入れなくなります）" aria-label="${esc(m.email)} を解除する">${ic("i-x")}</button>`}</span></li>`;
+  return `<section class="card" aria-labelledby="h-guests">
+    <header class="card-h">${ic("i-people")}<h2 id="h-guests">招いている人</h2><span class="count">${live.length}</span></header>
+    ${d.room ? `
+    <form class="guest-add" id="addguest">
+      <label class="sr" for="g-email">メールアドレス</label><input class="in" id="g-email" type="email" required placeholder="メールアドレス" autocomplete="off">
+      <label class="sr" for="g-name">お名前</label><input class="in" id="g-name" placeholder="お名前（任意）" autocomplete="off">
+      <button class="btn primary" type="submit">${ic("i-plus")}足す</button>
+    </form>
+    ${live.length ? `<ul class="guests">${live.map(row).join("")}</ul>` : '<p class="empty">まだ誰も招いていません。担当の方のメールアドレスを足してください。何人でも足せます。</p>'}
+    ${notYet.length > 1 ? `<button class="btn primary wide" data-invite-all>${ic("i-send")}まだの ${notYet.length} 人にまとめて招待メール</button>` : ""}
+    ${gone.length ? `<details class="gone"><summary>解除した人（${gone.length}）</summary><ul class="guests">${gone.map(row).join("")}</ul></details>` : ""}
+    <p class="sub" style="margin:var(--s-3) 0 0">「招待メール」を押すと、いつものメールアプリが開き、宛先・件名・本文が入った状態になります。送信はご自身で。名簿にいて、Cloudflare Access のポリシーにも入っている人だけが Guest Room に入れます。</p>`
+    : '<p class="empty">この取引先にはまだ Guest Room がありません。</p>'}
+  </section>`;
+}
+
+/* 取引先ひとつの台帳：出してある（Shared）／手元（Private）／招いている人 */
+async function pageClient(id) {
+  const d = await api("/api/admin/clients/" + encodeURIComponent(id));
+  if (!d) return '<div class="notfound">この取引先は見つかりませんでした。</div>';
+  CUR = d;
+  const shared = d.documents.filter(x => x.room_id), inside = d.documents.filter(x => !x.room_id);
+  const c = client(id) || { ...d.client, hue: d.room?.hue };
+  const act = (a, did, icon, label, extra = "", data = "") =>
+    `<button class="iconbtn ${extra}" data-act="${a}" data-id="${did}" ${data} title="${label}" aria-label="${label}">${ic(icon)}</button>`;
+  const row = (x, ops) => `<div class="lrow">
+      <span>${ic(x.room_id ? "i-door" : "i-desk")}</span>
+      ${x.room_id ? `<a class="c-name" href="/api/documents/${x.id}" target="_blank" rel="noopener" title="${esc(x.title)}"><span>${esc(x.title)}</span>`
+                  : `<span class="c-name" title="${esc(x.title)}"><span>${esc(x.title)}</span>`}
+        <small class="c-sub" style="display:block">${x.uploaded_by_side === "client" ? "先方" : ORG}・${md(x.created_at.slice(0, 10))}${x.confidential ? "・<b style='color:var(--danger)'>内部限定</b>" : ""}</small>
+      ${x.room_id ? "</a>" : "</span>"}
+      <span class="c-act">${ops}</span></div>`;
+  // 先方が置いたものは動かさない（応接室の既定ルールを執務室からも破らない）
+  const sharedOps = x => x.uploaded_by_side === "client" ? "" : act("unpublish", x.id, "i-desk", "手元に引き戻す（相手から見えなくなります）");
+  const insideOps = x => x.uploaded_by_side === "client" ? "" : [
+    x.confidential ? "" : act("publish", x.id, "i-door", "Guest Room に出す（相手が見られるようになります）"),
+    x.confidential ? act("conf", x.id, "i-unlock", "内部限定を解除する", "", 'data-v="0"')
+                   : act("conf", x.id, "i-lock", "内部限定にする（外に出せなくなります）", "danger", 'data-v="1"'),
+  ].join("");
+  const list = (xs, ops, empty) => xs.length ? `<div class="list lib">${xs.map(x => row(x, ops(x))).join("")}</div>` : `<p class="empty">${empty}</p>`;
+
+  return `
+    ${crumb([["今日", "#/today"], ["取引先", "#/clients"], [cname(c)]])}
+    <h1 class="ptitle" style="margin-bottom:var(--s-4)">
+      <span class="logo plogo${typeof c.hue === "number" ? "" : " none"}"${typeof c.hue === "number" ? ` style="--sh:${c.hue}"` : ""} aria-hidden="true">${esc(initial(d.client))}</span>
+      ${esc(d.client.name)}</h1>
+    <div class="cmdbar" role="toolbar" aria-label="この取引先の操作" style="margin-top:0">
+      ${d.room ? `<a class="cmd" href="/room.html?r=${encodeURIComponent(d.room.slug)}">${ic("i-door")}Guest Room を開く</a>` : ""}
+      <button class="cmd" data-upload="${esc(id)}">${ic("i-upload")}手元に資料を置く</button>
+      <a class="cmd" href="#/calendar/${today()}/new">${ic("i-cal")}予定を入れる</a>
+    </div>
+    ${d.room ? huePicker(d, id) : ""}
+    ${d.client.note ? `<p class="memo">${esc(d.client.note)}</p>` : ""}
+    ${d.room ? casesCard(d) : ""}
+    <div class="cols3">
+      <section class="card" aria-labelledby="h-shared">
+        <header class="card-h">${ic("i-door")}<h2 id="h-shared">出してある</h2><span class="count">${shared.length}</span></header>
+        <p class="sub">Guest Room にある資料。<strong>先方に見えています。</strong></p>
+        ${list(shared, sharedOps, "まだ何も出していません。")}
+      </section>
+      <section class="card drop" data-drop="${esc(id)}" aria-labelledby="h-private">
+        <header class="card-h">${ic("i-desk")}<h2 id="h-private">手元</h2><span class="count">${inside.length}</span></header>
+        <p class="sub">手元だけ。先方には見えません。</p>
+        ${list(inside, insideOps, "ありません。")}
+        <label class="chk2" style="margin-top:var(--s-3)"><input type="checkbox" id="upconf">次に置く資料を内部限定にする</label>
+        <p class="drop-hint only-wide">${ic("i-upload")}ここにファイルをドラッグしても置けます</p>
+      </section>
+      ${guestsCard(d)}
+    </div>
+    ${askLog(d.asks || [])}`;
+}
+
+/* 相談ロボとの会話（取引先には「オーナーも読めます」と伝えてある）。
+   何を聞いたかは、次の提案や支援のヒントになる。新しい質問が上。 */
+function askLog(asks) {
+  const qs = asks.filter(a => a.role === "user");
+  const tm = s => { const t = new Date(s); return `${t.getMonth() + 1}/${t.getDate()} ${pad(t.getHours())}:${pad(t.getMinutes())}`; };
+  const pairs = qs.map(q => ({ q, a: asks.find(a => a.role === "assistant" && a.author_email === q.author_email && a.created_at >= q.created_at) })).reverse();
+  return `<section class="card" aria-labelledby="h-asks" style="margin-top:var(--s-5)">
+    <header class="card-h">${ic("i-chat")}<h2 id="h-asks">相談ロボへの質問</h2><span class="count">${qs.length}</span></header>
+    ${pairs.length ? `<ul class="asklog">${pairs.map(({ q, a }) => `<li>
+        <div class="q"><small>${esc(q.author_side === "us" ? ORG : q.author_email)} · ${tm(q.created_at)}${q.file_name ? `・添付「${esc(q.file_name)}」` : ""}${a?.forwarded_at ? '・<b>伝言に転送済み</b>' : ""}</small>${esc(q.body)}</div>
+        ${a ? `<details><summary>ロボの答えを見る</summary><div class="a">${esc(a.body)}</div></details>` : ""}</li>`).join("")}</ul>`
+      : '<p class="empty">まだ質問はありません。</p>'}
+  </section>`;
+}
+
+/* ───────── Google カレンダー（入力済みの画面を開く）─────────
+   API 連携はしない。オーナーが Google の画面で保存して初めて登録される。
+   ※ この URL の書き方は広く使われているが、Google の公式ドキュメントには明記されていない */
+function gcalUrl(e) {
+  const d = e.day.replace(/-/g, "");
+  let dates;
+  if (e.start_time) {
+    const st = e.start_time.replace(":", "") + "00";
+    let en = e.end_time;
+    if (!en) { const [h, m] = e.start_time.split(":").map(Number); en = `${pad(Math.min(h + 1, 23))}:${pad(h >= 23 ? 59 : m)}`; }
+    dates = `${d}T${st}/${d}T${en.replace(":", "")}00`;
+  } else {
+    dates = `${d}/${plus(e.day, 1).replace(/-/g, "")}`;   // 終日は「次の日まで」で書く決まり
+  }
+  const c = client(e.client_id);
+  const details = [e.memo, c ? "取引先：" + (c.name) : ""].filter(Boolean).join("\n");
+  const q = new URLSearchParams({ action: "TEMPLATE", text: e.title, dates, ctz: "Asia/Tokyo" });
+  if (details) q.set("details", details);
+  if (e.place) q.set("location", e.place);
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
+function askShare(e) {
+  pending = e;
+  $("share-what").textContent = `${longDay(e.day)} ${timeOf(e)}「${e.title}」`;
+  $("share").showModal();
+}
+
+/* ───────── 操作 ───────── */
+function toast(msg) {
+  const t = $("toast");
+  t.innerHTML = ic("i-ok") + esc(msg); t.hidden = false;
+  clearTimeout(toast.timer); toast.timer = setTimeout(() => t.hidden = true, 2600);
+}
+function setNav(open) { document.body.classList.toggle("nav-open", open); $("menuBtn").setAttribute("aria-expanded", open); }
+async function refresh() { MONTH.key = ""; await loadHome(); drawNav(); drawTicker(); await drawMain(); }
+
+const findEvent = id => MONTH.events.find(x => x.id === id) || (H.events || []).find(x => x.id === id);
+
+document.addEventListener("click", async e => {
+  const t = e.target;
+
+  const cs = t.closest("[data-case][data-set]");
+  if (cs) {
+    const body = JSON.parse(cs.dataset.set);
+    if (body.status === "done" && !confirm("この案件を「終わった」にしますか？ Guest Room でも終わった案件に移ります（あとで開き直せます）。")) return;
+    if (await send("/api/admin/cases/" + cs.dataset.case, "PATCH", body)) {
+      toast(body.status === "done" ? "案件を閉じました" : body.status === "open" ? "開き直しました" : body.waiting_on === "client" ? "先方の番にしました" : "こちらの番にしました");
+      await refresh();
+    }
+    return;
+  }
+  const sn = t.closest("[data-seen], [data-seen-all]");
+  if (sn) {
+    const body = sn.dataset.seenAll !== undefined ? { all: true } : { ids: [Number(sn.dataset.seen)] };
+    if (await send("/api/admin/activity/seen", "POST", body)) { toast(body.all ? "すべて確認済みにしました" : "確認済みにしました"); await refresh(); }
+    return;
+  }
+  const hp = t.closest("[data-hue]");
+  if (hp) {
+    const id = route().rest[0];
+    if (await send("/api/admin/clients/" + encodeURIComponent(id) + "/hue", "PUT", { hue: Number(hp.dataset.hue) })) {
+      toast("部屋の色を変えました"); await refresh();
+    }
+    return;
+  }
+  const rs = t.closest("[data-restore]");
+  if (rs) {
+    rs.disabled = true;
+    if (await send("/api/admin/clients/" + encodeURIComponent(rs.dataset.restore) + "/restore", "POST")) {
+      toast(rs.dataset.name + " を戻しました"); await refresh();
+    } else rs.disabled = false;
+    return;
+  }
+  const dc = t.closest("[data-delclient]");
+  if (dc) {
+    $("delc").dataset.id = dc.dataset.delclient;
+    $("delc-name").textContent = dc.dataset.name;
+    $("delc").showModal(); return;
+  }
+  const dy = t.closest("[data-delc]");
+  if (dy) {
+    const dlg = $("delc"); dlg.close();
+    if (dy.dataset.delc !== "yes") return;
+    if (await send("/api/admin/clients/" + encodeURIComponent(dlg.dataset.id), "DELETE")) {
+      toast("取引先を消しました"); await refresh();
+    }
+    return;
+  }
+
+  const inv = t.closest("[data-invite], [data-invite-all]");
+  if (inv && CUR) {
+    const list = inv.dataset.invite
+      ? CUR.members.filter(m => m.email === inv.dataset.invite)
+      : CUR.members.filter(m => !m.revoked_at && !m.mailed_at);
+    const cid = route().rest[0];
+    location.href = inviteMail(list);
+    for (const m of list) await send("/api/admin/clients/" + encodeURIComponent(cid) + "/members", "PATCH", { email: m.email, action: "mailed" });
+    await drawMain(); return;
+  }
+  const mem = t.closest("[data-mem]");
+  if (mem) {
+    if (mem.dataset.mem === "revoke" && !confirm(mem.dataset.email + " を解除しますか？ Guest Room に入れなくなります（あとで戻せます）。")) return;
+    const cid = route().rest[0];
+    if (await send("/api/admin/clients/" + encodeURIComponent(cid) + "/members", "PATCH", { email: mem.dataset.email, action: mem.dataset.mem })) {
+      toast(mem.dataset.mem === "revoke" ? "解除しました" : "戻しました"); await drawMain();
+    }
+    return;
+  }
+
+  const cell = t.closest("[data-day]");
+  if (cell) { location.hash = "#/calendar/" + cell.dataset.day; return; }
+
+  const sh = t.closest("[data-share]");
+  if (sh) {
+    $("share").close();
+    if (sh.dataset.share === "yes" && pending) {
+      window.open(gcalUrl(pending), "_blank", "noopener");
+      await send("/api/admin/events/" + pending.id, "PATCH", { gcal_shared: true });
+      toast("Googleカレンダーを開きました。向こうで保存してください");
+      refresh();
+    }
+    pending = null; return;
+  }
+
+  const gs = t.closest("[data-gshare]");
+  if (gs) { const ev = findEvent(gs.dataset.gshare); if (ev) askShare(ev); return; }
+
+  const ed = t.closest("[data-evdel]");
+  if (ed) {
+    if (!confirm("この予定を消しますか？（Google に共有した分は、Google 側で消してください）")) return;
+    if (await send("/api/admin/events/" + ed.dataset.evdel, "DELETE")) { toast("予定を消しました"); location.hash = "#/calendar/" + (route().rest[0] || today()); refresh(); }
+    return;
+  }
+
+  const ck = t.closest("[data-check]");
+  if (ck) {
+    const [kind, id] = ck.dataset.check.split(":"), done = ck.getAttribute("aria-pressed") !== "true";
+    if (kind === "todo") await send("/api/admin/todos/" + id, "PATCH", { done });
+    else {
+      if (done && !confirm("先方と共有している「やること」です。済みにすると Guest Room でも「終わった」になります。よろしいですか？")) return;
+      await send(`/api/admin/milestones/${id}/status`, "POST", { status: done ? "done" : "todo" });
+    }
+    toast(done ? "済みにしました" : "まだにもどしました");
+    refresh(); return;
+  }
+
+  const td = t.closest("[data-tdel]");
+  if (td) { if (await send("/api/admin/todos/" + td.dataset.tdel, "DELETE")) { toast("タスクを消しました"); refresh(); } return; }
+
+  const up = t.closest("[data-upload]");
+  if (up) { $("picker").dataset.client = up.dataset.upload; $("picker").click(); return; }
+
+  // 資料の出し入れ（前の執務室と同じ API・同じ確認）
+  const b = t.closest("button[data-act]");
+  if (b) {
+    const { act, id, v } = b.dataset;
+    if (act === "publish") {
+      if (!confirm("この資料を Guest Room に出しますか？ 相手が見られるようになります。")) return;
+      if (await api("/api/admin/documents/" + id + "/publish", { method: "POST" })) toast("Guest Room に出しました");
+    } else if (act === "unpublish") {
+      if (!confirm("この資料を手元に引き戻しますか？ 相手からは見えなくなります。")) return;
+      if (await api("/api/admin/documents/" + id + "/unpublish", { method: "POST" })) toast("手元に引き戻しました");
+    } else if (act === "conf") {
+      if (await send("/api/admin/documents/" + id + "/confidential", "POST", { value: v === "1" })) toast(v === "1" ? "内部限定にしました" : "内部限定を解除しました");
+    }
+    drawMain();
+  }
+});
+
+async function uploadTo(clientId, file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  if ($("upconf")?.checked) fd.append("confidential", "1");
+  const r = await fetch("/api/admin/clients/" + encodeURIComponent(clientId) + "/documents", { method: "POST", body: fd });
+  if (!r.ok) { alert("置けませんでした（" + r.status + "）"); return; }
+  toast("「" + file.name + "」を手元に置きました");
+  drawMain();
+}
+$("picker").addEventListener("change", e => { const f = e.target.files[0]; if (f) uploadTo(e.target.dataset.client, f); e.target.value = ""; });
+document.addEventListener("dragover", e => { const z = e.target.closest("[data-drop]"); if (z) { e.preventDefault(); z.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const z = e.target.closest("[data-drop]"); if (z && !z.contains(e.relatedTarget)) z.classList.remove("over"); });
+document.addEventListener("drop", e => {
+  const z = e.target.closest("[data-drop]"); if (!z) return;
+  e.preventDefault(); z.classList.remove("over");
+  if (e.dataTransfer.files[0]) uploadTo(z.dataset.drop, e.dataTransfer.files[0]);
+});
+
+document.addEventListener("submit", async e => {
+  if (e.target.id === "newclient") {
+    e.preventDefault();
+    const r = await send("/api/admin/clients", "POST", { name: $("nc-name").value, short_name: $("nc-short").value, slug: $("nc-slug").value });
+    if (r) { toast("登録しました。担当の方を招待しましょう"); await loadHome(); drawNav(); location.hash = "#/client/" + encodeURIComponent(r.id); }
+    return;
+  }
+  if (e.target.id === "newcase") {
+    e.preventDefault();
+    const id = route().rest[0];
+    const r = await send("/api/admin/clients/" + encodeURIComponent(id) + "/cases", "POST",
+      { title: $("nk-title").value, summary: $("nk-sum").value, due_on: $("nk-due").value || null, waiting_on: $("nk-turn").value || null });
+    if (r) { toast("案件を作りました（Guest Room にも出ています）"); await refresh(); $("kt-" + r.id)?.focus(); }
+    return;
+  }
+  if (e.target.dataset.addtask) {
+    e.preventDefault();
+    const kid = e.target.dataset.addtask;
+    const r = await send("/api/admin/cases/" + kid + "/tasks", "POST", { title: $("kt-" + kid).value, due_on: $("kd-" + kid).value || null });
+    if (r) { toast("やることを足しました"); await refresh(); $("kt-" + kid)?.focus(); }
+    return;
+  }
+  if (e.target.id === "addguest") {
+    e.preventDefault();
+    const id = route().rest[0];
+    const r = await send("/api/admin/clients/" + encodeURIComponent(id) + "/members", "POST", { email: $("g-email").value, display_name: $("g-name").value });
+    if (r) { toast("名簿に足しました"); await drawMain(); $("g-email")?.focus(); }
+    return;
+  }
+  if (e.target.id === "addtask") {
+    e.preventDefault();
+    const body = { title: $("tk-title").value, due_on: $("tk-due").value || null, client_id: $("tk-client").value || null };
+    if (await send("/api/admin/todos", "POST", body)) { toast("タスクを足しました"); await refresh(); $("tk-title")?.focus(); }
+    return;
+  }
+  if (e.target.id === "evform") {
+    e.preventDefault();
+    const id = e.target.dataset.id;
+    const body = { title: $("ev-title").value, day: $("ev-day").value, start_time: $("ev-start").value || null,
+      end_time: $("ev-end").value || null, client_id: $("ev-client").value || null, place: $("ev-place").value, memo: $("ev-memo").value };
+    if (body.end_time && !body.start_time) { alert("終了だけは入れられません。開始も入れてください。"); return; }
+    const r = id ? await send("/api/admin/events/" + id, "PATCH", body) : await send("/api/admin/events", "POST", body);
+    if (!r) return;
+    toast(id ? "予定を直しました" : "予定を入れました");
+    location.hash = "#/calendar/" + body.day;
+    await refresh();
+    // 新しく入れた予定だけ聞く。直したときは、共有済みなら行の印から入れ直せる
+    if (!id) askShare({ ...body, id: r.id });
+  }
+});
+
+window.addEventListener("hashchange", () => { setNav(false); drawNav(); drawMain(); window.scrollTo(0, 0); });
+$("menuBtn").addEventListener("click", () => setNav(!document.body.classList.contains("nav-open")));
+$("scrim").addEventListener("click", () => setNav(false));
+document.addEventListener("keydown", e => { if (e.key === "Escape") setNav(false); });
+
+(async () => {
+  const me = await api("/api/me");
+  if (!me) return;
+  ME = me; ORG = me.site?.org || ORG;
+  if (me.side !== "us") { location.replace("/"); return; }
+  $("avatar").title = me.email;
+  tick(); setInterval(tick, 15000);
+  await loadHome();
+  if (!H) return;
+  drawNav(); drawTicker(); drawMain();
+  // 祝日（内閣府の祝日を JSON にしている holidays-jp）。取れなくても画面は動く
+  fetch("https://holidays-jp.github.io/api/v1/date.json").then(r => r.json())
+    .then(j => { HOL = j; if (route().page === "calendar") drawMain(); }).catch(() => {});
+  // 1分ごとに取り直す（先方の動きを拾う）。入力中は描き直さない
+  setInterval(async () => {
+    if (document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    if ($("share").open) return;
+    await loadHome(); drawNav(); drawTicker(); if (route().page === "today") drawMain();
+  }, 60000);
+})();
+</script>
+<a class="credit" href="https://garlondworks.com" target="_blank" rel="noopener">Originally built by <b>GARLOND WORKS</b></a>
+</body>
+</html>

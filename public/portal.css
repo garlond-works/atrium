@@ -1,0 +1,1501 @@
+/* Atrium — 応接室（Guest Room）と執務室（Office）の共通の見た目  2026-09-23 組み直し
+
+   参考：Microsoft 365 SharePoint のチームサイト（UI の型だけ。仕組みは Cloudflare のまま）
+   値  ：Fluent 2 公式トークン（@fluentui/tokens webLightTheme を npm から取得して実値で当てた）
+
+   オーナー「使う人が何だかわからないデザイン。アイコンやマークで誘導されていない」
+   → 誰でも一度は見た「印」に案内させる：
+       ・ファイルの種類アイコン（PDF / Word / Excel / PowerPoint）
+       ・虫眼鏡＝探す／家＝ホーム／下向き矢印＝ダウンロード／ゴミ箱＝消える
+     NN/g「Icon Usability」：誰でも分かる絵は家・虫眼鏡・印刷くらいしか無い。
+     だから**絵には必ず言葉を添える**。絵だけにするのは行の操作だけで、言葉は title/aria-label が持つ。
+
+   入口（index.html）だけ app.css のまま。
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@500;600;700&display=swap");
+
+:root {
+  /* ---- 色：Fluent 2 webLightTheme の実値 ---------------------------------- */
+  --bg1: #ffffff;   /* colorNeutralBackground1 カード */
+  --bg2: #fafafa;   /* colorNeutralBackground2 */
+  --bg3: #f5f5f5;   /* colorNeutralBackground3 ページの地・hover */
+  --bg5: #ebebeb;   /* colorNeutralBackground5 選択中 */
+  --fg1: #242424;   /* 本文（白 15.52:1） */
+  --fg2: #424242;   /* 準本文（地 9.22:1） */
+  --fg3: #616161;   /* 補足（白 6.19:1／地 5.68:1） */
+  --stroke1: #d1d1d1;   /* 入力欄の枠 */
+  --stroke2: #e0e0e0;   /* 行の区切り */
+
+  /* 押せる・進める色。全部屋で固定（部屋を移っても操作の色は変わらない）。
+     白文字 5.38:1／hover 6.66:1 */
+  --brand:       #0f6cbd;
+  --brand-hover: #115ea3;
+  --brand-bg2:   #ebf3fc;   /* 淡い面。上の brand 文字 4.81:1 */
+  --brand-link:  #115ea3;   /* 文字リンク（白 6.66:1） */
+
+  /* 状態の色。色だけで語らせない：必ず絵と言葉がセット */
+  --ok: #0e700e;   --ok-bg: #f1faf1;     /* 5.89:1 */
+  --warn: #bc4b09; --warn-bg: #fff9f5;   /* 4.85:1 */
+  --danger: #b10e1c;                     /* 7.12:1 */
+
+  /* ファイルの種類。上に白文字（すべて 5.18:1 以上・Python で実測） */
+  --ft-pdf:   #b30b00;
+  --ft-word:  #185abd;
+  --ft-excel: #107c41;
+  --ft-ppt:   #c43e1c;
+  --ft-img:   #6b3fa0;
+  --ft-other: #616161;
+
+  /* ---- 部屋の色 ------------------------------------------------------------
+     SharePoint の「サイトのテーマ」と同じ役割。色相 --h ひとつから作る（JS が差し替える）。
+     12色相すべてで計算済み：帯×白 最悪 12.79:1／ロゴ×白 最悪 5.01:1／印×白 最悪 3.44:1（非テキスト基準 3.0） */
+  --h: 210;
+  --room-dark:   hsl(var(--h) 45% 14%);   /* 上の帯 */
+  --room-tile:   hsl(var(--h) 50% 30%);   /* サイトのロゴ（頭文字） */
+  --room-accent: hsl(var(--h) 60% 35%);   /* ナビの選択の印 */
+
+  /* ---- 文字：Fluent の段（本文 14/20・項目 16/22・見出し 20/28・題 24/32）---- */
+  --font: "Segoe UI", "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  --t-100: 12px; --lh-100: 16px;
+  --t-300: 14px; --lh-300: 20px;
+  --t-400: 16px; --lh-400: 22px;
+  --t-500: 20px; --lh-500: 28px;
+  --t-600: 24px; --lh-600: 32px;
+
+  /* ---- 余白：Fluent は 4px 基準 -------------------------------------------- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-7: 32px;
+
+  /* ---- 形・影：Fluent の borderRadius / shadow ------------------------------ */
+  --r-m: 4px;   /* ボタン・入力欄 */
+  --r-xl: 8px;  /* カード（9/21 オーナー「少し丸みがあるといい」とも一致） */
+  --shadow4:  0 0 2px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.14);
+  --shadow8:  0 0 2px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.14);
+  --shadow28: 0 0 8px rgba(0,0,0,.12), 0 14px 28px rgba(0,0,0,.14);
+
+  --dur: 150ms;                          /* durationFast */
+  --ease: cubic-bezier(.33, 0, .67, 1);  /* curveEasyEase */
+
+  --tap: 44px;     /* 指で押せる最小寸法（Apple HIG）。Fluent の 32px より大きく取る */
+  --suite: 48px;   /* Microsoft 365 の上の帯と同じ高さ */
+  --nav-w: 240px;
+}
+@media (prefers-reduced-motion: reduce) { :root { --dur: 0ms; } }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0; background: var(--bg3); color: var(--fg1);
+  font: var(--t-300)/var(--lh-300) var(--font);
+  line-break: strict; -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { font: inherit; color: inherit; }
+a { color: var(--brand-link); }
+:focus-visible { outline: 2px solid var(--fg1); outline-offset: 2px; border-radius: var(--r-m); }
+
+.ic { width: 20px; height: 20px; flex: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ═════════ 上の帯（スイートバー） ═════════
+   Microsoft 365 の帯と同じく「ここはどこ／探す／自分」だけを置く。 */
+.suite {
+  position: sticky; top: 0; z-index: 30;
+  height: var(--suite); display: flex; align-items: center; gap: var(--s-2);
+  padding: 0 var(--s-2) 0 var(--s-4);
+  background: var(--room-dark); color: #fff;
+}
+.suite .wordmark { display: flex; align-items: center; gap: var(--s-2); white-space: nowrap; font-weight: 600; font-size: var(--t-400); }
+.suite .wordmark small { font-weight: 400; font-size: var(--t-300); opacity: .8; padding-left: var(--s-2); border-left: 1px solid rgba(255,255,255,.4); }
+.suite-btn {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-width: var(--suite); height: var(--suite); padding: 0 var(--s-3);
+  background: none; border: none; color: #fff; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background var(--dur) var(--ease);
+}
+.suite-btn:hover { background: rgba(255,255,255,.12); }
+.menu-btn { margin-left: calc(var(--s-4) * -1); }
+
+.avatar {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #fff; color: var(--room-dark); font-size: var(--t-100); font-weight: 600;
+}
+
+/* ═════════ サイトの見出し ═════════
+   SharePoint のサイトヘッダー：四角いロゴ＋サイト名。どこの部屋かを一目で。 */
+.site {
+  display: flex; align-items: center; gap: var(--s-4);
+  padding: var(--s-5) var(--s-7); background: var(--bg1); border-bottom: 1px solid var(--stroke2);
+}
+.site .logo {
+  flex: none; width: 48px; height: 48px; border-radius: var(--r-xl);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--room-tile); color: #fff; font-size: var(--t-500); font-weight: 600;
+}
+.site h1 { margin: 0; font-size: var(--t-500); line-height: var(--lh-500); font-weight: 600; }
+.site p { margin: 0; color: var(--fg3); }
+
+/* ═════════ 左ナビ＋中身 ═════════ */
+.shell { display: grid; grid-template-columns: var(--nav-w) minmax(0, 1fr); align-items: start; }
+.nav {
+  position: sticky; top: var(--suite); height: calc(100vh - var(--suite)); overflow-y: auto;
+  padding: var(--s-2) 0 var(--s-6); background: var(--bg1); border-right: 1px solid var(--stroke2);
+}
+.nav ul { list-style: none; margin: 0; padding: 0; }
+.nav a {
+  position: relative; display: flex; align-items: center; gap: var(--s-3);
+  min-height: var(--tap); margin: 0 var(--s-2); padding: 0 var(--s-3);
+  border-radius: var(--r-m); color: var(--fg1); text-decoration: none;
+  transition: background var(--dur) var(--ease);
+}
+.nav a:hover { background: var(--bg3); }
+/* 選択中：Fluent の NavDrawer と同じく、背景＋左の縦の印。印は部屋の色（サイトのテーマ） */
+.nav a[aria-current="page"] { background: var(--bg5); font-weight: 600; }
+.nav a[aria-current="page"]::before {
+  content: ""; position: absolute; left: 0; top: 50%; width: 3px; height: 20px; margin-top: -10px;
+  border-radius: 2px; background: var(--room-accent);
+}
+.nav a .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav a .n { flex: none; font-size: var(--t-100); color: var(--fg3); font-weight: 400; }
+.nav-h { margin: var(--s-4) 0 var(--s-1); padding: 0 var(--s-5); font-size: var(--t-100); line-height: var(--lh-100); font-weight: 600; color: var(--fg3); }
+.nav .flag { color: var(--warn); }
+
+main { min-width: 0; padding: var(--s-6) var(--s-7) var(--s-7); }
+.page { max-width: 1204px; margin: 0 auto; }   /* SharePoint のページ幅の上限 */
+@media (prefers-reduced-motion: no-preference) {
+  .page { animation: in 200ms var(--ease); }
+  @keyframes in { from { opacity: 0; transform: translateY(4px); } }
+}
+
+/* ページの頭：パンくず → 題 → 状態 → 操作の帯 */
+.crumb { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1); margin: calc(var(--s-3) * -1) 0 0; color: var(--fg3); }
+/* 見た目は小さい文字でも、押せる高さは 44px */
+.crumb a { color: var(--fg3); text-decoration: none; min-height: var(--tap); display: inline-flex; align-items: center; }
+.crumb a:hover { color: var(--fg1); text-decoration: underline; }
+.crumb .ic { width: 12px; height: 12px; }
+.ptitle { display: flex; align-items: center; gap: var(--s-3); margin: 0; font-size: var(--t-600); line-height: var(--lh-600); font-weight: 600; }
+.ptitle .ic, .ptitle .st { width: 28px; height: 28px; }
+.psum { margin: var(--s-2) 0 0; color: var(--fg2); max-width: 72ch; }
+.pmeta { display: flex; flex-wrap: wrap; gap: var(--s-2); margin-top: var(--s-3); }
+
+/* コマンドバー。SharePoint と同じく「枠なしのボタン＋青い絵」 */
+.cmdbar {
+  display: flex; flex-wrap: wrap; gap: var(--s-1);
+  margin: var(--s-4) 0 var(--s-6); padding: 0 var(--s-1);
+  background: var(--bg1); border-radius: var(--r-xl); box-shadow: var(--shadow4);
+}
+.cmd {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-3);
+  background: none; border: none; border-radius: var(--r-m); cursor: pointer;
+  color: var(--fg1); text-decoration: none; white-space: nowrap;
+  transition: background var(--dur) var(--ease);
+}
+.cmd .ic { color: var(--brand); }
+.cmd:hover { background: var(--bg3); }
+.cmd[aria-pressed="true"] { background: var(--bg5); font-weight: 600; }
+.cmdbar .sep { width: 1px; margin: var(--s-3) var(--s-1); background: var(--stroke2); }
+
+/* ═════════ 部品（Web パーツ） ═════════
+   SharePoint のセクション「2/3 ＋ 1/3」。主役が左、知らせが右。 */
+.cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: var(--s-6); align-items: start; }
+.col { display: flex; flex-direction: column; gap: var(--s-6); min-width: 0; }
+/* ホーム：知らせ（aside）は DOM では先頭、PC では右の列に置く */
+.cols.side-first > aside { grid-column: 2; grid-row: 1; }
+.cols.side-first > .col:not(aside) { grid-column: 1; grid-row: 1; }
+
+.card { --pad: var(--s-6); background: var(--bg1); border-radius: var(--r-xl); box-shadow: var(--shadow4); padding: var(--s-5) var(--pad); }
+.card-h { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-3); }
+.card-h h2 { margin: 0; font-size: var(--t-400); line-height: var(--lh-400); font-weight: 600; }
+.card-h > .ic { color: var(--brand); }
+.card-h .more { margin-left: auto; display: inline-flex; align-items: center; gap: var(--s-1); min-height: var(--tap); text-decoration: none; }
+.card-h .more:hover { text-decoration: underline; }
+.card-h .count { color: var(--fg3); }
+.card.attn { box-shadow: var(--shadow4), inset 4px 0 0 var(--warn); }
+.card.attn .card-h > .ic { color: var(--warn); }
+
+.empty { margin: 0; color: var(--fg3); }
+
+/* 状態の丸。○ これから／◐ 動いている／✓ 終わった。形だけで区別がつく */
+.st { width: 20px; height: 20px; flex: none; }
+.st-open { color: var(--fg3); }
+.st-waiting { color: var(--brand); }
+.st-done { color: var(--ok); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: var(--s-1);
+  min-height: 24px; padding: 0 var(--s-2); border-radius: 999px;
+  background: var(--bg3); color: var(--fg2); font-size: var(--t-100); line-height: var(--lh-100); font-weight: 500;
+  white-space: nowrap;
+}
+.pill .ic, .pill .st { width: 14px; height: 14px; }
+.pill.attn { background: var(--warn-bg); color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn); }
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+
+/* 案件のタイル（SharePoint のクイックリンク／サイトカードの型） */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-3); }
+.tile {
+  display: flex; flex-direction: column; gap: var(--s-2);
+  padding: var(--s-4); border: 1px solid var(--stroke2); border-radius: var(--r-xl);
+  color: var(--fg1); text-decoration: none; background: var(--bg1);
+  transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.tile:hover { box-shadow: var(--shadow8); border-color: transparent; }
+.tile .top { display: flex; align-items: flex-start; gap: var(--s-3); }
+.tile .ttl { font-size: var(--t-400); line-height: var(--lh-400); font-weight: 600; }
+.tile .icbox {
+  flex: none; width: 40px; height: 40px; border-radius: var(--r-xl);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--brand-bg2); color: var(--brand);
+}
+.tile.done .icbox { background: var(--ok-bg); color: var(--ok); }
+.tile .tags { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.tile .nums { display: flex; gap: var(--s-4); margin-top: auto; padding-top: var(--s-2); border-top: 1px solid var(--stroke2); color: var(--fg3); }
+.tile .nums span { display: inline-flex; align-items: center; gap: var(--s-1); }
+.tile .nums .ic { width: 16px; height: 16px; }
+
+/* ═════════ 資料の一覧（ドキュメントライブラリ） ═════════ */
+.list { width: 100%; }
+.lrow {
+  display: grid; align-items: center; column-gap: var(--s-3);
+  grid-template-columns: 32px minmax(0, 1fr) 112px 56px 92px;
+  min-height: 52px; padding: var(--s-1) var(--s-2);
+  border-top: 1px solid var(--stroke2);
+}
+/* 名前が主役。案件の列は中身の幅だけ（最大 10em）取り、残りはすべて名前へ */
+.list.with-case .lrow { grid-template-columns: 32px minmax(0, 1fr) fit-content(10em) 112px 56px 92px; }
+.lrow:not(.lhead):hover { background: var(--bg3); }
+.lhead { min-height: 36px; border-top: none; color: var(--fg3); font-size: var(--t-100); font-weight: 600; }
+.lrow .c-name {
+  min-width: 0; min-height: var(--tap); display: flex; flex-direction: column; justify-content: center;
+  color: var(--fg1); text-decoration: none; font-size: var(--t-400); line-height: var(--lh-400); font-weight: 500;
+}
+.lrow .c-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lrow a.c-name:hover span { color: var(--brand-link); text-decoration: underline; }
+.lrow .c-sub { display: none; font-size: var(--t-100); line-height: var(--lh-100); font-weight: 400; color: var(--fg3); }
+.lrow .c-case { min-width: 0; min-height: var(--tap); line-height: var(--tap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg2); text-decoration: none; }
+.lrow a.c-case:hover { text-decoration: underline; }
+.lrow .c-by, .lrow .c-date { color: var(--fg3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lrow .c-act { display: flex; justify-content: flex-end; gap: var(--s-1); }
+/* 表の置き場所が狭いとき（ホームの「最近の資料」など）は、画面幅に関係なくスマホと同じ組み方に。
+   列を詰めたままだと名前の列が 0 まで潰れる */
+.list[role="table"] { container-type: inline-size; }
+@container (max-width: 720px) {
+  .lhead { display: none; }
+  .lrow, .list.with-case .lrow { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  .lrow .c-case, .lrow .c-by, .lrow .c-date { display: none; }
+  .lrow .c-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lrow .c-name span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+}
+.iconbtn {
+  width: var(--tap); height: var(--tap); flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: var(--r-m); cursor: pointer;
+  color: var(--fg3); text-decoration: none;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.iconbtn:hover { background: var(--bg5); color: var(--fg1); }
+.iconbtn.danger:hover { color: var(--danger); }
+/* ゴミ箱が無い行も同じ幅を空けて、ダウンロードの印の位置を全行で揃える */
+.iconbtn.slot { visibility: hidden; }
+
+/* ファイルの種類アイコン。紙の形＋色の札＋文字。色だけでなく文字でも種類が読める */
+.ft { position: relative; display: inline-block; width: 32px; height: 32px; flex: none; }
+.ft svg { width: 32px; height: 32px; display: block; }
+.ft .pg { fill: #fff; stroke: var(--fg3); stroke-width: 1.25; }
+.ft .fold { fill: none; stroke: var(--fg3); stroke-width: 1.25; }
+.ft b {
+  position: absolute; left: 0; bottom: 4px; padding: 0 3px; border-radius: 2px;
+  font: 600 9px/13px var(--font); color: #fff; letter-spacing: .02em;
+}
+.ft-pdf b { background: var(--ft-pdf); }
+.ft-word b { background: var(--ft-word); }
+.ft-excel b { background: var(--ft-excel); }
+.ft-ppt b { background: var(--ft-ppt); }
+.ft-img b { background: var(--ft-img); }
+.ft-other b { background: var(--ft-other); }
+.ft.sm, .ft.sm svg { width: 20px; height: 20px; }
+.ft.sm b { font-size: 7px; line-height: 9px; bottom: 2px; padding: 0 2px; }
+
+/* 置き場所（ドラッグして落とせる） */
+.drop { position: relative; border-radius: var(--r-xl); transition: background var(--dur) var(--ease); }
+.drop.over { background: var(--brand-bg2); outline: 2px dashed var(--brand); outline-offset: -2px; }
+.drop-hint { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-3); color: var(--fg3); font-size: var(--t-100); }
+.drop-hint .ic { width: 16px; height: 16px; }
+
+/* ═════════ やること ═════════ */
+.tasks { list-style: none; margin: 0; padding: 0; }
+.tasks li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px var(--s-3); padding: var(--s-3) 0; border-top: 1px solid var(--stroke2); }
+.tasks li:first-child { border-top: none; padding-top: 0; }
+.tasks .st { margin-top: 1px; }
+.tasks .ttl { font-size: var(--t-400); line-height: var(--lh-400); }
+.tasks .done .ttl { color: var(--fg3); text-decoration: line-through; }
+.tasks .due { grid-column: 2; display: inline-flex; align-items: center; gap: var(--s-1); color: var(--fg3); font-size: var(--t-100); }
+.tasks .due .ic { width: 14px; height: 14px; }
+
+/* ═════════ やりとり（Teams のチャットの型：自分は右・淡い青） ═════════ */
+.msgs { display: flex; flex-direction: column; gap: var(--s-3); max-height: 440px; overflow-y: auto; margin: 0 calc(var(--s-2) * -1); padding: 0 var(--s-2); }
+.msg { max-width: 92%; }
+.msg.mine { align-self: flex-end; }
+.msg .who { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-1); color: var(--fg3); font-size: var(--t-100); }
+.msg.mine .who { justify-content: flex-end; }
+.msg .bubble { padding: var(--s-2) var(--s-3); border-radius: var(--r-xl); background: var(--bg3); white-space: pre-wrap; line-height: 1.7; }
+.msg.mine .bubble { background: var(--brand-bg2); }
+.msg .gone { color: var(--fg3); font-style: normal; }
+/* 伝言が指している資料。押すとその資料が開く＝資料とやりとりが繋がる */
+.msg .ref {
+  display: inline-flex; align-items: center; gap: var(--s-2); max-width: 100%;
+  min-height: var(--tap); margin-bottom: var(--s-1); padding: 0 var(--s-3);
+  border: 1px solid var(--stroke2); border-radius: var(--r-m); background: var(--bg1);
+  color: var(--fg1); text-decoration: none; font-size: var(--t-100);
+}
+.msg .ref span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg .ref:hover { border-color: var(--stroke1); background: var(--bg2); }
+
+.composer { margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px solid var(--stroke2); }
+.composer label { display: block; margin-bottom: var(--s-2); font-weight: 600; }
+.composer textarea {
+  width: 100%; min-height: 72px; resize: vertical; display: block;
+  padding: var(--s-2) var(--s-3); font-size: var(--t-400); line-height: var(--lh-400);
+  border: 1px solid var(--stroke1); border-bottom-color: var(--fg3); border-radius: var(--r-m); background: var(--bg1);
+}
+/* Fluent の入力欄：選ぶと下の線が青く太る */
+.composer textarea:focus { outline: none; border-bottom: 2px solid var(--brand); padding-bottom: calc(var(--s-2) - 1px); }
+.composer .row { display: flex; justify-content: flex-end; margin-top: var(--s-2); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-4); border-radius: var(--r-m);
+  border: 1px solid var(--stroke1); background: var(--bg1); color: var(--fg1);
+  font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background var(--dur) var(--ease);
+}
+.btn:hover { background: var(--bg3); }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn.primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* お知らせ */
+.news { list-style: none; margin: 0; padding: 0; }
+.news li { padding: var(--s-3) 0; border-top: 1px solid var(--stroke2); }
+.news li:first-child { border-top: none; padding-top: 0; }
+.news .body { line-height: 1.7; }
+.news .when { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-1); color: var(--fg3); font-size: var(--t-100); }
+
+/* あなたの番の一覧 */
+.turns { list-style: none; margin: 0; padding: 0; }
+.turns a {
+  display: flex; align-items: center; gap: var(--s-3); min-height: 52px;
+  margin: 0 calc(var(--s-2) * -1); padding: var(--s-2); border-radius: var(--r-m);
+  color: var(--fg1); text-decoration: none;
+}
+.turns a:hover { background: var(--bg3); }
+.turns .t { flex: 1; min-width: 0; }
+.turns .t b { display: block; font-weight: 600; font-size: var(--t-400); line-height: var(--lh-400); }
+.turns .t small { color: var(--fg3); font-size: var(--t-100); }
+.turns .go { color: var(--fg3); }
+
+/* フィルターの札 */
+.chips { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0 0 var(--s-4); }
+.chip {
+  display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap); padding: 0 var(--s-4);
+  border: 1px solid var(--stroke1); border-radius: 999px; background: var(--bg1);
+  color: var(--fg1); text-decoration: none; white-space: nowrap;
+}
+.chip:hover { background: var(--bg3); }
+.chip[aria-current="true"] { background: var(--fg1); border-color: var(--fg1); color: #fff; }
+.chip .n { color: inherit; opacity: .7; font-size: var(--t-100); }
+
+/* 資料のプレビュー（同じ画面の中で開く・原則4） */
+.viewer { background: var(--bg1); border-radius: var(--r-xl); box-shadow: var(--shadow4); overflow: hidden; }
+.viewer-body { height: calc(100vh - 300px); min-height: 420px; background: var(--bg5); }
+.viewer-body iframe { width: 100%; height: 100%; border: none; display: block; }
+.viewer-note { padding: 64px var(--s-6); text-align: center; }
+.viewer-note .ft { width: 64px; height: 64px; }
+.viewer-note .ft svg { width: 64px; height: 64px; }
+.viewer-note .ft b { font-size: 14px; line-height: 20px; bottom: 8px; padding: 0 5px; }
+.viewer-note p { margin: var(--s-4) 0; color: var(--fg2); }
+
+.notfound { padding: 64px var(--s-6); text-align: center; color: var(--fg2); }
+
+/* 知らせの札（置きました・送りました） */
+.toast {
+  position: fixed; left: 50%; bottom: var(--s-6); z-index: 50; transform: translateX(-50%);
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-3) var(--s-4); border-radius: var(--r-xl);
+  background: var(--fg1); color: #fff; box-shadow: var(--shadow28);
+}
+.toast .ic { color: #9fd89f; }
+
+.scrim { display: none; }
+.only-narrow { display: none; }
+
+/* ═════════ 狭い画面 ═════════
+   「画面の方針」どおりレスポンシブ。左ナビは引き出しにしまい、☰ で出す
+   （SharePoint のスマホ表示と同じ）。部品は1列に積む。 */
+@media (max-width: 899px) {
+  .only-narrow { display: inline-flex; }
+  .only-wide { display: none !important; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .nav {
+    position: fixed; z-index: 40; left: 0; top: var(--suite); bottom: 0; height: auto; width: 280px;
+    transform: translateX(-100%); transition: transform 200ms var(--ease);
+    box-shadow: none;
+  }
+  body.nav-open .nav { transform: none; box-shadow: var(--shadow28); }
+  body.nav-open .scrim { display: block; position: fixed; inset: var(--suite) 0 0 0; z-index: 35; background: rgba(0,0,0,.4); }
+  .site { padding: var(--s-4); }
+  main { padding: var(--s-4) var(--s-4) var(--s-7); }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .cols.side-first > aside, .cols.side-first > .col:not(aside) { grid-column: 1; grid-row: auto; }
+  /* 操作ボタンが2つ並ぶぶん名前が短くなる。1行で切らず2行まで見せる */
+  .lrow .c-name span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .card { --pad: var(--s-4); padding: var(--s-4) var(--pad); }
+  .suite .wordmark small { display: none; }
+
+  /* 表は名前の列だけ残し、置いた人・日付は名前の下の1行に落とす */
+  .lhead { display: none; }
+  .lrow, .list.with-case .lrow { grid-template-columns: 32px minmax(0, 1fr) auto; }
+  .lrow .c-case, .lrow .c-by, .lrow .c-date { display: none; }
+  .lrow .c-sub { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lrow:first-child { border-top: none; }
+  .viewer-body { height: calc(100vh - 220px); }
+}
+@media (max-width: 479px) {
+  /* 帯に全部は入らない。自分の頭文字（飾りに近い）を先に降ろし、探す・退室は残す */
+  .suite { gap: var(--s-2); padding-right: 0; }
+  .avatar { display: none; }
+  .exit .t { display: none; }
+  .ptitle { font-size: var(--t-500); line-height: var(--lh-500); }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   執務室（Office）  2026-09-23
+   オーナーのメインポータル。予定・タスク・取引先の動きを1か所で回す。
+   参考の型：Outlook のカレンダー（月の格子＋その日の一覧）／Microsoft To Do（期限で束ねる）／
+            Microsoft 365 のホーム（数字の札→中身）
+   ═════════════════════════════════════════════════════════════════ */
+
+/* オーナーの場所は黒で一定（「色の役割分担」）。取引先の色は持ち込まない */
+body.office {
+  --room-dark: #1b1b1b;
+  --room-tile: #242424;
+  --room-accent: var(--brand);
+}
+.suite .clock { display: flex; align-items: baseline; gap: var(--s-2); padding: 0 var(--s-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.suite .clock b { font-size: var(--t-400); font-weight: 600; }
+.suite .clock span { font-size: var(--t-100); opacity: .8; }
+
+/* 取引先の色の小さな印。文字は乗せない（「中間色は文字を乗せない」） */
+.sw { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 3px; background: hsl(var(--sh) 55% 42%); }
+.sw.none { background: var(--stroke1); }
+
+/* ───────── 数字の札（Microsoft 365 のホームの型）───────── */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-4); margin-bottom: var(--s-6); }
+.kpi {
+  display: flex; align-items: center; gap: var(--s-4); min-height: 88px; padding: var(--s-4) var(--s-5);
+  background: var(--bg1); border-radius: var(--r-xl); box-shadow: var(--shadow4);
+  color: var(--fg1); text-decoration: none; transition: box-shadow var(--dur) var(--ease);
+}
+.kpi:hover { box-shadow: var(--shadow8); }
+.kpi .icbox { flex: none; width: 44px; height: 44px; border-radius: var(--r-xl); display: flex; align-items: center; justify-content: center; background: var(--brand-bg2); color: var(--brand); }
+.kpi .icbox .ic { width: 24px; height: 24px; }
+.kpi.warn .icbox { background: var(--warn-bg); color: var(--warn); }
+.kpi b { display: block; font-size: 28px; line-height: 36px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kpi small { display: block; color: var(--fg3); }
+
+/* ───────── 予定の一覧（日ごとに束ねる）───────── */
+.agenda { list-style: none; margin: 0; padding: 0; }
+.agenda .dayh {
+  display: flex; align-items: baseline; gap: var(--s-2);
+  margin: var(--s-4) 0 var(--s-1); font-weight: 600; color: var(--fg2);
+}
+.agenda .dayh:first-child { margin-top: 0; }
+.agenda .dayh small { font-weight: 400; color: var(--fg3); }
+.agenda .dayh.today { color: var(--brand); }
+.ev {
+  display: grid; grid-template-columns: 76px 4px minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-3);
+  min-height: 52px; padding: var(--s-1) var(--s-2); border-radius: var(--r-m);
+}
+.ev:hover { background: var(--bg3); }
+.ev .tm { color: var(--fg2); font-variant-numeric: tabular-nums; font-size: var(--t-300); }
+.ev .tm small { display: block; color: var(--fg3); font-size: var(--t-100); }
+.ev .bar { align-self: stretch; margin: var(--s-1) 0; border-radius: 2px; background: var(--brand); }
+.ev .bar.c { background: hsl(var(--sh) 55% 42%); }
+.ev .body { min-width: 0; min-height: var(--tap); display: flex; flex-direction: column; justify-content: center; }
+/* 件名は切らずに2行まで。狭い横の列でも何の予定か読める */
+.ev .body b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; font-size: var(--t-400); line-height: var(--lh-400); }
+.ev .body small { display: flex; flex-wrap: wrap; gap: 0 var(--s-3); color: var(--fg3); font-size: var(--t-100); }
+.ev .body small span { display: inline-flex; align-items: center; gap: var(--s-1); }
+.ev .body small .ic { width: 14px; height: 14px; }
+.ev .ops { display: flex; gap: var(--s-1); }
+.gmark { color: var(--ok); }
+
+/* ───────── 月のカレンダー（Outlook の型）───────── */
+.cal-head { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-3); }
+.cal-head h2 { margin: 0 var(--s-2); font-size: var(--t-500); line-height: var(--lh-500); font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal-head .grow { flex: 1; }
+.month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--stroke2); border-left: 1px solid var(--stroke2); }
+.month .wd { padding: var(--s-2); font-size: var(--t-100); font-weight: 600; color: var(--fg3); border-right: 1px solid var(--stroke2); border-bottom: 1px solid var(--stroke2); background: var(--bg2); }
+.cell {
+  position: relative; display: flex; flex-direction: column; gap: 2px; min-height: 112px; padding: var(--s-1) var(--s-1) var(--s-2);
+  border-right: 1px solid var(--stroke2); border-bottom: 1px solid var(--stroke2);
+  background: var(--bg1); color: var(--fg1); text-align: left; font: inherit; cursor: pointer; min-width: 0;
+  border-top: none; border-left: none;
+}
+.cell:hover { background: var(--bg2); }
+.cell.out { background: var(--bg2); color: var(--fg3); }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--brand); }
+.cell .dn { display: flex; align-items: center; gap: var(--s-1); min-height: 28px; padding: 0 var(--s-1); font-variant-numeric: tabular-nums; }
+.cell .dn i { font-style: normal; display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; border-radius: 50%; }
+.cell.today .dn i { background: var(--brand); color: #fff; font-weight: 600; }
+.cell.sun .dn i, .cell.hol .dn i { color: var(--danger); }
+.cell.sat .dn i { color: var(--brand); }
+.cell.today.sun .dn i, .cell.today.sat .dn i, .cell.today.hol .dn i { color: #fff; }
+.cell .hn { min-width: 0; font-size: 10px; line-height: 14px; color: var(--danger); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chipev {
+  display: flex; align-items: center; gap: var(--s-1); min-width: 0; padding: 0 var(--s-1);
+  border-radius: var(--r-m); font-size: var(--t-100); line-height: 20px;
+  background: var(--brand-bg2); color: var(--fg1);
+}
+.chipev.c { background: hsl(var(--sh) 40% 93%); box-shadow: inset 3px 0 0 hsl(var(--sh) 55% 42%); }
+.chipev span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chipev time { flex: none; color: var(--fg3); font-variant-numeric: tabular-nums; }
+.cell .more { font-size: var(--t-100); color: var(--fg3); padding: 0 var(--s-1); }
+.cell .dots { display: none; }
+
+/* ───────── 入力（Fluent の入力欄：選ぶと下の線が青く太る）───────── */
+.form { display: grid; gap: var(--s-3); }
+.form .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.field label { display: block; margin-bottom: var(--s-1); font-weight: 600; }
+.field label small { font-weight: 400; color: var(--fg3); }
+.in {
+  width: 100%; min-height: var(--tap); padding: 0 var(--s-3);
+  font-size: var(--t-400); background: var(--bg1); color: var(--fg1);
+  border: 1px solid var(--stroke1); border-bottom-color: var(--fg3); border-radius: var(--r-m);
+}
+textarea.in { padding: var(--s-2) var(--s-3); min-height: 72px; resize: vertical; line-height: var(--lh-400); }
+.in:focus { outline: none; border-bottom: 2px solid var(--brand); }
+.form .acts { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: flex-end; }
+.chk2 { display: inline-flex; align-items: center; gap: var(--s-2); min-height: var(--tap); cursor: pointer; }
+.chk2 input { width: 20px; height: 20px; accent-color: var(--brand); }
+
+/* 確認の窓（Googleに共有しますか？） */
+dialog.dlg {
+  width: min(440px, calc(100vw - 32px)); padding: var(--s-6); border: none; border-radius: var(--r-xl);
+  box-shadow: var(--shadow28); color: var(--fg1);
+}
+dialog.dlg::backdrop { background: rgba(0,0,0,.4); }
+dialog.dlg h2 { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-2); font-size: var(--t-500); line-height: var(--lh-500); font-weight: 600; }
+dialog.dlg p { margin: 0 0 var(--s-2); color: var(--fg2); }
+dialog.dlg .note { font-size: var(--t-100); color: var(--fg3); }
+dialog.dlg .acts { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-5); }
+
+/* ───────── タスク（Microsoft To Do の型：期限で束ねる）───────── */
+.addbar { display: grid; grid-template-columns: minmax(0, 1fr) 160px 180px auto; gap: var(--s-2); align-items: end; }
+.tgroup + .tgroup { margin-top: var(--s-5); }
+.tgroup > h3 { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-1); font-size: var(--t-300); font-weight: 600; color: var(--fg2); }
+.tgroup.late > h3 { color: var(--danger); }
+.tgroup > h3 .n { font-weight: 400; color: var(--fg3); }
+.titems { list-style: none; margin: 0; padding: 0; }
+.titem { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; column-gap: var(--s-1); min-height: 52px; border-top: 1px solid var(--stroke2); }
+.titem:first-child { border-top: none; }
+.titem:hover { background: var(--bg2); }
+.tcheck { width: var(--tap); height: var(--tap); display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--fg3); border-radius: var(--r-m); }
+.tcheck:hover { color: var(--brand); }
+.tcheck .st { width: 22px; height: 22px; }
+.titem.done .tcheck { color: var(--ok); }
+.titem .tt { min-width: 0; padding: var(--s-1) 0; }
+.titem .tt b { display: block; font-weight: 500; font-size: var(--t-400); line-height: var(--lh-400); }
+.titem.done .tt b { color: var(--fg3); text-decoration: line-through; }
+.titem .tt small { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-1) var(--s-3); color: var(--fg3); font-size: var(--t-100); }
+.titem .tt small span { display: inline-flex; align-items: center; gap: var(--s-1); }
+.titem .tt small .ic { width: 14px; height: 14px; }
+.titem .late { color: var(--danger); font-weight: 600; }
+.titem .today { color: var(--warn); font-weight: 600; }
+.titem .shared { color: var(--brand); }
+
+/* ───────── 取引先 ───────── */
+.ctiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-4); }
+.ctile { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-5); background: var(--bg1); border-radius: var(--r-xl); box-shadow: var(--shadow4); color: var(--fg1); text-decoration: none; transition: box-shadow var(--dur) var(--ease); }
+.ctile:hover { box-shadow: var(--shadow8); }
+.ctile .top { display: flex; align-items: center; gap: var(--s-3); }
+.ctile .logo { flex: none; width: 40px; height: 40px; border-radius: var(--r-xl); display: flex; align-items: center; justify-content: center; background: hsl(var(--sh) 50% 30%); color: #fff; font-weight: 600; font-size: var(--t-400); }
+.ctile .logo.none { background: var(--fg3); }
+.ctile .nm { flex: 1; min-width: 0; font-weight: 600; font-size: var(--t-400); line-height: var(--lh-400); }
+.ctile .tags { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+.clist { list-style: none; margin: 0; padding: 0; }
+.clist a { display: flex; align-items: center; gap: var(--s-3); min-height: 48px; margin: 0 calc(var(--s-2) * -1); padding: 0 var(--s-2); border-radius: var(--r-m); color: var(--fg1); text-decoration: none; }
+.clist a:hover { background: var(--bg3); }
+.clist .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.feed { list-style: none; margin: 0; padding: 0; }
+.feed li { border-top: 1px solid var(--stroke2); }
+.feed li:first-child { border-top: none; }
+.feed .fi { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: var(--s-1) var(--s-3); margin: 0 calc(var(--s-2) * -1); padding: var(--s-3) var(--s-2); border-radius: var(--r-m); color: var(--fg1); text-decoration: none; }
+.feed a.fi:hover { background: var(--bg3); }
+.feed .ic { color: var(--fg3); margin-top: 1px; }
+.feed b { font-weight: 600; }
+.feed small { grid-column: 2; color: var(--fg3); font-size: var(--t-100); }
+.feed q { color: var(--fg2); }
+
+/* 取引先ひとつの台帳：出してある／手元／招いている人 */
+.cols3 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 300px; gap: var(--s-6); align-items: start; }
+.card .sub { margin: calc(var(--s-2) * -1) 0 var(--s-3); color: var(--fg3); font-size: var(--t-100); }
+.card .sub strong { color: var(--fg1); }
+.tag { display: inline-flex; align-items: center; min-height: 20px; padding: 0 var(--s-2); border-radius: 999px; font-size: var(--t-100); border: 1px solid var(--stroke1); color: var(--fg2); white-space: nowrap; }
+.tag.warn { border-color: var(--danger); color: var(--danger); }
+.memo { margin: 0 0 var(--s-5); padding: var(--s-3) var(--s-4); background: var(--bg1); border-radius: var(--r-xl); box-shadow: var(--shadow4), inset 4px 0 0 var(--fg3); white-space: pre-wrap; line-height: 1.7; }
+
+@media (max-width: 1199px) {
+  .cols3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cols3 > :last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 899px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+  .kpi { min-height: 72px; padding: var(--s-3); gap: var(--s-3); }
+  .kpi b { font-size: var(--t-600); line-height: var(--lh-600); }
+  .cols3 { grid-template-columns: minmax(0, 1fr); }
+  .addbar { grid-template-columns: 1fr 1fr; }
+  .addbar > :first-child { grid-column: 1 / -1; }
+  .suite .clock span { display: none; }
+  /* 月の見出しは1行に入らない（375px で 59px はみ出した）。年月を上の段に分ける */
+  .cal-head { flex-wrap: wrap; }
+  .cal-head h2 { order: -1; flex: 1 0 100%; margin: 0 0 var(--s-1); }
+  .cal-head .grow { display: none; }
+  .cal-head .btn.primary { margin-left: auto; }
+  /* 月の格子は、狭いと文字の札が読めない。点だけ出して、押した日の一覧で読ませる */
+  .cell { min-height: 56px; align-items: center; padding: 2px 0 var(--s-1); }
+  .cell .dn { padding: 0; }
+  .cell .chipev, .cell .more, .cell .hn { display: none; }
+  .cell .dots { display: flex; gap: 3px; }
+  .cell .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+  .cell .dots i.c { background: hsl(var(--sh) 55% 42%); }
+  .ev { grid-template-columns: 56px 4px minmax(0, 1fr) auto; column-gap: var(--s-2); }
+  .form .row2 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 479px) {
+  .suite .clock { display: none; }
+}
+
+/* 取引先の台帳の資料行：印｜名前（下に出所・日付）｜操作 */
+.list.lib .lrow, .list.lib .lrow:first-child { grid-template-columns: 32px minmax(0, 1fr) auto; }
+.list.lib .lrow:first-child { border-top: none; }
+.list.lib .lrow > span:first-child { color: var(--fg3); display: flex; }
+.list.lib .c-name span { white-space: normal; }
+
+
+/* ═════════════════════════════════════════════════════════════════
+   強弱（2026-09-23）
+   オーナー「見た目が淡白すぎて何が重要かがイマイチ見た目で伝わらない」
+   全部のカードが同じ白・同じ重さだった。律を1つにする：
+     急ぎで件数があるもの → 塗る（赤＝期限切れ／橙＝要対応）
+     普通                  → 白のカード
+     ゼロ件                → 影を外して灰色に引っ込める
+     1画面に1か所だけ      → 目が最初に止まる帯（今日と次の予定）
+   色だけで語らせない原則は維持：塗った札にも必ず言葉と絵が付く。
+   ═════════════════════════════════════════════════════════════════ */
+
+/* カード見出しの絵を色の箱に入れる。カードごとに目の止まり所ができる */
+.card-h { gap: var(--s-3); }
+.card-h > .ic { box-sizing: content-box; width: 18px; height: 18px; padding: 7px; border-radius: var(--r-xl); background: var(--brand-bg2); color: var(--brand); }
+.card-h h2 { font-size: 18px; line-height: 24px; }
+
+/* 要対応のカード：見出しを帯ごと塗る */
+.card.attn { box-shadow: var(--shadow4); overflow: hidden; padding-top: 0; }
+.card.attn .card-h { margin: 0 calc(var(--pad) * -1) var(--s-3); padding: var(--s-3) var(--pad); background: var(--warn); color: #fff; }
+.card.attn .card-h > .ic { background: rgba(255,255,255,.2); color: #fff; }
+
+/* 帯：今日と次の予定。この画面でいちばん先に目が止まる場所（白 11.65〜5.38:1） */
+.hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--s-6); align-items: stretch;
+  margin-bottom: var(--s-5); padding: var(--s-6) var(--s-7);
+  border-radius: var(--r-xl); color: #fff; box-shadow: var(--shadow8);
+  background: linear-gradient(120deg, #0c3b5e 0%, #0f6cbd 100%);
+}
+.hero small { display: flex; align-items: center; gap: var(--s-1); font-size: var(--t-100); font-weight: 600; letter-spacing: .04em; }
+.hero small .ic { width: 16px; height: 16px; }
+.hero-day h1 { margin: var(--s-1) 0 var(--s-2); font-size: 32px; line-height: 40px; font-weight: 600; }
+.hero-day p { margin: 0; font-size: var(--t-400); }
+.hero-next {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  padding: var(--s-4) var(--s-5); border-radius: var(--r-xl);
+  background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+  color: #fff; text-decoration: none; transition: background var(--dur) var(--ease);
+}
+.hero-next:hover { background: rgba(255,255,255,.2); }
+.hero-next b { display: flex; align-items: baseline; gap: var(--s-3); font-size: 28px; line-height: 36px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hero-next b span { font-size: var(--t-300); font-weight: 600; padding: 0 var(--s-2); border-radius: 999px; background: #fff; color: #0c3b5e; }
+.hero-next strong { font-size: var(--t-500); line-height: var(--lh-500); font-weight: 600; }
+.hero-next em { font-style: normal; font-size: var(--t-300); }
+
+/* 数字の札の強弱 */
+.kpi { border: 1px solid transparent; }
+.kpi.zero { box-shadow: none; background: transparent; border-color: var(--stroke2); }
+.kpi.zero b, .kpi.zero small { color: #707070; }   /* 白地 4.95:1 */
+.kpi.zero .icbox { background: var(--bg5); color: #707070; }
+.kpi.alarm, .kpi.hot { color: #fff; }
+.kpi.alarm { background: var(--danger); }   /* 白 7.12:1 */
+.kpi.hot { background: var(--warn); }       /* 白 5.06:1 */
+.kpi.alarm small, .kpi.hot small { color: #fff; }
+.kpi.alarm .icbox, .kpi.hot .icbox { background: rgba(255,255,255,.2); color: #fff; }
+.kpi.soft { background: var(--brand-bg2); }
+.kpi.soft .icbox { background: var(--brand); color: #fff; }
+.kpi.soft b { color: var(--brand); }        /* 淡い青地 4.81:1 */
+
+/* 予定：今日の見出しは青い札、過ぎた予定は灰色、次の予定は淡い青で囲う */
+.agenda .dayh.today { display: inline-flex; align-items: center; gap: var(--s-2); padding: 2px var(--s-3); border-radius: 999px; background: var(--brand); color: #fff; }
+.agenda .dayh.today small { color: #fff; }
+.ev.past .body b, .ev.past .tm { color: var(--fg3); font-weight: 400; }
+.ev.past .bar { opacity: .35; }
+.ev.next { background: var(--brand-bg2); box-shadow: inset 0 0 0 1px #b4d6fa; }
+
+/* タスク：期限切れは行ごと赤、今日までは橙の線 */
+.titem.is-late { background: #fdf3f4; box-shadow: inset 3px 0 0 var(--danger); }   /* 赤字 6.55:1 */
+.titem.is-today { box-shadow: inset 3px 0 0 var(--warn); }
+.tgroup.late > h3 { display: inline-flex; padding: 2px var(--s-3); border-radius: 999px; background: var(--danger); color: #fff; }
+.tgroup.late > h3 .n { color: #fff; }
+
+/* 案件・取引先の札：要対応は上辺を橙で塗る */
+.tile.attn, .ctile.attn { border-color: var(--warn); box-shadow: inset 0 4px 0 var(--warn); }
+.ctile.attn { box-shadow: var(--shadow4), inset 0 4px 0 var(--warn); }
+
+/* 応接室のサイト見出しに部屋の色を薄く敷く（どこの部屋かを面で示す） */
+body.room .site { background: linear-gradient(100deg, hsl(var(--h) 45% 93%) 0%, var(--bg1) 65%); }
+
+@media (max-width: 899px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: var(--s-4); padding: var(--s-5); }
+  .hero-day h1 { font-size: var(--t-600); line-height: var(--lh-600); }
+  .hero-next b { font-size: var(--t-600); line-height: var(--lh-600); }
+}
+
+
+/* ═════════════════════════════════════════════════════════════════
+   生成りの地と大きな数字（2026-09-23）
+     地 #f8f6f3 / #f1ece5（生成り）・文字は黒 #000 が 507回・補足 #999691 / #787672
+     書体 Noto Sans JP ＋ Be Vietnam Pro（数字・英字を大きく太く）
+     角丸 10 / 20 / 50 / 100（ピル）・影はほぼ無し・背景にぼかした橙／黄／緑の光
+   オーナー「ガッチガチのデザインでなくていい。webサイトからヒントを得ていい」
+   借りたのは空気（生成り・黒・大きな数字・ピル・点線・光）。急ぎを塗る律はそのまま残す。
+   ⚠️ 補足のグレー #999691 は白地 2.95:1 で基準未満 → 同じ色味で濃くした #6b6965（5.48:1）
+   この塊を消せば、ひとつ前（Fluent そのまま）に戻る。
+   ═════════════════════════════════════════════════════════════════ */
+:root {
+  --bg3: #f7f5f1;          /* 生成りの地 */
+  --bg2: #fbfaf7;
+  --bg5: #efe9e0;          /* 選択中・押したとき */
+  --fg1: #1a1a1a;          /* 地 15.98:1 */
+  --fg2: #4a4845;          /* 地 8.37:1 */
+  --fg3: #6b6965;          /* 白 5.48:1／地 5.03:1 */
+  --stroke1: #d8d0c4;
+  --stroke2: #e8e1d6;
+  --ink-line: #1a1a1a;     /* 点線・区切りの黒 */
+  --num: "Be Vietnam Pro", "Noto Sans JP", sans-serif;
+  --r-xl: 20px;
+  --r-m: 10px;
+}
+body { background: var(--bg3); }
+/* 背景の光。ぼかしを、画面の端に固定で敷く（中身を読む邪魔をしない淡さ） */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38vw 30vw at 96% 4%,  rgba(255, 176, 120, .30), transparent 70%),
+    radial-gradient(34vw 28vw at 2% 98%,  rgba(255, 214, 90, .28),  transparent 70%),
+    radial-gradient(30vw 24vw at 30% 110%, rgba(170, 220, 150, .22), transparent 70%);
+}
+
+/* 帯：黒い帯をやめて、生成りに黒い線1本 */
+.suite, body.office .suite, body.room .suite {
+  background: rgba(247, 245, 241, .92); color: var(--fg1);
+  border-bottom: 1px solid var(--ink-line); backdrop-filter: blur(8px);
+}
+.suite .wordmark { font-family: var(--num); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.suite .wordmark small { font-family: var(--font); letter-spacing: .04em; text-transform: none; border-left-color: var(--stroke1); opacity: 1; color: var(--fg3); }
+.suite-btn { color: var(--fg1); }
+.suite-btn:hover { background: var(--bg5); }
+.avatar { background: var(--fg1); color: #fff; }
+/* 時計：「09 23 2026 WED」 */
+.suite .clock { font-family: var(--num); align-items: center; gap: var(--s-2); }
+.suite .clock b { font-size: 22px; font-weight: 700; letter-spacing: .02em; }
+.suite .clock span { font-family: var(--num); font-size: 11px; line-height: 13px; font-weight: 700; letter-spacing: .06em; opacity: 1; white-space: pre; }
+
+/* 左ナビ：白い板ではなく地のまま。選択は黒い印 */
+.nav { background: transparent; border-right: 1px solid var(--stroke2); }
+.nav a[aria-current="page"] { background: #fff; box-shadow: 0 0 0 1px var(--stroke2); }
+.nav a[aria-current="page"]::before { background: var(--fg1); }
+body.room .nav a[aria-current="page"]::before { background: var(--room-accent); }
+.nav-h { letter-spacing: .08em; }
+
+/* カード：影を外して白い面に。角は 20px */
+.card, .kpi, .ctile, .cmdbar, .viewer { box-shadow: none; border: 1px solid var(--stroke2); }
+.card-h { padding-bottom: var(--s-3); margin-bottom: var(--s-4); border-bottom: 1px dashed var(--ink-line); }
+.card-h > .ic { background: none; padding: 0; width: 22px; height: 22px; color: var(--fg1); }
+.card-h h2 { letter-spacing: .08em; font-weight: 700; }
+.card.attn { border-color: var(--warn); }
+.card.attn .card-h { border-bottom: none; }
+.card.attn .card-h > .ic { color: #fff; }
+
+/* ボタン：ピル。主ボタンは黒 */
+.btn { border-radius: 999px; border-color: var(--ink-line); }
+.btn.primary { background: var(--fg1); border-color: var(--fg1); color: #fff; }
+.btn.primary:hover { background: #3a3835; border-color: #3a3835; }
+.card-h .more {
+  min-height: 36px; padding: 0 var(--s-2) 0 var(--s-4); border: 1px solid var(--ink-line); border-radius: 999px;
+  color: var(--fg1); font-weight: 600; letter-spacing: .06em; position: relative; white-space: nowrap; flex: none;
+}
+.card-h h2 { white-space: nowrap; }
+.card-h .count { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-h .more::after { content: ""; position: absolute; inset: -4px 0; }   /* 押せる高さは 44px */
+.card-h .more:hover { background: var(--fg1); color: #fff; text-decoration: none; }
+.cmd .ic { color: var(--fg1); }
+.chip[aria-current="true"] { background: var(--fg1); }
+
+/* 数字は Be Vietnam Pro で大きく太く */
+.kpi b, .ev .tm, .lrow .c-date, .tile .nums, .cell .dn i, .cal-head h2, .pill, .titem .tt small, .feed small, .msg .who {
+  font-family: var(--num);
+}
+.kpi b { font-size: 36px; line-height: 40px; font-weight: 700; }
+.ev .tm { font-size: var(--t-400); font-weight: 700; }
+.ev .tm small { font-weight: 500; }
+.cal-head h2 { font-weight: 700; letter-spacing: .04em; }
+
+/* 数字の札：ゼロは点線で引っ込める */
+.kpi.zero { border-style: dashed; border-color: var(--stroke1); }
+.kpi .icbox { border-radius: 50%; }
+
+/* 帯（今日）：黒い大きな数字＋右に次の予定。光は右上に1つ */
+.hero {
+  color: var(--fg1); box-shadow: none; border: 1px solid var(--ink-line);
+  background: radial-gradient(420px 260px at 92% 0%, rgba(255, 170, 100, .35), transparent 70%), #fff;
+}
+.hero small { letter-spacing: .14em; font-family: var(--num); }
+.bigdate { display: flex; align-items: flex-end; gap: var(--s-3); margin: var(--s-2) 0 var(--s-3); font-family: var(--num); }
+.bigdate b { font-size: 64px; line-height: 60px; font-weight: 700; letter-spacing: .01em; }
+.bigdate span { font-size: 15px; line-height: 18px; font-weight: 700; letter-spacing: .06em; padding-bottom: 4px; }
+.hero-day p { display: flex; flex-wrap: wrap; gap: var(--s-2); font-size: var(--t-300); }
+.hero-day p .pill { font-size: var(--t-300); min-height: 28px; padding: 0 var(--s-3); }
+.hero-next { background: var(--bg3); box-shadow: none; border: 1px solid var(--stroke2); color: var(--fg1); }
+.hero-next:hover { background: var(--bg5); }
+.hero-next b { font-family: var(--num); font-size: 40px; line-height: 44px; font-weight: 700; }
+.hero-next b span { background: var(--fg1); color: #fff; font-family: var(--font); }
+.hero-next strong { letter-spacing: .04em; }
+.hero-next em { color: var(--fg2); }
+
+/* 流れるお知らせ。動きを減らす設定では止めて横に送れるだけにする */
+.ticker { position: sticky; top: var(--suite); z-index: 25; overflow: hidden; border-bottom: 1px solid var(--stroke2); background: rgba(255,255,255,.85); backdrop-filter: blur(8px); }
+.ticker .track { display: flex; width: max-content; animation: flow 48s linear infinite; }
+.ticker:hover .track { animation-play-state: paused; }
+.ticker a, .ticker span.it { display: inline-flex; align-items: center; gap: var(--s-3); min-height: var(--tap); padding: 0 var(--s-7); white-space: nowrap; color: var(--fg1); text-decoration: none; font-size: var(--t-300); }
+.ticker time { font-family: var(--num); font-weight: 700; }
+.ticker a:hover { text-decoration: underline; }
+/* NEW の札（白 12.71:1） */
+.ticker .new { font-family: var(--num); font-size: 11px; line-height: 20px; padding: 0 var(--s-2); border-radius: 999px; background: #24305c; color: #fff; letter-spacing: .06em; }
+@keyframes flow { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ticker { overflow-x: auto; } .ticker .track { animation: none; } }
+body.room .nav, body.office .nav { top: calc(var(--suite) + var(--ticker-h, 0px)); height: calc(100vh - var(--suite) - var(--ticker-h, 0px)); }
+
+/* 予定の日の見出し：今日は黒いピル */
+.agenda .dayh.today { background: var(--fg1); }
+.ev.next { background: #fff4ea; box-shadow: inset 0 0 0 1px #f3c9a4; }
+
+/* 応接室のサイト見出しも生成りに。部屋の色はロゴと光で */
+.site { background: transparent; border-bottom: 1px solid var(--stroke2); }
+body.room .site { background: radial-gradient(520px 160px at 0% 0%, hsl(var(--h) 60% 85% / .55), transparent 70%); }
+.site h1 { letter-spacing: .06em; font-weight: 700; }
+.site .logo { border-radius: 50%; }
+.ctile .logo { border-radius: 50%; }
+
+@media (max-width: 899px) {
+  .bigdate b { font-size: 48px; line-height: 46px; }
+  .hero-next b { font-size: 32px; line-height: 36px; }
+  .kpi b { font-size: 28px; line-height: 32px; }
+  .nav { background: var(--bg3); }
+  body.room .nav, body.office .nav { top: var(--suite); height: auto; }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   配色：やわらか（墨の線＋パステルの面）
+     文字 #3b3938（墨）129回／白 35回／黄 #f1c846 19回（主ボタンの面）
+     水色 #adcfec／若葉 #a5d3ab／桃 #f19ca7／生成り #f0e8d8
+   オーナー「柔らかい色だけど見やすい配色で」
+   柔らかいのに見やすい理由を実測から読んだ：
+     パステルは必ず「面」で塗り、上に墨の文字と墨の線を乗せる。パステルを文字色にしない。
+   計算（Python）：墨×パステルの面 5.50〜7.16:1／墨×白 11.49:1。
+     パステルの面×白は 1.6〜2.1:1 しかない → 面には墨の線を引いて境目を見せる（元サイトと同じ手）。
+     文字に色が要る所は、同じ色相の濃い版（桃 #a8323f 6.58／黄 #7a5c00 6.25／
+     青 #2f6390 6.35／緑 #2e6b37 6.41：いずれも白地）。
+   役割：桃＝期限切れ／黄＝要対応・主ボタン／水色＝今日／若葉＝終わった
+   ═════════════════════════════════════════════════════════════════ */
+:root {
+  --ink: #3b3938;
+  --p-yellow: #f1c846; --p-blue: #adcfec; --p-green: #a5d3ab; --p-pink: #f19ca7; --p-cream: #f0e8d8;
+  --t-yellow: #fdf5d9; --t-blue: #eaf3fb; --t-green: #eaf5ec; --t-pink: #fdecee;   /* 行の地に敷く淡い版 */
+
+  --fg1: #3b3938;  --ink-line: #3b3938;
+  --fg2: #4f4b48;
+  --fg3: #6e6a66;          /* 白 5.36／地 5.01 */
+  --bg3: #faf7f1;          /* 地：生成りをさらに白に寄せる（墨 10.74） */
+  --bg5: #f0e8d8;
+  --stroke1: #d9d1c3; --stroke2: #ebe4d8;
+
+  --brand: #2f6390; --brand-hover: #264f73; --brand-bg2: var(--t-blue); --brand-link: #2f6390;
+  --danger: #a8323f; --warn: #7a5c00; --warn-bg: var(--t-yellow);
+  --ok: #2e6b37; --ok-bg: var(--t-green);
+}
+
+/* 背景の光もパステルで */
+body::before {
+  background:
+    radial-gradient(38vw 30vw at 96% 4%,  rgba(241, 200, 70, .22), transparent 70%),
+    radial-gradient(34vw 28vw at 2% 98%,  rgba(173, 207, 236, .30), transparent 70%),
+    radial-gradient(30vw 24vw at 40% 110%, rgba(165, 211, 171, .26), transparent 70%);
+}
+
+/* 主ボタン：黄の面＋墨の太線＋墨の文字（元サイトの「パートナー募集」） */
+.btn { border-width: 2px; }
+.btn.primary { background: var(--p-yellow); border-color: var(--ink); color: var(--ink); }
+.btn.primary:hover { background: #e8b92e; border-color: var(--ink); }
+
+/* 数字の札：塗る色をパステルに。境目は墨の線 */
+.kpi.alarm, .kpi.hot, .kpi.soft { color: var(--ink); border: 2px solid var(--ink); }
+.kpi.alarm { background: var(--p-pink); }
+.kpi.hot   { background: var(--p-yellow); }
+.kpi.soft  { background: var(--p-blue); }
+.kpi.alarm small, .kpi.hot small, .kpi.soft small, .kpi.soft b { color: var(--ink); }
+.kpi.alarm .icbox, .kpi.hot .icbox, .kpi.soft .icbox { background: #fff; color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
+
+/* 帯の中の札 */
+.pill.alarm { background: var(--p-pink); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.pill.hot   { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.pill.attn  { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.pill.ok    { background: var(--p-green); color: var(--ink); }
+
+/* 要対応のカード：見出しを黄の帯に */
+.card.attn { border: 2px solid var(--ink); }
+.card.attn .card-h { background: var(--p-yellow); color: var(--ink); border-bottom: 2px solid var(--ink); }
+.card.attn .card-h > .ic { color: var(--ink); }
+
+/* 案件・取引先の札：要対応は上辺を黄の太い帯に */
+.tile.attn { border: 2px solid var(--ink); box-shadow: inset 0 6px 0 var(--p-yellow); }
+.ctile.attn { border: 2px solid var(--ink); box-shadow: inset 0 6px 0 var(--p-yellow); }
+
+/* 帯（今日）：白地に墨の線、光は黄 */
+.hero { border: 2px solid var(--ink); background: radial-gradient(420px 260px at 92% 0%, rgba(241, 200, 70, .38), transparent 70%), #fff; }
+.hero-next { background: var(--t-blue); border: 1.5px solid var(--ink); }
+.hero-next:hover { background: #dcebf8; }
+.hero-next b span { background: var(--ink); }
+
+/* 予定：今日の見出しは水色のピル、次の予定は淡い水色 */
+.agenda .dayh.today { background: var(--p-blue); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.agenda .dayh.today small { color: var(--ink); }
+.ev.next { background: var(--t-blue); box-shadow: inset 0 0 0 1.5px var(--p-blue); }
+.ev .bar { background: var(--p-blue); }
+
+/* カレンダー：今日は水色の丸＋墨の線 */
+.cell.today .dn i { background: var(--p-blue); color: var(--ink); box-shadow: 0 0 0 1.5px var(--ink); }
+.cell.today.sun .dn i, .cell.today.sat .dn i, .cell.today.hol .dn i { color: var(--ink); }
+.cell.sel { box-shadow: inset 0 0 0 2px var(--ink); }
+.chipev { background: var(--t-blue); }
+
+/* タスク：期限切れは淡い桃の行＋桃の線、今日までは黄の線 */
+.titem.is-late { background: var(--t-pink); box-shadow: inset 4px 0 0 var(--p-pink); }
+.titem.is-today { background: var(--t-yellow); box-shadow: inset 4px 0 0 var(--p-yellow); }
+.tgroup.late > h3 { background: var(--p-pink); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.tgroup.late > h3 .n { color: var(--ink); }
+.titem.done .tcheck { color: var(--ok); }
+.tcheck:hover { color: var(--ink); }
+
+/* 状態の丸・印 */
+.st-waiting { color: var(--brand); }
+.tile .icbox { background: var(--t-blue); color: var(--ink); }
+.tile.done .icbox { background: var(--t-green); color: var(--ink); }
+.kpi .icbox { background: var(--t-blue); color: var(--ink); }
+.kpi.zero .icbox { background: var(--bg5); color: var(--fg3); }
+/* ゼロの札：点線と薄い数字は「読み込み中」に見えるので、実線・墨の数字に。
+   塗らないことで、件数のある札（塗り）より静かなまま。
+   期限切れ・要対応のゼロは「片付いた」＝墨の縁の ✓ */
+.kpi.zero { border-style: solid; }
+.kpi.zero b { color: var(--ink); }
+.kpi.zero.clear .icbox { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+/* 伝言：自分の吹き出しは淡い水色、相手は生成り */
+.msg .bubble { background: #f6f1e7; }
+.msg.mine .bubble { background: var(--t-blue); }
+
+/* 流れる帯の NEW：黄の札 */
+.ticker .new { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+/* 押した・選んだ印 */
+.nav a[aria-current="page"]::before { background: var(--p-yellow); width: 4px; box-shadow: 0 0 0 1px var(--ink); }
+.chip[aria-current="true"] { background: var(--p-yellow); border-color: var(--ink); color: var(--ink); }
+:focus-visible { outline-color: var(--ink); }
+
+/* ── お便り（やりとりの「いま」）────────────────────────
+   封筒の絵：インクの線＋パステルの面。
+   届いた＝黄色の封筒と黄色い地／返事待ち＝青い封筒／まだ無し＝クリーム。 */
+.letter {
+  display: flex; align-items: center; gap: var(--s-3); width: 100%;
+  margin: 0 0 var(--s-3); padding: var(--s-3); border-radius: var(--r-xl);
+  background: var(--bg3); border: 1.5px solid transparent; color: var(--fg1);
+  font: inherit; text-align: left; min-height: 64px;
+}
+.letter p { display: flex; flex-direction: column; gap: 2px; margin: 0; flex: 1; min-width: 0; }
+.letter b { font-size: var(--t-300); color: var(--ink); }
+.letter small { color: var(--fg3); font-size: var(--t-100); }
+.letter .new { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); border-radius: 999px; padding: 2px 10px; font: 700 12px/1.4 var(--num); }
+.env { width: 52px; height: 39px; flex: none; }
+.env-body { fill: var(--p-cream); stroke: var(--ink); stroke-width: 2; }
+.env-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.env-seal { fill: var(--p-pink); stroke: var(--ink); stroke-width: 2; }
+.letter.is-in { cursor: pointer; transition: transform 150ms ease, box-shadow 150ms ease; }
+.letter.is-in .env-body { fill: var(--p-yellow); }
+.letter.is-fresh { background: var(--t-yellow); border-color: var(--ink); }
+.letter.is-in:hover { transform: translateY(-1px); box-shadow: 0 3px 0 var(--ink); }
+.letter.is-in:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.letter.is-out .env-body { fill: var(--p-blue); }
+.letter.is-out .env-seal, .letter.is-empty .env-seal { display: none; }
+.letter.is-fresh .env { animation: env-bob 2.4s ease-in-out infinite; }
+@keyframes env-bob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-3px) rotate(-4deg); } }
+@media (prefers-reduced-motion: reduce) { .letter.is-fresh .env { animation: none; } .letter.is-in:hover { transform: none; } }
+.letter .nw { white-space: nowrap; }
+.letter .go { display: inline-flex; align-items: center; gap: 2px; color: var(--ink); font-weight: 600; font-size: var(--t-100); white-space: nowrap; }
+.letter.is-in .new + .go { margin-left: calc(var(--s-2) * -1); }
+
+/* お便りの目印を、案件ページを開く前の場所にも（左ナビ・ホーム・案件タイル） */
+.nav .mail { color: var(--ink); background: var(--p-yellow); border-radius: 999px; padding: 2px 5px; display: inline-flex; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.nav .mail .ic { width: 16px; height: 16px; }
+.pill.mail { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.card.letters { background: var(--t-yellow); }
+.card.letters .card-h .env { width: 36px; height: 27px; }
+.card.letters .card-h .env-body { fill: var(--p-yellow); }
+.card.letters .turns a:hover { background: rgba(255,255,255,.6); }
+.card.letters .snip { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; color: var(--fg2); }
+.card.letters .go { display: inline-flex; align-items: center; gap: 2px; color: var(--ink); font-weight: 600; font-size: var(--t-100); white-space: nowrap; }
+
+/* 区切りをはっきり：カードにインクの縁（「線で囲う」約束に揃える） */
+.card, .cmdbar, .viewer { border: 1.5px solid var(--ink); box-shadow: none; }
+.card.attn { border-width: 2px; }
+button.pill.mail { border: 0; font: inherit; cursor: pointer; min-height: 32px; position: relative; }
+button.pill.mail::after { content: ""; position: absolute; inset: -6px 0; }
+.letter b { white-space: nowrap; }
+
+/* 下に余白：最後のカードが画面の底に貼りつかず、「ここで終わり」が見える高さを残す */
+main { padding-bottom: calc(clamp(96px, 16vh, 160px) + env(safe-area-inset-bottom, 0px)); }
+.nav { padding-bottom: var(--s-7); }
+
+/* やりとりはページ一本でスクロール（枠の中の二重スクロールをやめた） */
+.msgs { max-height: none; overflow: visible; }
+.talk-more {
+  display: flex; align-items: center; justify-content: center; gap: var(--s-2); width: 100%;
+  min-height: var(--tap); margin: 0 0 var(--s-3); border: 1.5px dashed var(--ink-line); border-radius: 999px;
+  background: transparent; color: var(--fg2); font: inherit; font-size: var(--t-200); cursor: pointer;
+}
+.talk-more:hover { background: var(--bg3); color: var(--ink); border-color: var(--ink); }
+
+/* ── 相談ロボ ─────────────────────────────────────────
+   封筒と同じ描き方：インクの線＋パステルの面。頭は青、耳と胴は黄、アンテナと頬はピンク。
+   サイト見出しの左（取引先の頭文字の丸があった場所）が入口。 */
+.robot { display: block; width: 100%; height: 100%; overflow: visible; }
+.robot .rb-head { fill: var(--p-blue); stroke: var(--ink); stroke-width: 2; }
+.robot .rb-face { fill: #fffdf7; stroke: var(--ink); stroke-width: 1.6; }
+.robot .rb-yellow { fill: var(--p-yellow); stroke: var(--ink); stroke-width: 2; }
+.robot .rb-pink { fill: var(--p-pink); stroke: var(--ink); stroke-width: 1.8; }
+.robot .rb-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.robot .rb-eyes { fill: var(--ink); transform-box: fill-box; transform-origin: center; animation: rb-blink 5s infinite; }
+.robot .rb-cheek { fill: var(--p-pink); opacity: .8; }
+@keyframes rb-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.12); } }
+
+.robo-door[hidden] { display: none; }
+.robo-door {
+  position: relative; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  width: 84px; padding: 2px 0 0; border-radius: var(--r-xl); text-decoration: none; color: var(--ink);
+}
+.robo-door .robo-slot { width: 64px; height: 64px; transition: transform 200ms ease; }
+.robo-door .robo-tag {
+  font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap; padding: 4px 8px; border-radius: 999px;
+  background: var(--p-yellow); box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.robo-door:hover .robo-slot { transform: translateY(-2px) rotate(-6deg); }
+.robo-door:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+
+.ask-hero { display: flex; align-items: center; gap: var(--s-5); margin: var(--s-2) 0 var(--s-5); }
+.ask-hero .robo-big { flex: none; width: 112px; height: 112px; animation: rb-float 3.6s ease-in-out infinite; }
+.ask-hero .ptitle { margin-top: 0; }
+@keyframes rb-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.ask-notes { list-style: none; margin: var(--s-3) 0 0; padding: 0; display: grid; gap: 6px; color: var(--fg2); font-size: var(--t-200); }
+.ask-notes li { display: flex; align-items: flex-start; gap: var(--s-2); }
+.ask-notes .ic { flex: none; margin-top: 3px; }
+.ask-notes b { font-family: var(--num); color: var(--ink); font-size: 1.15em; }
+
+.msg.robo { display: flex; gap: var(--s-2); align-items: flex-start; max-width: 96%; }
+.msg.robo .robo-av { flex: none; width: 36px; height: 36px; margin-top: 18px; }
+.msg.robo .bubble { background: #fffdf7; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.robo-acts { margin-top: var(--s-1); }
+.robo-acts .sent { display: inline-flex; align-items: center; gap: 4px; color: var(--ok); font-size: var(--t-100); min-height: var(--tap); }
+.robo-av.thinking { animation: rb-float 1.2s ease-in-out infinite; }
+.dots { display: inline-flex; gap: 5px; padding: 4px 0; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); opacity: .3; animation: rb-dot 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: .2s; } .dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes rb-dot { 0%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.msg .ref .x { border: 0; background: none; font: inherit; cursor: pointer; padding: 0 4px; min-width: 32px; min-height: 32px; }
+
+.ask-empty { padding: var(--s-4); border-radius: var(--r-xl); background: var(--bg3); color: var(--fg2); }
+.ask-empty b { display: block; color: var(--ink); }
+.ask-ex { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: var(--s-4) 0 var(--s-2); }
+.ask-ex .chip { min-height: var(--tap); text-align: left; }
+.ask-with { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); margin-bottom: var(--s-2); font-size: var(--t-100); color: var(--fg2); }
+.ask-with .ref { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; min-height: 32px; padding: 0 0 0 var(--s-3);
+  border: 1.5px solid var(--ink); border-radius: 999px; background: var(--t-yellow); color: var(--ink); }
+.ask-with .ref span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ask-with .ref:not(:has(.x)) { padding-right: var(--s-3); }
+#askform .row { display: flex; justify-content: space-between; gap: var(--s-2); flex-wrap: wrap; }
+.ask-loading { display: flex; flex-direction: column; align-items: center; gap: var(--s-3); padding: 80px 0; color: var(--fg2); }
+.ask-loading .robot { width: 96px; height: 96px; animation: rb-float 1.2s ease-in-out infinite; }
+
+.pick { list-style: none; margin: 0 0 var(--s-3); padding: 0; display: grid; gap: var(--s-2); }
+.pickrow {
+  display: flex; align-items: center; gap: var(--s-2); width: 100%; min-height: var(--tap); padding: var(--s-2) var(--s-3);
+  border: 1.5px solid var(--stroke2); border-radius: var(--r-l); background: var(--bg1); font: inherit; text-align: left; cursor: pointer;
+}
+.pickrow .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pickrow .ck { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--stroke1); display: grid; place-items: center; color: transparent; flex: none; }
+.pickrow.on { border-color: var(--ink); background: var(--t-yellow); }
+.pickrow.on .ck { background: var(--p-yellow); border-color: var(--ink); color: var(--ink); }
+.pickrow:hover { border-color: var(--ink); }
+
+@media (max-width: 899px) {
+  .ask-hero { gap: var(--s-3); align-items: flex-start; }
+  .ask-hero .robo-big { width: 72px; height: 72px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .robot .rb-eyes, .ask-hero .robo-big, .robo-av.thinking, .dots i, .ask-loading .robot { animation: none; }
+  .robo-door:hover .robo-slot { transform: none; }
+}
+
+/* 執務室：相談ロボへの質問の記録 */
+.asklog { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.asklog li { padding: var(--s-3); border-radius: var(--r-l); background: var(--bg3); }
+.asklog .q { white-space: pre-wrap; }
+.asklog .q small { display: block; color: var(--fg3); font-size: var(--t-100); white-space: normal; }
+.asklog details summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; color: var(--brand); font-size: var(--t-200); }
+.asklog .a { white-space: pre-wrap; padding: var(--s-3); border-radius: var(--r-m); background: var(--bg1); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+/* ── 執務室：取引先の登録と招待 ── */
+.phead { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-4); }
+.guest-add { display: grid; grid-template-columns: 1fr; gap: var(--s-2); margin-bottom: var(--s-3); }
+.guest-add .btn { justify-self: end; }
+.guests { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.guest { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) 0; border-top: 1px dashed var(--stroke2); }
+.guest:first-child { border-top: 0; }
+.guest.off { opacity: .75; }
+.g-who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.g-who b { overflow-wrap: anywhere; font-weight: 600; }
+.g-who small { color: var(--fg3); font-size: var(--t-100); overflow-wrap: anywhere; }
+.g-st { display: flex; flex-wrap: wrap; gap: 4px; }
+.g-act { flex: none; display: flex; align-items: center; gap: 4px; }
+.g-act .btn { min-height: 36px; padding: 0 var(--s-3); font-size: var(--t-200); position: relative; }
+.g-act .btn::after { content: ""; position: absolute; inset: -4px 0; }
+.tag.ok { border-color: var(--ok); color: var(--ok); gap: 2px; }
+.tag.ok .ic { width: 12px; height: 12px; }
+.tag.warn { border-color: var(--warn); color: var(--warn); background: var(--t-yellow); }
+.btn.wide { width: 100%; justify-content: center; margin-top: var(--s-3); }
+details.gone { margin-top: var(--s-3); }
+details.gone summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; color: var(--fg2); font-size: var(--t-200); }
+/* 狭い列でも「招待メール」と × がはみ出さないよう、名前の下に回り込ませる */
+.cols3 > * { min-width: 0; }
+.guest { flex-wrap: wrap; }
+.g-who { flex: 1 1 150px; }
+.g-act { margin-left: auto; }
+
+/* 右上の丸：オーナーのロゴ（頭文字の丸をやめた） */
+.avatar { width: 40px; height: 40px; background: transparent; border-radius: 0; overflow: visible; }
+.avatar img { display: block; width: 100%; height: 100%; }
+
+/* ── 見た目の切り替えスイッチ（ヘッダー右） ── */
+.look { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--ink-line); margin-right: var(--s-2); }
+.look button {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 34px; padding: 0 10px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--fg2); font: inherit; font-size: var(--t-100); font-weight: 600; cursor: pointer; position: relative;
+}
+.look button::after { content: ""; position: absolute; inset: -5px -1px; }
+.look button .ic { width: 16px; height: 16px; }
+.look button[aria-pressed="true"] { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+@media (max-width: 599px) {
+  /* 狭い幅：今の見た目のボタンひとつだけ（押すと切り替わる）。検索欄の幅を削らない */
+  .look { padding: 0; box-shadow: none; margin-right: 6px; }
+  .look button::after { inset: -4px 0; }
+  .look .t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .look button[aria-pressed="false"] { display: none; }
+  .look button { width: 36px; height: 36px; min-height: 36px; padding: 0; justify-content: center; }
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   クール（2026-09-23）：オーナーカラー
+   オーナーが 9/21 に決めた本家の色。地＝白／面 #F4F4F5／文字 #191919／差し色＝シアン #00D6D6。
+   並び・機能は「やわらか」と同じ。色・角・線だけを差し替える。
+   役割の対応：黄→シアン（要対応・主ボタン・NEW）／桃→コーラル（期限切れ）／水色→灰（今日）／若葉→ミント（済み）
+   計算（Python）：墨×シアン 9.70／墨×コーラル 7.70／墨×灰 11.90／墨×ミント 13.25／
+     fg3 #5C5C60×白 6.66・×地 6.06／濃シアン文字 #006B6B×白 6.33／赤 #B42318 6.57／緑 #1F6B45 6.47
+   シアン×白は 1.81 しかないので、シアンの面には必ず墨の細線を引く（やわらかと同じ約束）。
+   ═════════════════════════════════════════════════════════════════ */
+:root[data-look="cool"] {
+  --ink: #191919; --fg1: #191919; --ink-line: #191919;
+  --fg2: #3a3a3e; --fg3: #5c5c60;
+  --bg1: #ffffff; --bg2: #fafafa; --bg3: #f4f4f5; --bg5: #e9e9ec;
+  --stroke1: #d4d4d8; --stroke2: #e4e4e7;
+  --p-yellow: #00d6d6; --p-blue: #d4d4d8; --p-green: #b8ebcf; --p-pink: #ff8a80; --p-cream: #e9e9ec;
+  --t-yellow: #e3fafa; --t-blue: #f0f0f2; --t-green: #edf8f1; --t-pink: #ffeceb;
+  --brand: #006b6b; --brand-hover: #005454; --brand-bg2: var(--t-yellow); --brand-link: #006b6b;
+  --danger: #b42318; --warn: #005f5f; --warn-bg: var(--t-yellow);
+  --ok: #1f6b45; --ok-bg: var(--t-green);
+  --r-xl: 10px; --r-l: 8px; --r-m: 6px;
+}
+:root[data-look="cool"] body::before { display: none; }
+:root[data-look="cool"] .suite, :root[data-look="cool"] body.office .suite, :root[data-look="cool"] body.room .suite { background: rgba(255, 255, 255, .94); }
+:root[data-look="cool"] body.room .site { background: linear-gradient(90deg, hsl(var(--h) 40% 94%), #fff 60%); }
+
+/* 線は細く、角は小さく。ピルの丸みも抑える */
+:root[data-look="cool"] .card, :root[data-look="cool"] .cmdbar, :root[data-look="cool"] .viewer { border-width: 1px; }
+:root[data-look="cool"] .card.attn, :root[data-look="cool"] .tile.attn, :root[data-look="cool"] .ctile.attn,
+:root[data-look="cool"] .kpi.alarm, :root[data-look="cool"] .kpi.hot, :root[data-look="cool"] .kpi.soft, :root[data-look="cool"] .hero { border-width: 1.5px; }
+:root[data-look="cool"] .card-h { border-bottom-style: solid; border-bottom-color: var(--stroke1); }
+:root[data-look="cool"] .btn { border-radius: var(--r-m); border-width: 1.5px; }
+:root[data-look="cool"] .btn.primary:hover { background: #00c2c2; }
+:root[data-look="cool"] .card-h .more, :root[data-look="cool"] .chip, :root[data-look="cool"] .talk-more,
+:root[data-look="cool"] .cmdbar { border-radius: var(--r-m); }
+
+/* 帯（今日）・次の予定：光をやめて白＋左のシアン線 */
+:root[data-look="cool"] .hero { background: #fff; box-shadow: inset 6px 0 0 var(--p-yellow); }
+:root[data-look="cool"] .hero-next:hover { background: #e7e7ea; }
+
+/* 伝言の吹き出し：相手は灰、自分は淡いシアン */
+:root[data-look="cool"] .msg .bubble { background: var(--bg3); }
+:root[data-look="cool"] .msg.mine .bubble { background: var(--t-yellow); }
+:root[data-look="cool"] .msg.robo .bubble { background: #fff; }
+
+/* ロボと封筒：頭は灰、差し色はシアン、頬は消す */
+:root[data-look="cool"] .robot .rb-face { fill: #fff; }
+:root[data-look="cool"] .robot .rb-pink { fill: var(--p-yellow); }
+:root[data-look="cool"] .robot .rb-cheek { display: none; }
+:root[data-look="cool"] .letter .env-seal { fill: var(--p-yellow); }
+
+/* 取引先カードのゴミ箱（右下）。カード全体のリンクと重ねず、外側の箱に置く */
+.ctile-wrap { position: relative; display: flex; flex-direction: column; }
+.ctile-wrap > .ctile { flex: 1; }
+.ctile-wrap .tags { padding-right: 48px; }
+.ctile-del {
+  position: absolute; right: 12px; bottom: 12px; width: 44px; height: 44px; display: grid; place-items: center;
+  border: 0; border-radius: var(--r-m); background: transparent; color: var(--fg3); cursor: pointer;
+}
+.ctile-del:hover { background: var(--t-pink); color: var(--danger); box-shadow: inset 0 0 0 1.5px var(--danger); }
+.ctile-del:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.danger:hover { background: #8c2733; border-color: #8c2733; }
+dialog.dlg ul.note { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+
+/* 消した取引先への入口：一覧の下に小さく。ふだんの邪魔にならない位置と濃さ */
+.gone-link { margin: var(--s-6) 0 0; text-align: right; }
+.gone-link a { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 var(--s-2); color: var(--fg3); font-size: var(--t-200); text-decoration: none; }
+.gone-link a:hover { color: var(--fg1); text-decoration: underline; }
+.gone-link .ic { width: 16px; height: 16px; }
+
+/* 先方の動き：1件ずつ「確認済み」にして消せる。行ごと押すと部屋へ飛ぶので、ボタンは右端に分けて置く */
+.feed li { display: flex; align-items: flex-start; gap: var(--s-1); }
+.feed li > .fi { flex: 1; min-width: 0; }
+.fi-seen {
+  flex: none; width: 44px; height: 44px; margin-top: 2px; display: grid; place-items: center;
+  border: 0; border-radius: var(--r-m); background: transparent; color: var(--fg3); cursor: pointer;
+}
+.fi-seen:hover { background: var(--t-green); color: var(--ok); box-shadow: inset 0 0 0 1.5px var(--ok); }
+button.more { border: 0; background: none; font: inherit; cursor: pointer; color: var(--brand); }
+
+/* ── 執務室：案件 ── */
+.cases-card { margin-bottom: var(--s-5); }
+details.newcase { margin: 0 0 var(--s-4); }
+details.newcase > summary { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 var(--s-4); cursor: pointer; list-style: none;
+  border: 1.5px solid var(--ink); border-radius: 999px; background: var(--p-yellow); color: var(--ink); font-weight: 600; }
+details.newcase > summary::-webkit-details-marker { display: none; }
+details.newcase[open] > summary { margin-bottom: var(--s-3); }
+details.newcase .form { max-width: 720px; padding: var(--s-4); border-radius: var(--r-xl); background: var(--bg3); }
+.kases { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.kase { padding: var(--s-4); border-radius: var(--r-xl); border: 1.5px solid var(--stroke1); background: var(--bg1); }
+.kase.is-done { background: var(--bg3); }
+.k-head { display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: flex-start; justify-content: space-between; }
+.k-t { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 280px; }
+.k-t b { font-size: var(--t-500); line-height: var(--lh-500); }
+.k-t small { color: var(--fg2); }
+.k-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.k-act { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.k-act .btn { min-height: 40px; font-size: var(--t-200); }
+.tasks-in { list-style: none; margin: var(--s-3) 0 0; padding: 0; }
+.k-add { display: grid; grid-template-columns: minmax(0, 1fr) 170px auto; gap: var(--s-2); margin-top: var(--s-3); }
+@media (max-width: 699px) { .k-add { grid-template-columns: 1fr 1fr; } .k-add .in:first-of-type { grid-column: 1 / -1; } }
+
+/* ロボに渡す資料：下の注意書きは「見出し直下の説明」用の詰め（負の上余白）を使わない。
+   直前の「まだ資料がありません」と重なっていた（2026-09-23 本番テストで発覚） */
+.card .sub.ask-note { display: flex; gap: 6px; margin: var(--s-4) 0 0; padding-top: var(--s-3); border-top: 1px dashed var(--stroke1); line-height: 1.7; }
+.card .sub.ask-note .ic { flex: none; width: 14px; height: 14px; margin-top: 4px; }
+.pick + .sub.ask-note, .empty + .sub.ask-note { margin-top: var(--s-3); }
+
+/* ロボに渡す資料：ファイルを渡すボタンを札の一番上に。渡したファイルは選んだ資料と同じ見た目で並べる */
+.btn.give { width: 100%; justify-content: center; margin-bottom: var(--s-3); }
+.card .sub.ask-sub { margin: var(--s-2) 0 var(--s-2); }
+.pickrow .x { margin-left: auto; border: 0; background: none; font: inherit; font-size: 18px; line-height: 1; cursor: pointer; min-width: 36px; min-height: 36px; color: var(--ink); }
+span.pickrow { cursor: default; }
+#askform .row { justify-content: space-between; }
+.ask-with .ref .x { min-width: 30px; min-height: 30px; padding: 0; border-radius: 999px; display: grid; place-items: center; }
+
+/* 「資料を選ぶ」で飛んできたとき、右の札を一瞬光らせて目を運ぶ */
+#givecard.flash { animation: give-flash 1.4s ease-out; }
+@keyframes give-flash { 0% { box-shadow: 0 0 0 0 var(--p-yellow); } 25% { box-shadow: 0 0 0 6px var(--p-yellow); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { #givecard.flash { animation: none; outline: 3px solid var(--p-yellow); } }
+
+/* ロボとの会話：自分の質問の横に小さなゴミ箱（うっかりプライベートな相談をしたときに消せる） */
+.msg.mine .who { justify-content: flex-end; }
+.askdel { border: 0; background: none; color: var(--fg3); cursor: pointer; width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: var(--r-m); position: relative; }
+.askdel::after { content: ""; position: absolute; inset: -6px; }
+.askdel .ic { width: 16px; height: 16px; }
+.askdel:hover { color: var(--danger); background: var(--t-pink); }
+
+/* Guest Room の案件ページ：オーナーが開いたときだけ、やることを足す欄と済みの切り替え */
+.tcheck-r { border: 0; background: none; padding: 0; cursor: pointer; width: 20px; height: 20px; position: relative; color: inherit; }
+.tcheck-r::after { content: ""; position: absolute; inset: -12px; }
+.task-add { display: grid; grid-template-columns: minmax(0, 1fr) 160px auto; gap: var(--s-2); margin-top: var(--s-4); padding-top: var(--s-4); border-top: 1px dashed var(--stroke1); }
+.task-add-note { grid-column: 1 / -1; margin: 0; color: var(--fg3); font-size: var(--t-100); }
+@media (max-width: 699px) { .task-add { grid-template-columns: 1fr auto; } .task-add #rt-title { grid-column: 1 / -1; } }
+
+/* お知らせ：相手側の動きを日付つきで。3日以内は NEW */
+.ups { list-style: none; margin: 0; padding: 0; }
+.ups li + li { border-top: 1px solid var(--stroke2); }
+.ups a { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px var(--s-3); align-items: baseline; padding: var(--s-2) 0; min-height: var(--tap); color: var(--fg1); text-decoration: none; }
+.ups a:hover .ups-t { text-decoration: underline; }
+.ups-when { display: inline-flex; align-items: center; gap: 6px; color: var(--fg3); font-size: var(--t-100); font-family: var(--num); white-space: nowrap; }
+.ups .new { background: var(--p-yellow); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); border-radius: 999px; padding: 0 8px; font: 700 11px/1.6 var(--num); }
+.ups-t { font-size: var(--t-200); line-height: 1.6; }
+.news + .ups { margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px dashed var(--stroke1); }
+
+/* メモ：先方に見える1枚のホワイトボード */
+.memo-body { white-space: pre-wrap; line-height: 1.8; padding: var(--s-3) var(--s-4); border-radius: var(--r-l, 8px); background: var(--t-yellow); box-shadow: inset 4px 0 0 var(--p-yellow); }
+#memoform { display: grid; gap: var(--s-2); }
+#memoform textarea { min-height: 140px; padding: var(--s-2) var(--s-3); line-height: 1.7; }
+#memoform .acts { display: flex; justify-content: flex-end; gap: var(--s-2); }
+
+/* 案件の札・取引先の札も、他のカードと同じ墨の縁に（灰色の細線だと地に溶けて見えなかった） */
+.tile, .ctile, .kase { border: 1.5px solid var(--ink); }
+.tile:hover { border-color: var(--ink); }
+.tile.attn, .ctile.attn { border-width: 2px; }
+.tile.done, .kase.is-done { border-color: var(--stroke1); }
+:root[data-look="cool"] .tile, :root[data-look="cool"] .ctile, :root[data-look="cool"] .kase { border-width: 1px; }
+:root[data-look="cool"] .tile.attn, :root[data-look="cool"] .ctile.attn { border-width: 1.5px; }
+
+/* 「ロボに渡すもの」の × ：枠も地の色も付けず、札の中に収める。押せる範囲は見た目より広く */
+.ask-with .ref { padding-right: 4px; gap: 6px; }
+.ask-with .ref .x {
+  position: relative; flex: none; width: 22px; height: 22px; min-width: 0; min-height: 0; padding: 0; margin: 0;
+  display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; box-shadow: none;
+  color: var(--fg2); font-size: 15px; line-height: 1; cursor: pointer;
+}
+.ask-with .ref .x::after { content: ""; position: absolute; inset: -11px -6px; }
+.ask-with .ref .x:hover { background: rgba(0, 0, 0, .08); color: var(--ink); }
+.ask-with .ref .x:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+/* ═════════════════════════════════════════════════════════════════
+   部屋の色をアクセントに（2026-09-23）
+   オーナー「色が少なすぎる。アクセントを入れて見やすく」。
+   色を足すなら意味のある場所から取る：取引先ごとに決まっている部屋の色相 --h（部屋の身元）。
+   黄・桃・水色・若葉（やわらか）／シアン等（クール）は「要対応・期限切れ・今日・済み」の役割色なので使わない。
+   ═════════════════════════════════════════════════════════════════ */
+body.room {
+  --acc-bg:  hsl(var(--h) 70% 91%);   /* 面：見出しの丸・案件のアイコン */
+  --acc-mid: hsl(var(--h) 55% 72%);   /* 線：見出しの下線 */
+  --acc-ink: hsl(var(--h) 55% 28%);   /* 丸の中のアイコンの色（面との比は下で計算） */
+}
+/* 抑えめに（オーナー「ちょっとやりすぎかな、抑えつつアクセントを」）：
+   見出しのアイコンは色だけ（丸はつけない）／見出しの下線は元のまま、左端に短い部屋の色の印だけ／
+   案件の札のアイコンは淡い地だけ／左メニューの選択は淡い地 */
+body.room .card-h > .ic { color: var(--acc-ink); }
+body.room .card.attn .card-h > .ic { color: var(--ink); }
+body.room .card-h { position: relative; }
+body.room .card-h::after { content: ""; position: absolute; left: 0; bottom: -1.5px; width: 40px; height: 3px; border-radius: 2px; background: var(--acc-mid); }
+body.room .card.attn .card-h::after { display: none; }
+body.room .tile .icbox { background: var(--acc-bg); color: var(--acc-ink); }
+body.room .tile.done .icbox { background: var(--bg3); color: var(--fg3); }
+body.room .nav a[aria-current="page"] { background: var(--acc-bg); }
+
+/* やわらかは執務室のやわらかを軸に（オーナー 2026-09-23）。部屋の色はクールだけで使う。
+   見出しのアイコン＝執務室と同じ青（--brand）／見出しの印＝黄（執務室の選択の印・主ボタンと同じ色）／
+   案件の札のアイコン＝淡い水色の地／左メニューの選択＝執務室と同じ（白い地＋黄の印） */
+:root:not([data-look="cool"]) body.room .card-h > .ic { color: var(--brand); }
+:root:not([data-look="cool"]) body.room .card-h::after { background: var(--p-yellow); box-shadow: 0 0 0 1px var(--ink); height: 4px; bottom: -2px; }
+:root:not([data-look="cool"]) body.room .tile .icbox { background: var(--t-blue); color: var(--ink); }
+:root:not([data-look="cool"]) body.room .nav a[aria-current="page"] { background: var(--bg1); }
+/* やわらか：左メニューの選択の印と、会社名の後ろのにじみも執務室と同じ黄に（部屋の紫などは使わない） */
+:root:not([data-look="cool"]) body.room .nav a[aria-current="page"]::before { background: var(--p-yellow); width: 4px; box-shadow: 0 0 0 1px var(--ink); }
+:root:not([data-look="cool"]) body.room .site { background: radial-gradient(520px 160px at 0% 0%, rgba(241, 200, 70, .30), transparent 70%); }
+
+/* 相談ロボの注意書き：個人情報・プライベートは書かない（会話は オーナーも読めるため）。一番目立つ位置に */
+.ask-caution { display: flex; gap: var(--s-2); align-items: flex-start; margin: var(--s-3) 0 0; padding: var(--s-2) var(--s-3);
+  border-radius: var(--r-m); background: var(--t-pink); box-shadow: inset 3px 0 0 var(--danger); color: var(--fg1); font-size: var(--t-200); line-height: 1.7; }
+.ask-caution .ic { flex: none; margin-top: 3px; color: var(--danger); }
+.ask-caution b { color: var(--danger); }
+/* 注意書きは3段・赤は使わない（オーナー）。地は淡い生成り、左に墨の線 */
+.ask-caution { background: var(--bg3); box-shadow: inset 3px 0 0 var(--ink); }
+.ask-caution .ic { color: var(--ink); width: 18px; height: 18px; margin-top: 2px; }
+.ask-caution b { color: var(--ink); display: block; }
+.ask-caution .l { display: block; color: var(--fg2); }
+
+/* 執務室：部屋の色を選ぶ12色。今の色は墨の輪、ほかの部屋が使っている色は白い点 */
+.huepick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 var(--s-5); }
+.hp-label { font-size: var(--t-200); color: var(--fg2); margin-right: var(--s-2); }
+.hp { position: relative; width: 28px; height: 28px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; background: hsl(var(--sh) 50% 30%); }
+.hp::after { content: ""; position: absolute; inset: -8px -2px; }
+.hp:hover { transform: scale(1.1); }
+.hp.on { box-shadow: 0 0 0 2px var(--bg1), 0 0 0 4px var(--ink); }
+.hp.used::before { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; }
+.hp:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.hp-warn { display: inline-flex; align-items: center; gap: 4px; margin-left: var(--s-2); font-size: var(--t-100); color: var(--warn); }
+
+/* 部屋の色はパステルで（オーナー「トーン的にパステルカラーの方がサイトの雰囲気似合ってる」）。
+   hsl(h 65% 80%)。上に乗る文字は墨、境目は墨の線。墨×面は12色すべて 5.35 以上 */
+:root { --room-pastel: hsl(var(--sh) 65% 80%); }
+.sw { background: hsl(var(--sh) 65% 80%); box-shadow: inset 0 0 0 1.5px var(--ink); width: 14px; height: 14px; }
+.ctile .logo, .plogo { background: hsl(var(--sh) 65% 80%); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); font-weight: 700; }
+.plogo { width: 40px; height: 40px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; flex: none; }
+.ctile .logo.none, .plogo.none { background: var(--bg3); color: var(--fg2); }
+.hp { background: hsl(var(--sh) 65% 80%); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.hp.on { box-shadow: inset 0 0 0 1.5px var(--ink), 0 0 0 2px var(--bg1), 0 0 0 4px var(--ink); }
+.hp.used::before { background: var(--ink); width: 6px; height: 6px; margin: -3px 0 0 -3px; }
+:root[data-look="cool"] .sw, :root[data-look="cool"] .ctile .logo, :root[data-look="cool"] .plogo, :root[data-look="cool"] .hp:not(.on) { box-shadow: inset 0 0 0 1px var(--ink); }
+
+/* 予定の色の印（2026-09-23 オーナーOK）：
+   取引先なし＝自分の予定＝オーナーのシアン／取引先の予定＝その部屋のパステル。どちらも墨の細い縁で白地から浮かせる */
+.ev { grid-template-columns: 76px 6px minmax(0, 1fr) auto; }
+@media (max-width: 899px) { .ev { grid-template-columns: 56px 6px minmax(0, 1fr) auto; } }
+.ev .bar, :root[data-look="cool"] .ev .bar { background: #00d6d6; box-shadow: 0 0 0 1px var(--ink); border-radius: 3px; }
+.ev .bar.c, :root[data-look="cool"] .ev .bar.c { background: hsl(var(--sh) 65% 80%); }
+.cell .dots i, :root[data-look="cool"] .cell .dots i { width: 8px; height: 8px; background: #00d6d6; box-shadow: 0 0 0 1px var(--ink); }
+.cell .dots i.c, :root[data-look="cool"] .cell .dots i.c { background: hsl(var(--sh) 65% 80%); }
+.chipev, :root[data-look="cool"] .chipev { background: #e3fafa; box-shadow: inset 3px 0 0 #00d6d6; }
+.chipev.c, :root[data-look="cool"] .chipev.c { background: hsl(var(--sh) 65% 93%); box-shadow: inset 3px 0 0 hsl(var(--sh) 65% 70%); }
+
+/* Guest Room のメンバー */
+.members { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.members li { display: flex; align-items: center; gap: var(--s-3); }
+.members.waiting { margin-top: var(--s-3); padding-top: var(--s-3); border-top: 1px dashed var(--stroke1); opacity: .8; }
+.mb-av { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: var(--t-200);
+  background: var(--t-blue); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+.members.waiting .mb-av { background: var(--bg3); box-shadow: inset 0 0 0 1.5px var(--stroke1); }
+.mb-t { display: flex; flex-direction: column; min-width: 0; }
+.mb-t b { font-weight: 600; overflow-wrap: anywhere; }
+.mb-t small { color: var(--fg3); font-size: var(--t-100); }
+:root[data-look="cool"] body.room .mb-av { background: var(--acc-bg); }
+
+/* 透かし：Atrium を最初に作った人のクレジット（MIT ライセンス。残してもらえるとうれしいです） */
+.credit {
+  position: fixed; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .72);
+  font-size: 10px; line-height: 18px; letter-spacing: .06em; color: #707070; text-decoration: none;   /* 白地 4.95:1 */
+}
+.credit b { font-weight: 700; }
+.credit:hover { color: #191919; text-decoration: underline; }
+@media print { .credit { display: none; } }

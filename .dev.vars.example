@@ -1,0 +1,7 @@
+# 手元で動かすとき（npx wrangler dev）だけ使う設定。
+# このファイルを .dev.vars という名前でコピーして使ってください（.dev.vars は Git に入りません）。
+#
+# DEV_EMAIL … 手元（localhost）で、このアドレスの人として入ったことにする。
+#             オーナーとして見るなら wrangler.jsonc の OWNER_EMAIL と同じにする。
+#             本番（workers.dev や独自ドメイン）では使われません。
+DEV_EMAIL=you@example.com

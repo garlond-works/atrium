@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Atrium</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="i-door" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M4 3.5h12v17H4z"/><path d="M16 8.5h4v12h-4"/><circle cx="12.5" cy="12" r="1"/>
+  </g>
+  <g id="i-desk" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M2.5 7.5h19v3h-19z"/><path d="M4.5 10.5v10M19.5 10.5v10"/><path d="M8 14h8"/>
+  </g>
+</defs></svg>
+
+<header class="bar">
+  <span class="roomtag">Atrium</span>
+  <h1 class="place">ポータル</h1>
+  <span class="me" id="me"></span>
+</header>
+
+<main class="sheet">
+  <div class="home">
+    <section class="card" id="officeCard" hidden>
+      <h2><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-desk"/></svg>Office</h2>
+      <div class="body">
+        <p class="empty">取引先の台帳と、Guest Room に出す資料を扱う部屋。</p>
+        <p style="margin:var(--s-4) 0 0"><a class="btn" href="/office.html" style="text-decoration:none">Office を開く</a></p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-door"/></svg>Guest Rooms <span class="count" id="n"></span></h2>
+      <div class="body"><ul class="rooms" id="rooms"><li class="empty">読み込み中…</li></ul></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+(async () => {
+  const res = await fetch("/api/me");
+  if (!res.ok) {
+    document.querySelector(".sheet").innerHTML =
+      '<p class="empty">認証情報を取得できませんでした（' + res.status + '）。Cloudflare Access の設定と、wrangler.jsonc の ACCESS_TEAM_DOMAIN・ACCESS_AUD を確かめてください。</p>';
+    return;
+  }
+  const me = await res.json();
+
+  // オーナーは執務室が入口（オーナーのメインポータル・2026-09-23）
+  if (me.side === "us") { location.replace("/office.html"); return; }
+  // 来訪者にはこの入口を見せない。自分の Guest Room へそのまま通す。
+  if (me.side !== "us") {
+    if (me.rooms.length === 1) { location.replace("/room.html?r=" + encodeURIComponent(me.rooms[0].slug)); return; }
+    if (me.rooms.length === 0) {
+      document.querySelector(".sheet").innerHTML = '<p class="empty">ご案内できる Guest Room がありません。</p>';
+      return;
+    }
+  }
+
+  document.getElementById("me").textContent = me.email;
+  if (me.side === "us") document.getElementById("officeCard").hidden = false;
+
+  document.getElementById("n").textContent = me.rooms.length || "";
+  document.getElementById("rooms").innerHTML = me.rooms.length
+    ? me.rooms.map(r => `
+      <li><a href="/room.html?r=${encodeURIComponent(r.slug)}">
+        <span class="swatch" style="--sh:${r.hue}" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="nm">${esc(r.client_name)}</span>
+        <svg class="ic go" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-door"/></svg>
+      </a></li>`).join("")
+    : '<li class="empty">まだ Guest Room がありません。Office から取引先を追加してください。</li>';
+})();
+</script>
+<a class="credit" href="https://garlondworks.com" target="_blank" rel="noopener">Originally built by <b>GARLOND WORKS</b></a>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "atrium",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+
+  // 版ごとのプレビュー URL（<版>-atrium.<サブドメイン>.workers.dev）は出さない。
+  // Access の設定から漏れやすい入口を、最初から作らないため。
+  "preview_urls": false,
+
+  // 画面は public/ の静的ファイル。/api/* と執務室（/office*）だけ Worker を通す。
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/office*"]
+  },
+
+  "vars": {
+    // ① あなた（オーナー）のメールアドレス。このアドレスで入った人だけが執務室を開ける
+    "OWNER_EMAIL": "you@example.com",
+
+    // ② 画面と相談ロボが名乗る会社名
+    "ORG_NAME": "あなたの会社名",
+    // 相談ロボに伝える会社の説明（1文・空でもよい）。ここに書いた以外のことをロボは作らない
+    "ORG_ABOUT": "",
+
+    // ③ Cloudflare Access の設定（README の手順 4 を参照）
+    //    チームのドメイン（例：yourteam.cloudflareaccess.com）
+    "ACCESS_TEAM_DOMAIN": "yourteam.cloudflareaccess.com",
+    //    Access アプリケーションの「Application Audience (AUD) Tag」
+    "ACCESS_AUD": "paste-your-aud-tag-here"
+  },
+
+  // ④ `npx wrangler d1 create atrium` で出た database_id を貼る
+  "d1_databases": [
+    { "binding": "DB", "database_name": "atrium", "database_id": "paste-your-database-id-here" }
+  ],
+
+  // ⑤ `npx wrangler r2 bucket create atrium-documents` で作るバケット
+  "r2_buckets": [
+    { "binding": "DOCS", "bucket_name": "atrium-documents" }
+  ],
+
+  // 相談ロボ（AI）を使うときだけ、下の1行の // を外す。
+  // Workers AI を使います（無料枠あり・超えた分は Cloudflare の料金がかかる場合があります）。
+  // "ai": { "binding": "AI" },
+
+  "observability": { "enabled": true }
+}

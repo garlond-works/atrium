@@ -1,0 +1,733 @@
+/* Atrium — 応接室
+   tokens.css の変数だけで組む。直値のハードコード禁止。
+
+   配置の律（「ただ置く」を避けるための決め事）：
+     ① 余白は 4/8/12/16/24/32/48/64 以外を使わない
+     ② カードの内側は左右とも --s-5(24px) で揃える。中の要素は同じ線に乗る
+     ③ 距離が関係を語る。見出し⇄中身は --s-3、項目⇄項目は --s-4、塊⇄塊は --s-5
+     ④ 3枚のカードは天地を揃える。長いものはカードの中でスクロールさせる
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600&display=swap");
+@import url("/tokens.css");
+
+* { box-sizing: border-box; }
+
+/* hidden 属性は、要素に display を指定した時点で効かなくなる。
+   .card（flex）・.chips（flex）がそれで、入口の Office カードが
+   来訪者にも見えていた（2026-09-23 実測で発覚）。
+   HTML の hidden は「無いもの」を意味するので、CSS より強くする。 */
+[hidden] { display: none !important; }
+
+/* ゴシックで統一。明朝は混ぜない。フォールバックも全てゴシック。 */
+html, body, input, button, select, textarea { font-family: var(--font-jp); }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  /* 部屋の中だけ、地が部屋の色になる。入口と Office は据え置き */
+  color: var(--ink);
+  font-size: var(--t-base);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--ls);
+  line-break: strict;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ───────── 帯：濃いシアンの面。上に白文字 ───────── */
+.bar {
+  position: sticky; top: 0; z-index: 10;
+  flex: none;
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  min-height: 64px; padding: var(--s-3) var(--s-5);
+  background: var(--dark); color: var(--on-dark);
+}
+/* 部屋の種類を英字で小さく置き、会社名を主にする。
+   Clash Display の字面が効く場所。 */
+.roomtag {
+  order: 0; flex: none;
+  font-family: var(--font-en); font-size: var(--t-sm); font-weight: var(--w-med);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--brand); white-space: nowrap;
+}
+.bar .place {
+  order: 1; flex: 0 1 auto; min-width: 0; margin: 0;
+  font-size: var(--t-md); font-weight: var(--w-bold); line-height: var(--lh-tight);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bar .me {
+  order: 3; margin-left: auto; font-size: var(--t-xs); opacity: .85;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bar .leave {
+  order: 4; flex: none; white-space: nowrap; font-size: var(--t-sm);
+  color: var(--on-dark); background: transparent;
+  border: 1px solid rgba(255,255,255,.55); border-radius: var(--r);
+  /* 指で押せる最小寸法。帯の中でも 44px を割らない（Apple HIG） */
+  min-height: var(--tap); padding: 0 var(--s-4); cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.bar .leave:hover { background: rgba(255,255,255,.14); }
+
+/* 帯の中の並び順は #nav 自体に効かせる。
+   order を .leave に書いても、flex の子は #nav なので効かない（2026-09-21 実測で発覚）。 */
+.bar #nav { order: 5; flex: none; margin-left: var(--s-4); }
+
+/* 狭いときは帯を2段にして、名前もボタンも折り返さない */
+@media (max-width: 719px) {
+  .bar { height: auto; padding: var(--s-3) var(--s-4); }
+  .bar .me { flex: 1 0 100%; order: 3; }
+}
+
+/* ───────── 面 ───────── */
+.sheet { max-width: 1240px; margin: 0 auto; padding: var(--s-5) var(--s-5) var(--s-8); }
+/* 窓の中では面を中央寄せしない。
+   `.sheet` の `margin: 0 auto` を残したまま flex の子にすると、左右の auto マージンが
+   stretch を打ち消し、面が中身の幅までしか広がらない（2026-09-23 実測。
+   3列のときは中身が押し広げていたので見えていなかった）。 */
+.window .sheet { max-width: none; margin: 0; padding: var(--s-5); }
+/* 窓の中では区画の外枠を外す。窓の枠と二重になって container soup になるため。
+   境界は区画のあいだの縦罫だけが語る。 */
+.window .grid { border: none; border-radius: 0; }
+
+/* 3枚は等分にしない。役割で幅が違う。天地は揃える。
+
+   骨格：
+   カードを浮かせて並べるのではなく、1枚の面を罫線で区画に切る。
+   ここでは線を部屋の色の濃い版にして 4.06:1（地）／4.87:1（白）を確保する。
+   gap を 0 にして隙間を消し、境界は線だけが語る。 */
+.grid {
+  display: grid; gap: 0;
+  background: var(--card);
+  border: 1px solid var(--theme-rule);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: 296px minmax(0, 1fr) 256px;
+    align-items: stretch;
+    min-height: 520px;
+  }
+  .grid > .card + .card { border-left: 1px solid var(--theme-rule); }
+}
+/* 狭い画面では縦に積み、区画の切れ目は横罫になる */
+@media (max-width: 899px) {
+  .grid > .card + .card { border-top: 1px solid var(--theme-rule); }
+  /* 伝言が伸びてもタスクが画面の下に沈まないよう、
+     各区画の中身に上限を設けてカードの中でスクロールさせる。
+     並び順は DOM のまま変えない（読み上げの順と食い違わせない）。 */
+  .card .body { max-height: 52vh; }
+}
+
+/* ───────── カード ───────── */
+.card {
+  display: flex; flex-direction: column; min-height: 0;
+  background: transparent;   /* 区画の地は .grid が持つ */
+  border: none; border-radius: 0;
+  overflow: hidden;
+}
+.card > h2 {
+  flex: none; margin: 0;
+  padding: var(--s-5) var(--s-5) var(--s-3);
+  /* 区画名は英字。和文本文と書体を分けて、見出しであることを字面で示す */
+  font-family: var(--font-en);
+  font-size: var(--t-md); font-weight: var(--w-bold); line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  display: flex; align-items: baseline; gap: var(--s-3);
+}
+.card > h2 .count {
+  font-family: var(--font-en); font-size: var(--t-xs); letter-spacing: 0;
+  color: var(--ink-mute); font-weight: var(--w-normal);
+}
+/* 中身が長いときはカードの中でスクロールさせる。カード自体は伸ばさない。 */
+.card .body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 var(--s-5) var(--s-5); }
+.card .foot { flex: none; padding: var(--s-4) var(--s-5); border-top: 1px solid var(--line); }
+
+/* ───────── 押せるもの ─────────
+   明るいシアンの面は白い地の上にだけ置く（濃いシアンとは 2.63:1 しかないため）。
+   1画面につき、主ボタンは1つだけ。 */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--t-base); font-weight: var(--w-med);
+  min-height: var(--tap); padding: 0 var(--s-5);
+  border-radius: var(--r); border: 1px solid var(--line);
+  background: var(--card); color: var(--ink); cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.btn:hover { background: var(--surface); }
+.btn.primary {
+  background: var(--brand); color: var(--brand-ink);
+  border-color: var(--brand); font-weight: var(--w-bold);
+}
+.btn.primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+.btn:disabled { opacity: .45; cursor: default; }
+
+input[type=text], input[type=file], select, textarea {
+  font-size: var(--t-base); color: var(--ink);
+  min-height: var(--tap); padding: var(--s-2) var(--s-3);
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+  width: 100%;
+}
+:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 2px; }
+
+/* ───────── 資料 ───────── */
+.docs { list-style: none; margin: 0; padding: 0; }
+.docs li { padding: var(--s-2) 0; border-top: 1px solid var(--line); }
+.docs li:first-child { border-top: none; }
+.docs .name {
+  /* 見た目は1行でも、指で押せる範囲は 44px を確保する（Apple HIG）。
+     現場の人が立ったままスマホで押す前提。
+     資料を同じ画面で開くようになったので button でも使う。既定の枠は消す。 */
+  display: flex; align-items: center; min-height: var(--tap); width: 100%;
+  padding: 0; background: none; border: none; text-align: left; cursor: pointer;
+  font: inherit; font-weight: var(--w-med);   /* 日時・出所（400）と重さで分ける */
+  color: var(--ink); text-decoration: none; line-height: var(--lh-tight);
+}
+.docs button.name:hover { color: var(--brand-text); text-decoration: underline; }
+.docs a.name:hover { color: var(--brand-text); text-decoration: underline; }
+.docs .meta {
+  display: flex; align-items: center; gap: var(--s-2);
+  flex-wrap: nowrap; white-space: nowrap;
+  font-size: var(--t-xs); color: var(--ink-mute);
+}
+/* 引き取る（＝取り下げる）。絵だけのボタン。
+   言葉は title / aria-label が持つ。押せる範囲は 44px 角。 */
+.docs .pull, .docs .act.icon {
+  margin-left: auto; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--tap); min-height: var(--tap); padding: 0;
+  color: var(--ink-mute); background: none; border: none; cursor: pointer;
+  border-radius: var(--r); text-decoration: none;
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.docs .pull:hover { color: var(--alert); background: var(--surface); }
+
+/* ───────── 伝言 ───────── */
+.talk { display: flex; flex-direction: column; gap: var(--s-4); }
+.say { max-width: 82%; }
+.say .bubble {
+  padding: var(--s-3) var(--s-4); border-radius: var(--r);
+  background: var(--surface); white-space: pre-wrap;
+  /* 文章が続く場所。ここだけ読み物の行送り・字間を使う */
+  line-height: var(--lh-read); letter-spacing: var(--ls-read);
+}
+.say .ref {
+  font-size: var(--t-xs); color: var(--ink-mute);
+  padding-left: var(--s-3); margin-bottom: var(--s-2);
+  border-left: 2px solid var(--brand);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.say .sign { font-size: var(--t-xs); color: var(--ink-mute); margin-top: var(--s-2); }
+.say.mine { align-self: flex-end; }
+.say.mine .bubble { background: var(--dark); color: var(--on-dark); }
+.say.mine .sign { text-align: right; }
+.say .gone { opacity: .7; }
+
+/* ───────── やること ───────── */
+.tasks { list-style: none; margin: 0; padding: 0; }
+.tasks li {
+  /* 印｜(やること / 期日) の2列。期日を同じ行に置くと、
+     列が狭いときにタイトルが折り返して期日と競り合う（2026-09-21 実測）。 */
+  display: grid; grid-template-columns: 20px minmax(0, 1fr);
+  gap: var(--s-1) var(--s-3); align-items: start;
+  padding: var(--s-4) 0; border-top: 1px solid var(--line);
+}
+.tasks li:first-child { border-top: none; padding-top: 0; }
+.tasks .mark {
+  flex: none; width: 20px; height: 20px; margin-top: 4px;
+  border: 2px solid var(--line); border-radius: var(--r-pill);
+}
+/* 応接室では「まだ／終わった」の2状態だけ。doing は執務室の内部状態。 */
+.tasks .done .mark { border-color: var(--dark); background: var(--dark); }
+.tasks .done .title { color: var(--ink-mute); text-decoration: line-through; }
+.tasks .title { line-height: var(--lh-tight); }
+.tasks .due {
+  grid-column: 2;
+  font-family: var(--font-en); font-size: var(--t-xs); color: var(--ink-mute);
+}
+
+.empty { color: var(--ink-mute); font-size: var(--t-sm); margin: 0; }
+
+/* ───────── アイコン ─────────
+   意味を担うものだけ置く。飾りでは置かない。
+   色は持たせず currentColor を継承する。
+
+   文字との併記について（2026-09-23 オーナー判断で改訂）：
+   見出し・ボタンは文字と併記する。**資料1行の操作だけは絵単独にする。**
+   一行に「Guest Room に出す」「内部限定にする」と言葉が2つ並ぶと、
+   資料名より操作のほうが目立ち、行が読めなくなるため。
+   絵だけにする代わりに、言葉は `aria-label`（読み上げ）と `title`（ホバー）が必ず持つ。
+   絵は操作の結果と一致させる（消える＝ゴミ箱／移すだけ＝矢印）。 */
+.ic {
+  width: 18px; height: 18px; flex: none;
+  vertical-align: -3px; color: inherit;
+}
+.card > h2 .ic { width: 26px; height: 26px; color: var(--ink-mute); align-self: center; }
+.btn .ic { margin-right: var(--s-2); }
+.bar .leave .ic { width: 16px; height: 16px; margin-right: var(--s-2); }
+
+/* 迎えの一言。場所の名前の下に小さく添える */
+.greet {
+  order: 2; flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--t-xs); color: rgba(255,255,255,.75);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 狭い画面では、迎えの一言とアドレスを2段目に落とす。
+   退室・All Rooms は1行目の右端に置く（画面のどこを探せばいいか動かさない）。 */
+@media (max-width: 719px) {
+  .bar #nav { order: 0; margin-left: auto; }
+  .bar .place { flex: 1 0 100%; order: 1; }
+  .greet { flex: 1 0 100%; order: 5; }
+  .bar .me { flex: 1 0 100%; order: 6; margin-left: 0; }
+}
+@media (min-width: 720px) { .greet { margin-left: var(--s-4); } }
+
+/* 入力欄には必ずラベルを置く。placeholder は入力し始めると消えるので、
+   何を入れる欄かを示す役目を負わせない（読み上げでも拾われない）。 */
+.lbl {
+  display: block; margin-bottom: var(--s-2);
+  font-size: var(--t-sm); font-weight: var(--w-med); color: var(--ink);
+}
+
+/* ───────── 開く演出（ロード一発に集約）─────────
+   アイコン → サイドバー → 全画面と段階的に開く動き。
+   Atrium は毎日使う道具なので、あそこまで長い前振りは付けない。
+   「窓が開く → 帯が入る → 区画が左から順に立つ」の 0.8 秒で畳む。
+   散発ホバーを足さず、ここ一回に全部預ける。 */
+@media (prefers-reduced-motion: no-preference) {
+  .window { animation: open 520ms var(--ease) backwards; }
+  @keyframes open {
+    from { opacity: 0; transform: translateY(10px) scale(.985); }
+  }
+
+  .bar > * { animation: rise 380ms var(--ease) backwards; animation-delay: 180ms; }
+
+  .card { animation: rise 420ms var(--ease) backwards; }
+  .card:nth-child(1) { animation-delay: 260ms; }
+  .card:nth-child(2) { animation-delay: 340ms; }
+  .card:nth-child(3) { animation-delay: 420ms; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+}
+
+
+/* ───────── 入口（Home） ───────── */
+.home { display: grid; gap: var(--s-4); }
+@media (min-width: 900px) { .home { grid-template-columns: 300px minmax(0, 1fr); align-items: start; } }
+
+.rooms { list-style: none; margin: 0; padding: 0; }
+.rooms li { border-top: 1px solid var(--line); }
+.rooms li:first-child { border-top: none; }
+.rooms a {
+  display: flex; align-items: center; gap: var(--s-3);
+  min-height: var(--tap); padding: var(--s-3) 0;
+  color: var(--ink); text-decoration: none;
+  transition: color var(--dur) var(--ease);
+}
+.rooms a:hover { color: var(--brand-text); }
+.rooms .nm { flex: 1 1 auto; font-weight: var(--w-med); }
+.rooms .go { color: var(--ink-mute); }
+.rooms a:hover .go { color: var(--brand-text); }
+
+/* ═════════ 部屋の色 ═════════
+   Guest Room は取引先ごとに色相がひとつ与えられ、地・帯・チップがそこから作られる。
+   使うのは「この部屋はどこか」を示すことだけ。押せるものの色には一切使わない。
+
+   押せるもの＝シアン（--brand）は全部屋で固定する。
+   部屋を移っても操作の色が変わらないことが、
+   「説明書が要らない」の本体だと判断した。 */
+
+/* 色が付くのは Guest Room だけ。入口と Office は黒のままにする。
+   「オーナーの場所は黒で一定／取引先の部屋は色が変わる」を規則にする。 */
+body.room {
+  /* ベタ塗り一色をやめて層を作る（antislop 逆リスト「背景に層を作る」）。
+     固定して、中身をスクロールしても壁紙が動かないようにする。 */
+  background: var(--wall);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+body.room .bar { background: var(--theme-dark); }
+
+/* ───────── 窓 ─────────
+   帯も中身も1枚に収め、壁紙の上に浮かせる。
+   「部屋の中にいて、外に空気がある」構造をここで作る。 */
+.window {
+  max-width: 1160px; margin: var(--s-7) auto;
+  background: var(--card);
+  border: 1px solid var(--theme-rule);
+  border-radius: 14px;   /* 面のいちばん外側だけ、中の 8px より一段大きく */
+  overflow: hidden;
+}
+@media (min-width: 900px) {
+  /* 窓の高さを画面に合わせ、中身は窓の中で収まる。
+     区画ごとの縦スクロールは .card .body が持つ。 */
+  .window { height: calc(100vh - var(--s-7) * 2); display: flex; flex-direction: column; }
+  .window .sheet { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .window .grid  { flex: 1 1 auto; height: auto; min-height: 0; }
+}
+/* 狭い画面では窓を外して全画面にする。
+   壁紙に割ける余白が無いのと、帯を sticky のまま使いたいため。 */
+@media (max-width: 719px) {
+  /* 窓の枠は外すが、地は透かして壁紙を見せる。
+     窓のまま置くと画面が狭すぎて中身が痩せ、
+     白で覆うと壁紙が一切見えなくなるので、その中間を取る。 */
+  .window {
+    margin: 0; max-width: none; border: none; border-radius: 0;
+    background: transparent;
+  }
+  /* 帯は画面の端から端まで。区画だけを壁紙の上に浮かせる。 */
+  .window .grid {
+    border: 1px solid var(--theme-rule);
+    border-radius: var(--r);
+  }
+}
+
+/* 帯の下に区画の線を1本。帯と面の境目をはっきりさせる */
+body.room .bar { border-bottom: 1px solid var(--theme-rule); }
+
+/* 3色のチップ。
+   文字を乗せず、押せず、ただ置くだけ。
+   帯（L14%）の上に置くので、暗い1枚目だけ L26% まで持ち上げて見えるようにする。 */
+.chips { order: 0; flex: none; display: flex; gap: 2px; margin-left: var(--s-2); }
+.chips i { display: block; width: 14px; height: 14px; }
+.chips i:nth-child(1) { background: hsl(var(--h) 45% 26%); }
+.chips i:nth-child(2) { background: var(--theme-chip); }
+.chips i:nth-child(3) { background: var(--theme-pale); }
+
+/* 区画の中の細い区切り（項目と項目）は据え置きの薄い線のまま。
+   区画を切る線（--theme-rule）と役割が違うので、濃さも変えない。 */
+
+/* 入口の部屋一覧に出す3色。部屋の帯と同じ色相から作る。 */
+.rooms .swatch { flex: none; display: flex; gap: 2px; }
+.rooms .swatch i { display: block; width: 10px; height: 16px; }
+.rooms .swatch i:nth-child(1) { background: hsl(var(--sh) 45% 14%); }
+.rooms .swatch i:nth-child(2) { background: hsl(var(--sh) 55% 42%); }
+.rooms .swatch i:nth-child(3) { background: hsl(var(--sh) 22% 90%); }
+
+/* ═════════ 執務室（Office） ═════════
+   オーナーだけが開く道具。器（帯・区画グリッド・44px・タイポの段）は応接室と同じものを使い、
+   密度だけ上げる（「画面ごとの性質」＝執務室は情報密度を取ってよい／
+   操作の取り違えを防ぐ）。
+
+   色は付けない。「オーナーの場所は黒で一定／取引先の部屋は色が変わる」の規則どおり、
+   取引先の身元はチップとスウォッチに閉じ込め、器そのものには持ち込まない。 */
+
+body.office {
+  /* 区画を切る罫線だけ、部屋の色相ではなく中立のグレーに差し替える。
+     --ink-mute は白地 6.05:1・地 5.30:1 で、非テキスト基準 3.0 を大きく上回る。 */
+  --theme-rule: var(--ink-mute);
+}
+
+/* 一覧は1区画、詳細は3区画。
+   Shared と Private を同じ幅にして、左右の移動が「出す／引き戻す」に見えるようにする。 */
+@media (min-width: 900px) {
+  /* 1区画のときは幅を絞る。1240px いっぱいに広げると、
+     左端の会社名と右端の件数が 1m 離れて視線が流れる（実測 1190px）。 */
+  body.office .grid.one   { grid-template-columns: minmax(0, 1fr); min-height: 0; max-width: 840px; }
+  body.office .grid.three { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 288px; }
+}
+
+/* 区画名の下に和文を1行。英字見出しだけでは「どっちが外に見えているか」が
+   一目で決まらない。取り違えを防ぐのが執務室の重心なので、ここは言葉で書く。 */
+.card > .sub {
+  flex: none; margin: 0;
+  padding: 0 var(--s-5) var(--s-3);
+  font-size: var(--t-xs); line-height: var(--lh-ui); color: var(--ink-mute);
+}
+
+/* 申し送り。資料に紐づかない、取引先そのものへのメモ。 */
+.note {
+  margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4);
+  background: var(--surface); border-left: 2px solid var(--brand);
+  border-radius: var(--r); font-size: var(--t-sm); white-space: pre-wrap;
+  line-height: var(--lh-read); letter-spacing: var(--ls-read);
+}
+
+/* 状態は形と言葉で示す。色は「危険なほう」にだけ添える（色のみに情報を預けない）。 */
+.tag {
+  display: inline-block; flex: none;
+  font-size: var(--t-xs); line-height: var(--lh-ui);
+  padding: 0 var(--s-2); border-radius: var(--r-pill);
+  border: 1px solid var(--line); color: var(--ink-mute);
+  white-space: nowrap;
+}
+.tag.warn { border-color: var(--alert); color: var(--alert); }
+
+/* 資料行の操作。応接室の .pull と同じ手で、見た目は小さいまま当たり判定だけ 44px。
+   執務室は1行に操作が2つ並ぶので、meta の折り返しだけ許す（ボタンの中身は折らない）。 */
+/* 操作が無い行（先方が置いたもの）だけ高さが落ちて、行のリズムが崩れる。
+   ボタンが入る行と同じ 44px を下限にして揃える。 */
+body.office .docs .meta { flex-wrap: wrap; white-space: normal; row-gap: 0; min-height: var(--tap); }
+/* 44px 角の的が2つ密着すると押し間違える。指1本ぶんの隙間を空ける。 */
+.docs .ops { margin-left: auto; flex: none; display: flex; align-items: center; gap: var(--s-1); }
+/* 絵のボタンは .ops の中で並ぶので、個々の margin-left:auto は打ち消す */
+.docs .ops .act.icon { margin-left: 0; }
+.docs .act.icon:hover { color: var(--ink); background: var(--surface); }
+.docs .act.icon.warn:hover { color: var(--alert); }
+/* 絵の寸法は本文まわりの 18px ではなく、単独で意味を負うぶん一段大きく */
+.docs .pull .ic, .docs .act.icon .ic { width: 20px; height: 20px; vertical-align: 0; }
+
+/* 招いている人。読むだけの一覧なので行は詰める。 */
+.guests { list-style: none; margin: 0; padding: 0; }
+.guests li {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-1) var(--s-2);
+  padding: var(--s-3) 0; border-top: 1px solid var(--line);
+  font-size: var(--t-sm); line-height: var(--lh-tight);
+}
+.guests li:first-child { border-top: none; }
+.guests .addr { min-width: 0; overflow-wrap: anywhere; }
+
+/* 一覧の右端に出す件数。数字なので英字書体に乗せる。 */
+.rooms .stat {
+  flex: none; font-family: var(--font-en);
+  font-size: var(--t-xs); color: var(--ink-mute); white-space: nowrap;
+}
+
+/* チェックは押せる範囲を 44px 取る。印そのものは 20px（.tasks .mark と同じ寸法）。 */
+.chk {
+  display: flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap); font-size: var(--t-sm); cursor: pointer;
+}
+.chk input {
+  flex: none; width: 20px; height: 20px; min-height: 0; padding: 0;
+  accent-color: var(--brand-text);
+}
+
+/* 帯の中の戻り導線は a でも button でも同じ見た目にする。 */
+.bar a.leave { display: inline-flex; align-items: center; text-decoration: none; }
+
+/* 「応接 4 / 手元 7」の区切り。数字とラベルの塊を目で分ける。 */
+.rooms .stat .sep { margin: 0 var(--s-1); color: var(--line); }
+
+/* 状態（進行中・休眠）は会社名のすぐ隣に置く。右端の件数と同じ塊に入れると、
+   「この会社の状態」ではなく「数字の一部」に見える。 */
+body.office .rooms .nm {
+  flex: 0 1 auto; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.office .rooms .tag { margin-right: auto; }
+
+/* 狭い画面で1行に詰め込むと、flex が縮められるもの（＝会社名）から先に潰れる。
+   375px で「封…」「S…」になり、状態タグと件数が主役になっていた（2026-09-23 実測）。
+   名前は省略せず折り返させ、件数は次の段へ落とす。
+   2段目はスウォッチ幅（10*3+2*2=34px）ぶん下げて、名前の頭に揃える（配置の律②）。 */
+@media (max-width: 719px) {
+  /* flex をやめて格子で置く。折り返し任せだと、開く印（右端のアイコン）まで
+     段が落ちて宙に浮いた。列を先に決めて、何がどこに来るかを固定する。
+     1段目＝印・名前・状態・開く印／2段目＝件数。 */
+  body.office .rooms a {
+    display: grid; align-items: center;
+    grid-template-columns: 34px minmax(0, 1fr) auto 18px;
+    column-gap: var(--s-3); row-gap: var(--s-1);
+    padding: var(--s-3) 0;
+  }
+  body.office .rooms .swatch { grid-area: 1 / 1; }
+  body.office .rooms .nm {
+    grid-area: 1 / 2; white-space: normal; overflow: visible; overflow-wrap: anywhere;
+    line-height: var(--lh-tight);
+  }
+  body.office .rooms .tag  { grid-area: 1 / 3; margin-right: 0; }
+  body.office .rooms .go   { grid-area: 1 / 4; }
+  body.office .rooms .stat { grid-area: 2 / 2 / 3 / 5; }
+}
+
+/* PC では執務室も1画面に収める。
+   ページ全体がスクロールすると、区画見出し（Shared / Private）が sticky の帯の下へ
+   消えて、どちらの列を見ているのか分からなくなる（2026-09-23 実測）。
+   取り違えを防ぐのが執務室の重心なので、見出しは常に見えていなければならない。
+   応接室が窓でやっていることを、窓を使わずに同じ形で入れる。 */
+@media (min-width: 900px) {
+  body.office { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  /* 高さを渡す鎖は1本でも切れると溢れる。body → .sheet → #view → .grid の
+     全部を flex で繋ぐ。#view（JS が中身を差し込む器）が block のままだと、
+     そこで鎖が切れて中身が画面の外へ出た（2026-09-23 実測）。 */
+  body.office .sheet {
+    flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+    padding-bottom: var(--s-5);   /* 1画面に収めるので下の余白は他と同じ 24px */
+  }
+  body.office .sheet > #view { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  body.office .grid { flex: 1 1 auto; min-height: 0; }
+  /* ただし1区画のときは伸ばさない。4行の一覧を画面の高さまで引き伸ばすと、
+     中身の量と器の大きさが合わない。中身なりの高さで止める。 */
+  body.office .grid.one { flex: 0 0 auto; }
+}
+
+/* ═════════════════════════════════════════════════
+   2ペイン（応接室・2026-09-23）
+
+   3列を捨てた。資料・伝言・やることを並列に置くのはデータの形であって
+   仕事の流れではない。案件を左に並べ、選んだ案件の中身を右にまとめる。
+   README「設計の原則」4「一覧とプレビューを1画面に」の実装。
+
+   境界は罫線グリッドではなく、1本の縦罫と**選択状態**が担う
+   （GitHub は区画を罫線で切らず、行の区切りと背景だけで分けている）。
+   ═════════════════════════════════════════════════ */
+
+.board {
+  /* 高さの鎖：窓 → .sheet（flex column）→ .board → .pane → .viewer → iframe。
+     board が中身なりの高さだと、PDF を開いたとき iframe の高さが 0 になって
+     窓ごと縮む（2026-09-23 実測で発覚。Office のときと同じ穴を踏んだ）。 */
+  flex: 1 1 auto;
+  display: grid; min-height: 0;
+  background: var(--card);
+  border: 1px solid var(--theme-rule); border-radius: var(--r);
+  overflow: hidden;
+}
+.window .board { border: none; border-radius: 0; }
+
+@media (min-width: 900px) {
+  .board { grid-template-columns: 288px minmax(0, 1fr); }
+  .side { border-right: 1px solid var(--line); }
+}
+
+/* ───────── 左：案件の一覧 ───────── */
+.side { display: flex; flex-direction: column; min-height: 0; }
+.side > h2 {
+  flex: none; margin: 0; padding: var(--s-4) var(--s-4) var(--s-2);
+  font-family: var(--font-en); font-size: var(--t-md); font-weight: var(--w-bold);
+  line-height: var(--lh-tight);
+  display: flex; align-items: baseline; gap: var(--s-2);
+}
+.side > h2 .count {
+  font-family: var(--font-en); font-size: var(--t-xs);
+  color: var(--ink-mute); font-weight: var(--w-normal);
+}
+.side .body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: var(--s-4); }
+
+.cases { list-style: none; margin: 0; padding: 0; }
+.cases a {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--s-1) var(--s-3); align-items: start;
+  min-height: var(--tap); padding: var(--s-3) var(--s-4);
+  /* 選択の印は左のバー。選んでいない行にも同じ幅を確保して、文字がずれないようにする */
+  border-left: 2px solid transparent;
+  color: var(--ink); text-decoration: none;
+  transition: background var(--dur) var(--ease);
+}
+.cases a:hover { background: var(--surface); }
+.cases a.on { background: var(--surface); border-left-color: var(--theme-chip); }
+.cases .ttl { font-weight: var(--w-med); line-height: var(--lh-tight); }
+.cases .sub {
+  grid-column: 2; font-size: var(--t-xs); color: var(--ink-mute);
+  line-height: var(--lh-ui); display: flex; gap: var(--s-2); flex-wrap: wrap;
+}
+.cases .done .ttl { color: var(--ink-mute); }
+
+/* 状態は形で示す（色だけに情報を預けない）。やることの印と同じ語彙。
+   ○ これから／◐ 相手のボール／● 終わった */
+.state {
+  flex: none; width: 16px; height: 16px; margin-top: 4px;
+  border: 2px solid var(--ink-mute); border-radius: var(--r-pill);
+  background: var(--card);
+}
+.state.waiting { background: linear-gradient(90deg, var(--ink-mute) 50%, var(--card) 50%); }
+.state.done { background: var(--ink-mute); border-color: var(--ink-mute); }
+
+/* 案件に属さない資料の棚 */
+.shelf { margin-top: var(--s-5); border-top: 1px solid var(--line); padding-top: var(--s-3); }
+.shelf > h3 {
+  margin: 0 0 var(--s-1); padding: 0 var(--s-4);
+  font-size: var(--t-xs); font-weight: var(--w-bold); color: var(--ink-mute);
+}
+
+/* ───────── 右：選んだ案件 ───────── */
+.pane { display: flex; flex-direction: column; min-height: 0; }
+.pane-head { flex: none; padding: var(--s-5) var(--s-5) var(--s-4); border-bottom: 1px solid var(--line); }
+.pane-title { margin: 0; font-size: var(--t-lg); font-weight: var(--w-bold); line-height: var(--lh-tight); }
+.pane-sum {
+  margin: var(--s-2) 0 0; font-size: var(--t-sm); color: var(--ink-mute);
+  line-height: var(--lh-read); letter-spacing: var(--ls-read);
+}
+.pane-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-2) var(--s-3);
+  margin-top: var(--s-3); font-size: var(--t-xs); color: var(--ink-mute);
+}
+.pane-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--s-5); }
+.pane-foot { flex: none; padding: var(--s-4) var(--s-5); border-top: 1px solid var(--line); }
+
+/* 中身の塊（資料／やること／やりとり）。
+   区画見出しは小さく太く、色を落とす。業務画面の階層はサイズではなく
+   ウェイトと色で作る（GitHub は見出し20px・本文14px の 1.43倍しかない）。 */
+.block + .block { margin-top: var(--s-6); }
+.block > h3 {
+  margin: 0 0 var(--s-3);
+  font-size: var(--t-sm); font-weight: var(--w-bold); color: var(--ink-mute);
+  display: flex; align-items: baseline; gap: var(--s-2);
+}
+
+/* ───────── 資料のプレビュー ─────────
+   別タブで開かない。同じ画面の中で開いて、同じ画面の中で戻る
+   （原則4「開く→違った→閉じて戻る、の往復を設計から消す」）。 */
+.viewer { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+.viewer-head {
+  flex: none; display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3) var(--s-4); border-bottom: 1px solid var(--line);
+}
+.viewer-head .ttl {
+  min-width: 0; font-weight: var(--w-med); line-height: var(--lh-tight);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 戻る導線は資料のプレビューと、狭い画面の案件ビューの2箇所に出る。
+   同じ見た目・同じ当たり判定にする（.pane-head 側が 26px で律を割っていた）。 */
+.back {
+  flex: none; display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: var(--tap); padding: 0 var(--s-3);
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-mute); font-size: var(--t-sm); border-radius: var(--r);
+}
+.back:hover { background: var(--surface); color: var(--ink); }
+/* 案件ビューの戻るは見出しの上。左端を見出しの文字と揃える */
+.pane-head .back { margin: 0 0 var(--s-1) calc(var(--s-3) * -1); }
+.viewer-body { flex: 1 1 auto; min-height: 0; background: var(--surface); }
+.viewer-body iframe { width: 100%; height: 100%; border: none; display: block; }
+.viewer-note { padding: var(--s-6) var(--s-5); text-align: center; }
+
+/* ───────── 狭い画面：一覧 → タップで全画面 ─────────
+   画面の方針どおり。PC を縮めるのではなく、狭いときだけ
+   2ペインを1枚ずつ見せる。 */
+@media (max-width: 899px) {
+  .board.open .side { display: none; }
+  .board:not(.open) .pane { display: none; }
+}
+@media (min-width: 900px) {
+  .pane .back.only-narrow { display: none; }
+}
+
+/* ───────── お知らせ（原則7「情報は向こうから来る」） ───────── */
+.notice {
+  flex: none; display: flex; align-items: flex-start; gap: var(--s-3);
+  margin: 0 0 var(--s-4); padding: var(--s-3) var(--s-4);
+  background: var(--card); border: 1px solid var(--theme-rule);
+  border-left-width: 3px; border-radius: var(--r);
+  font-size: var(--t-sm); line-height: var(--lh-read); letter-spacing: var(--ls-read);
+}
+.notice .ic { color: var(--ink-mute); margin-top: 3px; }
+
+/* 棚（どの案件にも属さない資料）は案件ではないので、状態の印を持たない。
+   格子の1列目は空けたまま、文字の頭を案件と揃える。 */
+.shelf .state { border: none; background: none; }
+
+/* 応接室の資料行は2段の格子にする。
+   名前の下に引き取るボタンを置くと 44px が縦に2つ積まれて 104px になり、
+   業務ツールの相場（GitHub の 66〜90px）から外れて間延びする。
+   押せるものは横に並べ、読むだけの情報（出所・日付）を下の段に落とす。 */
+body.room .docs li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center; padding: var(--s-1) 0;
+}
+body.room .docs .name { grid-area: 1 / 1; }
+body.room .docs .pull { grid-area: 1 / 2; margin-left: 0; }
+body.room .docs .meta { grid-area: 2 / 1 / 3 / 3; }
+
+/* 透かし：Atrium を最初に作った人のクレジット（MIT ライセンス。残してもらえるとうれしいです） */
+.credit {
+  position: fixed; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  padding: 2px 10px; border-radius: 999px; background: rgba(255, 255, 255, .72);
+  font-size: 10px; line-height: 18px; letter-spacing: .06em; color: #707070; text-decoration: none;   /* 白地 4.95:1 */
+}
+.credit b { font-weight: 700; }
+.credit:hover { color: #191919; text-decoration: underline; }
+@media print { .credit { display: none; } }

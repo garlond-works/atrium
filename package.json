@@ -1,0 +1,18 @@
+{
+  "name": "atrium",
+  "version": "1.0.0",
+  "private": true,
+  "description": "取引先ポータル Atrium（Cloudflare Workers + D1 + R2 + Access）",
+  "license": "MIT",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute atrium --remote --file=schema.sql",
+    "db:seed": "wrangler d1 execute atrium --remote --file=seed.sql",
+    "db:init:local": "wrangler d1 execute atrium --local --file=schema.sql",
+    "db:seed:local": "wrangler d1 execute atrium --local --file=seed.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
