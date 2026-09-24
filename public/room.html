@@ -735,7 +735,8 @@ function pageDoc(id) {
   if (!x) return '<div class="notfound">この資料は見つかりませんでした（引き取られた可能性があります）。</div>';
   const c = x.case_id && caseOf(x.case_id);
   const kind = (x.mime_type || "").toLowerCase();
-  const inline = kind.startsWith("image/") || kind === "application/pdf" || kind.startsWith("text/");
+  // サーバー（src/index.js の INLINE_TYPES）と同じ一覧。HTML・SVG などは画面の中で開かない
+  const inline = ["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "text/plain"].includes(kind.split(";")[0].trim());
   const [, , kname] = ftype(x);
   return `
     ${crumb([["ホーム", "#/home"], c ? [c.title, "#/case/" + c.id] : ["すべての資料", "#/files"], [x.title]])}

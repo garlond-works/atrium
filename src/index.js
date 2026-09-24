@@ -168,6 +168,9 @@ async function log(env, roomId, email, side, action, targetType, targetId) {
 }
 
 
+// ブラウザの中で開いてよい資料の種類（画面側の room.html にも同じ一覧がある）
+const INLINE_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/gif", "image/webp", "text/plain"];
+
 // ─────────────────────────────────────────
 // 相談ロボ（Gemma 4 / Workers AI）
 //
@@ -1201,13 +1204,19 @@ export default {
 
       await log(env, doc.room_id, email, side, "download", "document", doc.id);
 
-      return new Response(obj.body, {
-        headers: {
-          "content-type": doc.mime_type || "application/octet-stream",
-          "content-disposition":
-            `inline; filename*=UTF-8''${encodeURIComponent(doc.title)}`,
-        },
-      });
+      // ブラウザの中で開くのは、中でスクリプトが動かない種類だけ。
+      // 種類は置いた人の申告（file.type）なので信じない。HTML・SVG などを inline で返すと、
+      // 取引先が置いたファイルのスクリプトが、開いた人（オーナー含む）のログインのまま動いてしまう。
+      const mt = String(doc.mime_type || "").toLowerCase().split(";")[0].trim();
+      const inline = INLINE_TYPES.includes(mt);
+      const headers = {
+        "content-type": !inline ? "application/octet-stream" : mt === "text/plain" ? "text/plain; charset=utf-8" : mt,
+        "content-disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(doc.title)}`,
+        "x-content-type-options": "nosniff",
+      };
+      // 画像・テキストはスクリプトの動かない箱で開く（PDF はブラウザの PDF 表示が壊れるので付けない）
+      if (inline && mt !== "application/pdf") headers["content-security-policy"] = "sandbox; default-src 'none'; img-src 'self'; style-src 'unsafe-inline'";
+      return new Response(obj.body, { headers });
     }
 
     // POST /api/documents/:id/withdraw — 自分が置いたものだけ引っ込められる
