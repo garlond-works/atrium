@@ -132,6 +132,16 @@ const today = () => ymd(new Date());
 const md = s => { const t = toDate(s); return `${t.getMonth() + 1}/${t.getDate()}`; };
 const longDay = s => { const t = toDate(s); return `${t.getMonth() + 1}月${t.getDate()}日（${WD[t.getDay()]}）`; };
 const rel = s => s === today() ? "今日" : s === plus(today(), 1) ? "明日" : s === plus(today(), -1) ? "昨日" : "";
+// 時刻は「時」と「分」の2つのプルダウン。分は 00 か 30 だけ（既存の予定が違う分ならそれも残す）
+const hmSelects = (id, v) => {
+  const [vh, vm] = v ? v.split(":") : ["", "00"];
+  const mins = ["00", "30"]; if (!mins.includes(vm)) mins.push(vm), mins.sort();
+  const hrs = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, "0"));
+  const opt = (x, cur) => `<option value="${x}"${x === cur ? " selected" : ""}>${x}</option>`;
+  return `<select class="in" id="${id}-h" aria-label="時"><option value=""></option>${hrs.map(h => opt(h, vh)).join("")}</select>`
+       + `<select class="in" id="${id}-m" aria-label="分">${mins.map(m => opt(m, vm)).join("")}</select>`;
+};
+const hmValue = id => $(id + "-h").value ? $(id + "-h").value + ":" + $(id + "-m").value : null;
 const timeOf = e => e.start_time ? e.start_time + (e.end_time ? "–" + e.end_time : "") : "終日";
 
 const STATUS = { active: "進行中", following: "フォロー中", archived: "休眠" };
@@ -456,8 +466,8 @@ async function pageCalendar(sel, evId) {
             <div class="field"><label for="ev-title">件名</label><input class="in" id="ev-title" required value="${esc(f.title)}" autocomplete="off"></div>
             <div class="field"><label for="ev-day">日付</label><input class="in" id="ev-day" type="date" required value="${f.day}"></div>
             <div class="row2">
-              <div class="field"><label for="ev-start">開始 <small>空＝終日</small></label><input class="in" id="ev-start" type="time" value="${f.start_time || ""}"></div>
-              <div class="field"><label for="ev-end">終了</label><input class="in" id="ev-end" type="time" value="${f.end_time || ""}"></div>
+              <div class="field"><label for="ev-start-h">開始 <small>空＝終日</small></label><div class="hm" id="ev-start">${hmSelects("ev-start", f.start_time)}</div></div>
+              <div class="field"><label for="ev-end-h">終了</label><div class="hm" id="ev-end">${hmSelects("ev-end", f.end_time)}</div></div>
             </div>
             <div class="field"><label for="ev-client">取引先 <small>任意</small></label><select class="in" id="ev-client">${clientOptions(f.client_id)}</select></div>
             <div class="field"><label for="ev-place">場所 <small>任意</small></label><input class="in" id="ev-place" value="${esc(f.place || "")}" autocomplete="off"></div>
@@ -977,8 +987,8 @@ document.addEventListener("submit", async e => {
   if (e.target.id === "evform") {
     e.preventDefault();
     const id = e.target.dataset.id;
-    const body = { title: $("ev-title").value, day: $("ev-day").value, start_time: $("ev-start").value || null,
-      end_time: $("ev-end").value || null, client_id: $("ev-client").value || null, place: $("ev-place").value, memo: $("ev-memo").value };
+    const body = { title: $("ev-title").value, day: $("ev-day").value, start_time: hmValue("ev-start"),
+      end_time: hmValue("ev-end"), client_id: $("ev-client").value || null, place: $("ev-place").value, memo: $("ev-memo").value };
     if (body.end_time && !body.start_time) { alert("終了だけは入れられません。開始も入れてください。"); return; }
     const r = id ? await send("/api/admin/events/" + id, "PATCH", body) : await send("/api/admin/events", "POST", body);
     if (!r) return;

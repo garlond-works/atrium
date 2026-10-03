@@ -568,6 +568,8 @@ body.office {
 /* ───────── 入力（Fluent の入力欄：選ぶと下の線が青く太る）───────── */
 .form { display: grid; gap: var(--s-3); }
 .form .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
+.form .hm { display: flex; gap: var(--s-2); }
+.form .hm .in { min-width: 0; flex: 1; }
 .field label { display: block; margin-bottom: var(--s-1); font-weight: 600; }
 .field label small { font-weight: 400; color: var(--fg3); }
 .in {
