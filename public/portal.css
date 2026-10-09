@@ -564,6 +564,12 @@ body.office {
 .chipev time { flex: none; color: var(--fg3); font-variant-numeric: tabular-nums; }
 .cell .more { font-size: var(--t-100); color: var(--fg3); padding: 0 var(--s-1); }
 .cell .dots { display: none; }
+/* 日付の右下の＋：押すとその日の予定入力へ。マウスで指したとき・選んだ日だけ出す（狭い画面は日を押して「予定を入れる」） */
+.cell .add { display: none; position: absolute; right: 4px; bottom: 4px; width: 28px; height: 28px; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--bg1); color: var(--fg2); box-shadow: 0 0 0 1px var(--stroke2); }
+.cell .add svg { width: 16px; height: 16px; }
+.cell .add:hover { background: var(--brand); color: #fff; box-shadow: none; }
+@media (hover: hover) and (min-width: 900px) { .cell:hover .add, .cell.sel .add { display: inline-flex; } }
 
 /* ───────── 入力（Fluent の入力欄：選ぶと下の線が青く太る）───────── */
 .form { display: grid; gap: var(--s-3); }

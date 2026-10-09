@@ -404,9 +404,12 @@ function quickAdd() {
 
 /* ═══════ カレンダー ═══════ */
 async function pageCalendar(sel, evId) {
-  sel = sel && /^\d{4}-\d{2}-\d{2}$/.test(sel) ? sel : today();
+  // "2026-10" のように月だけのときは、日を選ばない（枠なし）。月は動かさない
+  const noSel = !!sel && /^\d{4}-\d{2}$/.test(sel);
+  const base = noSel ? sel + "-01" : sel;
+  sel = noSel ? "" : sel && /^\d{4}-\d{2}-\d{2}$/.test(sel) ? sel : today();
   editing = evId || null;
-  const s = toDate(sel), first = new Date(s.getFullYear(), s.getMonth(), 1);
+  const s = toDate(noSel ? base : sel), first = new Date(s.getFullYear(), s.getMonth(), 1);
   const startDay = ymd(new Date(first.getFullYear(), first.getMonth(), 1 - first.getDay()));
   const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
   const weeks = Math.ceil((first.getDay() + days) / 7);
@@ -431,6 +434,7 @@ async function pageCalendar(sel, evId) {
       ${list.slice(0, 3).map(e => { const c = client(e.client_id); const hue = c && typeof c.hue === "number";
         return `<span class="chipev${hue ? " c" : ""}"${hue ? ` style="--sh:${c.hue}"` : ""}>${e.start_time ? `<time>${e.start_time}</time>` : ""}<span>${esc(e.title)}</span></span>`; }).join("")}
       ${list.length > 3 ? `<span class="more">他 ${list.length - 3} 件</span>` : ""}
+      <span class="add" data-add="${dy}" title="${md(dy)}に予定を入れる">${ic("i-plus")}</span>
       ${list.length ? `<span class="dots">${list.slice(0, 3).map(e => { const c = client(e.client_id);
         return `<i${c && typeof c.hue === "number" ? ` class="c" style="--sh:${c.hue}"` : ""}></i>`; }).join("")}</span>` : ""}
     </button>`;
@@ -447,7 +451,7 @@ async function pageCalendar(sel, evId) {
       <a class="btn" href="#/calendar/${next}" aria-label="次の月">${ic("i-chev")}</a>
       <h2>${first.getFullYear()}年${first.getMonth() + 1}月</h2>
       <span class="grow"></span>
-      <a class="btn primary" href="#/calendar/${sel}/new">${ic("i-plus")}予定を入れる</a>
+      <a class="btn primary" href="#/calendar/${sel || today()}/new">${ic("i-plus")}予定を入れる</a>
     </div>
     <div class="cols">
       <div class="col">
@@ -456,10 +460,10 @@ async function pageCalendar(sel, evId) {
         </section>
       </div>
       <aside class="col">
-        <section class="card" aria-labelledby="h-day">
+        ${noSel ? `<section class="card"><p class="empty">日付を押すと、その日の予定がここに出ます。</p></section>` : `<section class="card" aria-labelledby="h-day">
           <header class="card-h">${ic("i-cal")}<h2 id="h-day">${longDay(sel)}</h2><span class="count">${HOL[sel] ? esc(HOL[sel]) : rel(sel)}</span></header>
           ${dayList.length ? `<div class="agenda">${dayList.map(x => evRow(x, { del: true })).join("")}</div>` : '<p class="empty">予定はありません。</p>'}
-        </section>
+        </section>`}
         ${editing ? `<section class="card" aria-labelledby="h-form">
           <header class="card-h">${ic(e ? "i-cal" : "i-plus")}<h2 id="h-form">${e ? "予定を直す" : "予定を入れる"}</h2></header>
           <form class="form" id="evform" data-id="${e ? e.id : ""}">
@@ -803,6 +807,13 @@ const findEvent = id => MONTH.events.find(x => x.id === id) || (H.events || []).
 document.addEventListener("click", async e => {
   const t = e.target;
 
+  // カレンダーの枠外を押したら、選んだ日の枠を外す（予定を入力中は、書きかけを消さないので何もしない）
+  if (route().page === "calendar" && !editing && !t.closest("a, button, input, select, textarea, label, dialog, summary, .card, [data-day]")
+      && (t.closest("#main") || t === document.body || t === document.documentElement)) {
+    const d = route().rest[0];
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d) || !d) { location.hash = "#/calendar/" + (d || today()).slice(0, 7); return; }
+  }
+
   const cs = t.closest("[data-case][data-set]");
   if (cs) {
     const body = JSON.parse(cs.dataset.set);
@@ -870,6 +881,9 @@ document.addEventListener("click", async e => {
     }
     return;
   }
+
+  const add = t.closest("[data-add]");
+  if (add) { location.hash = "#/calendar/" + add.dataset.add + "/new"; return; }
 
   const cell = t.closest("[data-day]");
   if (cell) { location.hash = "#/calendar/" + cell.dataset.day; return; }
