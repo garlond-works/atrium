@@ -350,7 +350,7 @@ function pageToday() {
            ${turnN ? `<span class="pill hot">${ic("i-flag")}要対応 ${turnN}件</span>` : ""}
            ${!late.length && !turnN ? "急ぎの用事はありません" : ""}</p>
       </div>
-      <a class="hero-next" href="${nx ? `#/calendar/${nx.day}/${nx.id}` : `#/calendar/${t0}/new`}">
+      ${(() => { const nc = nx && client(nx.client_id), hue = nc && typeof nc.hue === "number"; return `<a class="hero-next${nx ? "" : " none"}${hue ? " c" : ""}"${hue ? ` style="--sh:${nc.hue}"` : ""} href="${nx ? `#/calendar/${nx.day}/${nx.id}` : `#/calendar/${t0}/new`}">`; })()}
         <small>${ic("i-clock")}次の予定</small>
         ${nx ? `<b>${nx.day === t0 ? "" : rel(nx.day) || md(nx.day) + " "}${nx.start_time || "終日"}${untilText(nx) ? `<span>${untilText(nx)}</span>` : ""}</b>
           <strong>${esc(nx.title)}</strong>
@@ -371,19 +371,19 @@ function pageToday() {
           <ul class="clist">${turn.map(c => `<li><a href="${c.slug ? "/room.html?r=" + encodeURIComponent(c.slug) : "#/client/" + c.id}">
             ${swatch(c)}<span class="t">${esc(cname(c))}</span><span class="pill attn">案件 ${c.my_turn}</span>${ic("i-chev")}</a></li>`).join("")}</ul>
         </section>` : ""}
-        <section class="card" id="feed" aria-labelledby="h-feed">
+        <section class="card rail" id="feed" aria-labelledby="h-feed">
           <header class="card-h">${ic("i-bolt")}<h2 id="h-feed">先方の動き</h2>
             ${(H.activity || []).length > 1 ? `<button type="button" class="more" data-seen-all>${ic("i-ok")}すべて確認済み</button>` : ""}</header>
           ${(H.activity || []).length ? `<ul class="feed">${H.activity.map(feedRow).join("")}</ul>` : '<p class="empty">まだ動きはありません。</p>'}
         </section>
       </aside>
       <div class="col">
-        <section class="card" aria-labelledby="h-ag">
+        <section class="card rail" aria-labelledby="h-ag">
           <header class="card-h">${ic("i-cal")}<h2 id="h-ag">予定</h2><span class="count">今日から2週間</span>
             <a class="more" href="#/calendar/${t0}/new">${ic("i-plus")}予定を入れる</a></header>
           <div class="agenda">${agenda}</div>
         </section>
-        <section class="card" aria-labelledby="h-tk">
+        <section class="card rail" aria-labelledby="h-tk">
           <header class="card-h">${ic("i-task")}<h2 id="h-tk">タスク</h2><span class="count">残り ${tasks.length}</span>
             <a class="more" href="#/tasks">すべて見る${ic("i-chev")}</a></header>
           ${quickAdd()}
@@ -394,12 +394,12 @@ function pageToday() {
 }
 
 function quickAdd() {
-  return `<form class="addbar" id="addtask" aria-label="タスクを足す">
+  return `<div class="addbar-wrap"><form class="addbar" id="addtask" aria-label="タスクを足す">
     <div class="field"><label for="tk-title">タスクを足す</label><input class="in" id="tk-title" required placeholder="例）請求書を送る" autocomplete="off"></div>
     <div class="field"><label for="tk-due">期限 <small>任意</small></label><input class="in" id="tk-due" type="date"></div>
     <div class="field"><label for="tk-client">取引先 <small>任意</small></label><select class="in" id="tk-client">${clientOptions("")}</select></div>
     <button class="btn primary" type="submit">${ic("i-plus")}足す</button>
-  </form>`;
+  </form></div>`;
 }
 
 /* ═══════ カレンダー ═══════ */

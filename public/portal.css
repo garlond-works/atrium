@@ -602,6 +602,11 @@ dialog.dlg .acts { display: flex; justify-content: flex-end; gap: var(--s-2); ma
 
 /* ───────── タスク（Microsoft To Do の型：期限で束ねる）───────── */
 .addbar { display: grid; grid-template-columns: minmax(0, 1fr) 160px 180px auto; gap: var(--s-2); align-items: end; }
+/* 画面幅ではなく枠の幅で並べる：1000〜1100px でホームが2列になると枠が 322px ほどになり、件名が 0px に潰れていた（件名の最小200px＋期限160＋取引先180＋ボタン＋すき間 ≒ 655px） */
+.addbar-wrap { container-type: inline-size; }
+@container (max-width: 680px) {
+  .addbar { grid-template-columns: 1fr 1fr; }
+  .addbar > :first-child { grid-column: 1 / -1; }
 .tgroup + .tgroup { margin-top: var(--s-5); }
 .tgroup > h3 { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-1); font-size: var(--t-300); font-weight: 600; color: var(--fg2); }
 .tgroup.late > h3 { color: var(--danger); }
@@ -1513,3 +1518,14 @@ body.room .nav a[aria-current="page"] { background: var(--acc-bg); }
   .credit { position: static; display: block; width: max-content; max-width: none; margin: 0 16px 16px auto; }
 }
 @media print { .credit { display: none; } }
+
+/* 次の予定の枠の左に、その予定の色（カレンダーの予定の色と同じ）。取引先なし＝自分の予定のシアン／取引先の予定＝その部屋のパステル。予定がないときは色なし */
+.hero-next { box-shadow: inset 6px 0 0 #00d6d6; }
+.hero-next.c { box-shadow: inset 6px 0 0 hsl(var(--sh) 65% 80%); }
+.hero-next.none { box-shadow: none; }
+
+/* ホームの先方の動き・予定・タスクの枠の左に、TODAY の帯と同じ線（見た目 cool のときだけ・6px） */
+:root[data-look="cool"] .card.rail { box-shadow: inset 6px 0 0 var(--p-yellow); }
+
+/* 枠が狭いとき、見出しの右のボタンは次の行へ（1000px 前後でホームが2列になり、「すべて確認済み」が枠の外へはみ出し、「今日から2週間」が切れていた） */
+.card-h { flex-wrap: wrap; row-gap: var(--s-1); }
