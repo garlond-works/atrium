@@ -168,6 +168,14 @@ async function log(env, roomId, email, side, action, targetType, targetId) {
 }
 
 
+// 資料を完全に消す：R2 の実体と、ロボ用の文字の控えを消し、台帳には消した日時だけ残す。
+// 台帳の行と操作の記録は残す（伝言や記録が指している先を壊さない）。
+async function purgeDocument(env, doc) {
+  await env.DOCS.delete(doc.r2_key);
+  await env.DB.prepare(`DELETE FROM document_texts WHERE document_id = ?`).bind(doc.id).run();
+  await env.DB.prepare(`UPDATE documents SET purged_at = ?, updated_at = ? WHERE id = ?`).bind(now(), now(), doc.id).run();
+}
+
 // 置ける資料の大きさの上限と、題名（長すぎる題名は切る）
 const DOC_MAX = 50 * 1024 * 1024;
 const docTitle = (form, file) => String(form.get("title") || file.name || "資料").slice(0, 200);
@@ -292,7 +300,7 @@ ${now}
 - 「いま何をお願いされていますか？」のような質問には、上の内容をもとに答える。ここにないことは「Guest Room のホームか案件のページをご確認ください」と案内する。
 
 # Atrium（Guest Room）の使い方を聞かれたら
-- 資料を置く：案件のページの「資料を置く」、またはファイルをドラッグ。置いた資料は ${ORG} から見える。自分が置いたものは自分で引き取れる。
+- 資料を置く：案件のページの「資料を置く」、またはファイルをドラッグ。置いた資料は ${ORG} から見える。資料はゴミ箱に入れられる（こちら側も相手側も、誰が置いた資料でも）。ゴミ箱から戻すことも、完全に消すこともできる。完全に消すと元に戻せない。
 - 伝える：案件のページの下の欄に書いて送る。${ORG} に届く。
 - お便り：${ORG} からの新しい伝言は、封筒のマークと「お便りが届いています」で知らせる。
 - やること：${ORG} からのお願い。期限つきのものは期限を確認する。
@@ -686,7 +694,7 @@ export default {
              JOIN rooms r ON r.id = a.room_id AND r.is_open = 1   -- 消した取引先の動きは出さない
              LEFT JOIN documents d ON a.target_type = 'document' AND d.id = a.target_id
              LEFT JOIN messages  m ON a.target_type = 'message'  AND m.id = a.target_id
-            WHERE a.actor_side = 'client' AND a.action IN ('upload', 'message', 'withdraw')
+            WHERE a.actor_side = 'client' AND a.action IN ('upload', 'message', 'withdraw', 'purge')
               AND a.seen_at IS NULL
             ORDER BY a.created_at DESC LIMIT 12`
         ).all();
@@ -934,6 +942,15 @@ export default {
             ORDER BY created_at DESC`
         ).bind(room.id).all();
 
+        // ゴミ箱：入れた資料（完全に消したものは出さない）。双方に見える
+        const trash = await env.DB.prepare(
+          `SELECT id, title, category, mime_type, size_bytes, case_id,
+                  uploaded_by, uploaded_by_side, created_at, withdrawn_at, withdrawn_by
+             FROM documents
+            WHERE room_id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL
+            ORDER BY withdrawn_at DESC`
+        ).bind(room.id).all();
+
         const msgs = await env.DB.prepare(
           `SELECT id, body, author_email, author_side, document_id, case_id, created_at, withdrawn_at
              FROM messages WHERE room_id = ? ORDER BY created_at ASC`
@@ -968,12 +985,29 @@ export default {
           site: { org: orgName(env), ai: aiOn(env) },
           cases: cases.results ?? [],
           documents: docs.results ?? [],
+          trash: (trash.results ?? []).map(x => ({
+            // 入れた人の記録がない古い分（以前は置いた本人だけが引き取れた）は、置いた側が入れたもの
+            ...x, withdrawn_by_side: !x.withdrawn_by ? x.uploaded_by_side
+              : x.withdrawn_by.toLowerCase() === env.OWNER_EMAIL.toLowerCase() ? "us" : "client",
+          })),
           messages: msgs.results ?? [],
           tasks: tasks.results ?? [],
           announcements: news.results ?? [],
           members: (members.results ?? []).map(m => ({
             name: m.display_name || m.email.split("@")[0], email: m.email, joined_at: m.joined_at })),
         });
+      }
+
+      // POST /api/rooms/:slug/trash/empty — ゴミ箱を空にする（双方・完全に消す）
+      if (rest === "/trash/empty" && request.method === "POST") {
+        const rows = await env.DB.prepare(
+          `SELECT id, r2_key FROM documents WHERE room_id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
+        ).bind(room.id).all();
+        for (const doc of rows.results ?? []) {
+          await purgeDocument(env, doc);
+          await log(env, room.id, email, side, "purge", "document", doc.id);
+        }
+        return json({ ok: true, purged: (rows.results ?? []).length });
       }
 
       // PUT /api/rooms/:slug/memo — 部屋のメモを書く（オーナーだけ）
@@ -1246,27 +1280,53 @@ export default {
       return new Response(obj.body, { headers });
     }
 
-    // POST /api/documents/:id/withdraw — 自分が置いたものだけ引っ込められる
+    // POST /api/documents/:id/withdraw — ゴミ箱に入れる（双方・誰が置いた資料でも）
+    // ここは同じ応接室の中の話。部屋の外の人には「無い」と返す（存在を漏らさない）。
     const wdMatch = path.match(/^\/api\/documents\/([^/]+)\/withdraw$/);
     if (wdMatch && request.method === "POST") {
       const doc = await env.DB.prepare(
-        `SELECT id, room_id, uploaded_by FROM documents WHERE id = ? AND withdrawn_at IS NULL`
+        `SELECT id, room_id FROM documents WHERE id = ? AND withdrawn_at IS NULL`
       ).bind(wdMatch[1]).first();
-      const side = doc ? await resolveActor(env, email, doc.room_id) : null;
+      const side = doc?.room_id ? await resolveActor(env, email, doc.room_id) : null;
       if (!doc || !side) return json({ error: "not_found" }, 404);
 
-      // 応接室の既定ルール：置いた本人だけが引っ込められる。
-      // 相手はこちらの資料に触れないし、こちらも相手の資料を消さない。
-      // ここは同じ応接室の中の話で、相手の資料が「ある」ことは画面で見えているので 403 でよい。
-      if (doc.uploaded_by.toLowerCase() !== email.toLowerCase()) {
-        return json({ error: "not_yours" }, 403);
-      }
-
       await env.DB.prepare(
-        `UPDATE documents SET withdrawn_at = ?, updated_at = ? WHERE id = ?`
-      ).bind(now(), now(), doc.id).run();
+        `UPDATE documents SET withdrawn_at = ?, withdrawn_by = ?, updated_at = ? WHERE id = ?`
+      ).bind(now(), email, now(), doc.id).run();
 
       await log(env, doc.room_id, email, side, "withdraw", "document", doc.id);
+      return json({ ok: true });
+    }
+
+    // POST /api/documents/:id/restore — ゴミ箱から戻す（双方）
+    const rsMatch = path.match(/^\/api\/documents\/([^/]+)\/restore$/);
+    if (rsMatch && request.method === "POST") {
+      const doc = await env.DB.prepare(
+        `SELECT id, room_id FROM documents WHERE id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
+      ).bind(rsMatch[1]).first();
+      const side = doc?.room_id ? await resolveActor(env, email, doc.room_id) : null;
+      if (!doc || !side) return json({ error: "not_found" }, 404);
+
+      await env.DB.prepare(
+        `UPDATE documents SET withdrawn_at = NULL, withdrawn_by = NULL, updated_at = ? WHERE id = ?`
+      ).bind(now(), doc.id).run();
+
+      await log(env, doc.room_id, email, side, "restore", "document", doc.id);
+      return json({ ok: true });
+    }
+
+    // POST /api/documents/:id/purge — ゴミ箱の中の資料を完全に消す（双方・元に戻せない）
+    // ゴミ箱に入っていない資料は消せない（誤って生きた資料を消さない）。
+    const pgMatch = path.match(/^\/api\/documents\/([^/]+)\/purge$/);
+    if (pgMatch && request.method === "POST") {
+      const doc = await env.DB.prepare(
+        `SELECT id, room_id, r2_key FROM documents WHERE id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
+      ).bind(pgMatch[1]).first();
+      const side = doc?.room_id ? await resolveActor(env, email, doc.room_id) : null;
+      if (!doc || !side) return json({ error: "not_found" }, 404);
+
+      await purgeDocument(env, doc);
+      await log(env, doc.room_id, email, side, "purge", "document", doc.id);
       return json({ ok: true });
     }
 

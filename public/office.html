@@ -286,7 +286,8 @@ function feedRow(a) {
   const c = client(a.client_id), who = `<b>${esc(cname(c) || "先方")}</b>`;
   const [icon, text] = a.action === "upload" ? ["i-upload", `${who} が資料を置きました${a.doc_title ? `：「${esc(a.doc_title)}」` : ""}`]
     : a.action === "message" ? ["i-chat", `${who} から伝言${a.message ? `：<q>${esc(a.message)}</q>` : ""}`]
-    : ["i-trash", `${who} が資料を引き取りました`];
+    : a.action === "purge" ? ["i-trash", `${who} が資料を完全に消しました`]
+    : ["i-trash", `${who} が資料をゴミ箱に入れました`];
   const t = new Date(a.created_at);
   // 1件まるごとを押せるようにする（小さな「開く」リンクは指で押しにくい）
   const inner = `${ic(icon)}<span>${text}</span>
@@ -304,7 +305,7 @@ function drawTicker() {
   const one = items.map(a => {
     const t = new Date(a.created_at), c = client(a.client_id);
     const what = a.action === "upload" ? `が資料を置きました${a.doc_title ? "「" + esc(a.doc_title) + "」" : ""}`
-      : a.action === "message" ? `から伝言${a.message ? "：" + esc(a.message) : ""}` : "が資料を引き取りました";
+      : a.action === "message" ? `から伝言${a.message ? "：" + esc(a.message) : ""}` : a.action === "purge" ? "が資料を完全に消しました" : "が資料をゴミ箱に入れました";
     return `<a href="${a.slug ? "/room.html?r=" + encodeURIComponent(a.slug) : "#/today"}"><time>${t.getMonth() + 1}.${pad(t.getDate())}</time>${esc(cname(c) || "先方")} ${what}</a>`;
   }).join("");
   // 同じ並びを2回つないで、半分流れたら頭に戻す（切れ目なく流れる）。2回目は読み上げない

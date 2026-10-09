@@ -1529,3 +1529,6 @@ body.room .nav a[aria-current="page"] { background: var(--acc-bg); }
 
 /* 枠が狭いとき、見出しの右のボタンは次の行へ（1000px 前後でホームが2列になり、「すべて確認済み」が枠の外へはみ出し、「今日から2週間」が切れていた） */
 .card-h { flex-wrap: wrap; row-gap: var(--s-1); }
+
+/* ゴミ箱の欄：上の資料の枠とくっつかないように */
+.card.trash { margin-top: var(--s-5); }

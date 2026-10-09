@@ -34,6 +34,8 @@
       <path d="M3.5 3.5l17 8.5-17 8.5 2.5-8.5z"/><path d="M6 12h8"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
       <path d="M4 6.5h16"/><path d="M9.5 6.5V3.5h5v3"/><path d="M6 6.5l1 14h10l1-14"/><path d="M10 10.5v6M14 10.5v6"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 7.5 4.5 12 9 16.5"/><path d="M4.5 12H15a4.5 4.5 0 0 1 0 9h-2"/></symbol>
     <symbol id="i-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
       <path d="M14 3.5H4.5v17H14"/><path d="M10 12h10.5"/><path d="M16.5 8l4 4-4 4"/></symbol>
     <symbol id="i-grid" viewBox="0 0 24 24" fill="currentColor">
@@ -370,11 +372,40 @@ function docTable(docs, withCase, emptyText) {
         <span class="c-date" role="cell" title="${when(x.created_at)}">${day(x.created_at)}</span>
         <span class="c-act" role="cell">
           <a class="iconbtn" href="/api/documents/${x.id}" download title="ダウンロード" aria-label="「${esc(x.title)}」をダウンロード">${ic("i-download")}</a>
-          ${mine(x) ? `<button class="iconbtn danger" data-pull="${x.id}" title="この資料を引き取る（相手からも見えなくなります）" aria-label="「${esc(x.title)}」を引き取る">${ic("i-trash")}</button>` : '<span class="iconbtn slot" aria-hidden="true"></span>'}
+          <button class="iconbtn danger" data-pull="${x.id}" title="ゴミ箱に入れる（相手からも見えなくなります）" aria-label="「${esc(x.title)}」をゴミ箱に入れる">${ic("i-trash")}</button>
         </span>
       </div>`;
     }).join("")}
   </div>`;
+}
+
+/* ゴミ箱：入れた資料。双方に見える。戻す／完全に消す（完全に消すと元に戻せない） */
+function trashSection() {
+  const t = d.trash || [];
+  if (!t.length) return "";
+  const by = x => x.uploaded_by_side === "us" ? ORG : sideName("client");
+  return `<section class="card trash" aria-labelledby="h-trash">
+    <header class="card-h">${ic("i-trash")}<h2 id="h-trash">ゴミ箱</h2><span class="count">${t.length}件</span>
+      <button type="button" class="more" data-trash-empty>${ic("i-trash")}ゴミ箱を空にする</button></header>
+    <p class="sub">入れた資料は、どちらからも見えません。戻すか、完全に消せます（完全に消すと元に戻せません）。</p>
+    <div class="list" role="table" aria-label="ゴミ箱の資料">
+      <div class="lrow lhead" role="row">
+        <span role="columnheader"><span class="sr">種類</span></span><span role="columnheader">名前</span>
+        <span role="columnheader">置いた人</span><span role="columnheader">入れた日</span><span role="columnheader"><span class="sr">操作</span></span>
+      </div>
+      ${t.map(x => `<div class="lrow" role="row">
+        <span role="cell">${ficon(x)}</span>
+        <span class="c-name" role="cell" title="${esc(x.title)}"><span>${esc(x.title)}</span>
+          <small class="c-sub">${by(x)}・${sideName(x.withdrawn_by_side)}がゴミ箱に入れました・${day(x.withdrawn_at)}</small></span>
+        <span class="c-by" role="cell">${by(x)}</span>
+        <span class="c-date" role="cell" title="${when(x.withdrawn_at)}">${day(x.withdrawn_at)}</span>
+        <span class="c-act" role="cell">
+          <button class="iconbtn" data-restore="${x.id}" title="元に戻す" aria-label="「${esc(x.title)}」を元に戻す">${ic("i-undo")}</button>
+          <button class="iconbtn danger" data-purge="${x.id}" title="完全に消す（元に戻せません）" aria-label="「${esc(x.title)}」を完全に消す">${ic("i-trash")}</button>
+        </span>
+      </div>`).join("")}
+    </div>
+  </section>`;
 }
 
 /* ホーム：SharePoint のサイトのトップ。「情報は向こうから来る」（原則7）を一番上に */
@@ -465,7 +496,8 @@ function pageFiles(filter) {
       </div>
       ${docTable(docs, !filter)}
       <p class="drop-hint only-wide">${ic("i-upload")}ここにファイルをドラッグしても置けます</p>
-    </section>`;
+    </section>
+    ${trashSection()}`;
 }
 
 /* 案件：資料（主役）＋ やること・やりとり（横）。三つが一枚に並んで繋がる */
@@ -736,7 +768,7 @@ function letter(talk) {
 /* 資料を画面の中で開く（別タブに飛ばさない・原則4） */
 function pageDoc(id) {
   const x = d.documents.find(v => v.id === id);
-  if (!x) return '<div class="notfound">この資料は見つかりませんでした（引き取られた可能性があります）。</div>';
+  if (!x) return '<div class="notfound">この資料は見つかりませんでした（ゴミ箱に入れられた可能性があります）。</div>';
   const c = x.case_id && caseOf(x.case_id);
   const kind = (x.mime_type || "").toLowerCase();
   // サーバー（src/index.js の INLINE_TYPES）と同じ一覧。HTML・SVG などは画面の中で開かない
@@ -749,7 +781,7 @@ function pageDoc(id) {
       <a class="cmd" href="${c ? "#/case/" + c.id : "#/files"}">${ic("i-back")}${c ? "案件に戻る" : "一覧に戻る"}</a>
       <span class="sep" aria-hidden="true"></span>
       <a class="cmd" href="/api/documents/${x.id}" download>${ic("i-download")}ダウンロード</a>
-      ${mine(x) ? `<button class="cmd" data-pull="${x.id}">${ic("i-trash")}引き取る</button>` : ""}
+      <button class="cmd" data-pull="${x.id}">${ic("i-trash")}ゴミ箱に入れる</button>
     </div>
     <div class="viewer">
       ${inline
@@ -856,12 +888,35 @@ document.addEventListener("click", async e => {
 
   const pull = e.target.closest("[data-pull]");
   if (pull) {
-    if (!confirm("この資料を引き取りますか？ 相手からも見えなくなります。")) return;
+    if (!confirm("この資料をゴミ箱に入れますか？ 相手からも見えなくなります（ゴミ箱から戻せます）。")) return;
     const r = await fetch("/api/documents/" + pull.dataset.pull + "/withdraw", { method: "POST" });
-    if (!r.ok) { alert("引き取れませんでした。"); return; }
-    toast("資料を引き取りました");
+    if (!r.ok) { alert("ゴミ箱に入れられませんでした。"); return; }
+    toast("資料をゴミ箱に入れました");
     if (route().page === "doc") history.back();
-    load();
+    load(); return;
+  }
+
+  const rst = e.target.closest("[data-restore]");
+  if (rst) {
+    const r = await fetch("/api/documents/" + rst.dataset.restore + "/restore", { method: "POST" });
+    if (!r.ok) { alert("元に戻せませんでした。"); return; }
+    toast("資料を元に戻しました"); load(); return;
+  }
+
+  const pg = e.target.closest("[data-purge]");
+  if (pg) {
+    if (!confirm("この資料を完全に消しますか？ 元に戻せません。")) return;
+    const r = await fetch("/api/documents/" + pg.dataset.purge + "/purge", { method: "POST" });
+    if (!r.ok) { alert("消せませんでした。"); return; }
+    toast("資料を完全に消しました"); load(); return;
+  }
+
+  if (e.target.closest("[data-trash-empty]")) {
+    const n = (d.trash || []).length;
+    if (!confirm(`ゴミ箱の資料 ${n} 件を、すべて完全に消しますか？ 元に戻せません。`)) return;
+    const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/trash/empty", { method: "POST" });
+    if (!r.ok) { alert("消せませんでした。"); return; }
+    toast("ゴミ箱を空にしました"); load(); return;
   }
 });
 
