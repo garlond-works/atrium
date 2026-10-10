@@ -23,7 +23,7 @@ Atrium は3つの部屋でできています。名前は古代ローマの邸宅
 
 | 部屋 | 誰が入れるか | 中身 |
 |---|---|---|
-| **執務室（Office）** | あなただけ | 全取引先の横断ビュー／予定／タスク／ノート／取引先ごとの台帳と内部メモ |
+| **執務室（Office）** | あなただけ | 全取引先の横断ビュー／予定／タスク／ノート／名刺／取引先ごとの台帳と内部メモ |
 | **取引先の台帳** | あなただけ | 作りかけの資料・内部限定の資料。ここで作って、完成したものだけを応接室に出す |
 | **応接室（Guest Room）** | あなたと、招いた取引先 | 案件ごとの資料・伝言・やること・メモ・お知らせ |
 
@@ -31,6 +31,7 @@ Atrium は3つの部屋でできています。名前は古代ローマの邸宅
 - 資料は案件に結びつけて置けます。取引先も資料を置けて、自分が置いたものは自分で引き取れます
 - 「いまどちらが動く番か」（先方／こちら）を案件ごとに持てます
 - **ノート**：執務室だけの自分用メモ。何枚でも作れて自動で保存されます。取引先に結びつけて絞り込めます（取引先には見えません）
+- **名刺**：執務室だけで見る名刺の一覧。会社名の読みで頭文字（A〜Z・あ〜わ）ごと・会社ごとにまとまり、押すと画像を大きく見られます（取引先には見えません）。入れ方は下の「名刺の入れ方」
 - 見た目はライト／ダーク。最初は端末の設定に合わせ、右上で切り替えられます
 - **相談ロボ（任意）**：取引先が、応接室の資料をもとに AI へ質問できます（Workers AI）
 
@@ -205,3 +206,31 @@ MIT License です。自由に使って、改造して、配ってかまいま�
 - フォント：Noto Sans JP・Be Vietnam Pro（Google Fonts・SIL Open Font License）
 - PDF の読み取り（相談ロボ）：[pdf.js](https://github.com/mozilla/pdf.js)（Apache License 2.0・jsDelivr から読み込み）
 - 祝日：[holidays-jp](https://github.com/holidays-jp/api)（執務室のカレンダー）
+
+## 名刺の入れ方
+
+名刺は画面から入れるのではなく、`wrangler` で台帳（D1）と置き場（R2）に直接入れます。名刺を読み取るアプリ（ScanSnap Home など）から書き出した値を、次の形で入れてください。
+
+1. 表の画像（JPEG）を置き場に置く：
+
+   ```bash
+   npx wrangler r2 object put atrium-documents/cards/<id>/front.jpg --file front.jpg --content-type image/jpeg --remote
+   ```
+
+   原本の PDF もあれば `cards/<id>/card.pdf` に `--content-type application/pdf` で置きます（無くても動きます）。
+2. 台帳に1行入れる（`<id>` は名刺ごとに決まった値。同じ id で入れ直すと上書き）：
+
+   ```sql
+   INSERT INTO cards (id, company, company_kana, name, name_kana, department, job_title, scanned_on, source_modified, image_key, pdf_key, created_at, updated_at)
+   VALUES ('<id>', '株式会社サンプル', 'サンプル', '山田 太郎', 'ヤマダ タロウ', '営業部', '部長', '2026-10-11', '1',
+           'cards/<id>/front.jpg', NULL, '2026-10-11T00:00:00Z', '2026-10-11T00:00:00Z')
+   ON CONFLICT(id) DO UPDATE SET company = excluded.company, company_kana = excluded.company_kana, name = excluded.name,
+     name_kana = excluded.name_kana, department = excluded.department, job_title = excluded.job_title,
+     image_key = excluded.image_key, pdf_key = excluded.pdf_key, updated_at = excluded.updated_at
+   WHERE cards.deleted_at IS NULL;
+   ```
+
+   `npx wrangler d1 execute <DB名> --remote --file cards.sql` で流します。末尾の `WHERE` は、Office で消した名刺を入れ直さないための条件です。
+
+- 並びは `company_kana`（カナ・ひらがなどちらでも可）で決まります。空なら会社名の1文字目（英字はその文字、漢字は「その他」）。
+- Office で消した名刺は画像と文字が消え、`deleted_at` だけが残ります。

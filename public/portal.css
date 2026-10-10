@@ -1586,6 +1586,61 @@ body.room .suite {
 .nclient { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--fg3); flex: 0 1 260px; min-width: 0; }
 .nclient .in { min-width: 0; width: 100%; }
 .nstat { margin-left: auto; color: var(--fg3); font-size: var(--t-100); flex: none; white-space: nowrap; }
+/* 名刺：頭文字の帯（上に貼りつく）→ 頭文字ごとの見出し → 会社ごとのカード → 名刺の並び */
+.ccount { color: var(--fg3); font-size: var(--t-300); }
+.cidx {
+  position: sticky;
+  top: calc(var(--suite) + var(--ticker-h, 0px));
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 var(--s-4);
+  padding: var(--s-2) 0;
+  background: var(--bg3);
+}
+.cidx button {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 var(--s-2);
+  border: 1px solid var(--stroke2);
+  border-radius: var(--r-m);
+  background: var(--card);
+  color: var(--fg1);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cgroup { margin-bottom: var(--s-6); scroll-margin-top: calc(var(--suite) + var(--ticker-h, 0px) + 72px); }
+.cgh { margin: 0 0 var(--s-3); padding-left: 10px; border-left: 3px solid #00d6d6; font-size: var(--t-500); line-height: var(--lh-500); font-weight: 600; }
+.cco { margin-bottom: var(--s-3); }
+.cco-h { display: flex; align-items: baseline; gap: var(--s-2); margin: 0 0 var(--s-3); font-size: var(--t-400); font-weight: 600; }
+.cco-h small { color: var(--fg3); font-size: var(--t-100); font-weight: 400; }
+.ccards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s-3); }
+.ccard {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: var(--s-2);
+  border: 1px solid var(--stroke2);
+  border-radius: var(--r-l);
+  background: var(--card);
+  color: var(--fg1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ccard img { width: 100%; aspect-ratio: 91 / 55; margin-bottom: var(--s-2); object-fit: contain; border-radius: var(--r-m); background: var(--bg3); }
+.ccard b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ccard small { color: var(--fg3); font-size: var(--t-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+dialog.cardv { width: min(640px, calc(100vw - 32px)); }
+.cardv-img { display: block; width: 100%; max-height: 60vh; margin: var(--s-2) 0 var(--s-4); object-fit: contain; border-radius: var(--r-m); background: var(--bg3); }
+.cardv-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--s-1) var(--s-4); margin: 0; }
+.cardv-dl dt { color: var(--fg3); font-size: var(--t-200); }
+.cardv-dl dd { margin: 0; }
+.cardv-dl dd small { margin-left: var(--s-2); color: var(--fg3); font-size: var(--t-100); }
+dialog.cardv .acts { flex-wrap: wrap; }
+dialog.cardv .acts .iconbtn { margin-right: auto; }
 
 /* ══════════════════════════════════════════════════════════════════
    Guest Room（応接室）：会社名の帯・ロボ・資料・やりとり・相談
@@ -2045,6 +2100,7 @@ body.room .card-h::after {
    ══════════════════════════════════════════════════════════════════ */
 
 :root[data-theme="dark"] body { background: var(--bg); color: var(--fg1); }
+:root[data-theme="dark"] .cidx { background: var(--bg); }
 :root[data-theme="dark"] .suite,
 :root[data-theme="dark"] body.office .suite,
 :root[data-theme="dark"] body.room .suite {
@@ -2213,6 +2269,8 @@ a.kpi.zero:hover small { color: var(--fg2); }
 .nmini-all:hover { color: var(--fg1); text-decoration: underline; }
 .nlist a:not([aria-current="page"]):hover, .nmini a:hover { background: var(--hv-bg); box-shadow: inset 3px 0 0 var(--hv-bar); }
 .tile.attn:hover { box-shadow: inset 0 6px 0 var(--p-yellow); border-color: var(--hv-bar); }
+.cidx button:hover, .ccard:hover { background: var(--hv-bg); border-color: var(--hv-bar); }
+.ccard:hover small { color: var(--fg2); }
 
 /* ══════════════════════════════════════════════════════════════════
    画面幅・動きを減らす設定による切り替え
@@ -2255,6 +2313,7 @@ a.kpi.zero:hover small { color: var(--fg2); }
   .suite { gap: var(--s-2); padding-right: 0; }
   .avatar, .exit .t { display: none; }
   .ptitle { font-size: var(--t-500); line-height: var(--lh-500); }
+  .ccards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
 }
 @media (hover: hover) and (min-width: 900px) {
   .cell:hover .add, .cell.sel .add { display: inline-flex; }

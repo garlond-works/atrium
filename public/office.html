@@ -23,6 +23,9 @@
     <!-- 自分用ノート＝角を折ったメモ用紙＋行 -->
     <symbol id="i-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
       <path d="M5 3.5h10l4 4v13H5Z"/><path d="M15 3.5v4h4"/><path d="M8.5 11.5h7M8.5 15h7M8.5 18.5h4"/></symbol>
+    <!-- 名刺＝横長のカード＋顔＋文字の行 -->
+    <symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="2.5" y="5.5" width="19" height="13" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5 15.5c.5-1.3 1.6-2 3-2s2.5.7 3 2"/><path d="M13.5 10h5M13.5 13.5h3.5"/></symbol>
     <symbol id="i-case" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
       <rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V4.5h7V7"/><path d="M2.5 12.5h19"/><path d="M10.5 12.5v2h3v-2"/></symbol>
     <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -114,6 +117,16 @@
   <div class="acts">
     <button class="btn" data-delc="no" autofocus>やめる</button>
     <button class="btn danger" data-delc="yes"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>消す</button>
+  </div>
+</dialog>
+
+<dialog class="dlg cardv" id="cardv" aria-labelledby="cardv-h">
+  <h2 id="cardv-h"></h2>
+  <div id="cardv-body"></div>
+  <div class="acts">
+    <button class="iconbtn danger" id="cardv-del" title="この名刺を消す" aria-label="この名刺を消す"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
+    <a class="btn" id="cardv-pdf" target="_blank" rel="noopener">原本を開く（PDF・裏面も）</a>
+    <button class="btn primary" data-cardclose autofocus>閉じる</button>
   </div>
 </dialog>
 
@@ -219,6 +232,7 @@ function drawNav() {
       <li><a href="#/calendar"${cur("calendar")}>${ic("i-cal")}<span class="t">カレンダー</span>${todayEv ? `<span class="n">今日 ${todayEv}</span>` : ""}</a></li>
       <li><a href="#/tasks"${cur("tasks")}>${ic("i-task")}<span class="t">タスク</span>${due ? `<span class="n">${due}</span>` : ""}</a></li>
       <li><a href="#/notes"${cur("notes")}>${ic("i-note")}<span class="t">ノート</span></a></li>
+      <li><a href="#/cards"${cur("cards")}>${ic("i-card")}<span class="t">名刺</span></a></li>
       <li><a href="#/clients"${cur("clients")}>${ic("i-people")}<span class="t">取引先</span></a></li>
     </ul>
     <h2 class="nav-h">取引先の部屋</h2>
@@ -230,7 +244,7 @@ function drawNav() {
 /* ───────── 中身 ───────── */
 async function drawMain() {
   const r = route();
-  const view = { today: pageToday, calendar: pageCalendar, tasks: pageTasks, notes: pageNotes, clients: pageClients, client: pageClient }[r.page] || pageToday;
+  const view = { today: pageToday, calendar: pageCalendar, tasks: pageTasks, notes: pageNotes, cards: pageCards, clients: pageClients, client: pageClient }[r.page] || pageToday;
   const html = await view(...r.rest);
   $("main").innerHTML = `<div class="page">${html}</div>`;
   if (r.page === "notes") noteAfterDraw();
@@ -626,6 +640,83 @@ async function noteLeave() {
     return;
   }
   await noteSave();
+}
+
+/* ═══════ 名刺 ═══════
+   名刺の表（cards）に入れた名刺を、会社の頭文字（A〜Z・あ〜わ）ごと、会社ごとにまとめて並べる。
+   並びは会社名の読み（カナ）で決める。読みが無い会社は会社名の1文字目で決める。 */
+let CARDS = [];
+const LEGAL = /^(株式会社|有限会社|合同会社|合資会社|合名会社|一般社団法人|一般財団法人|公益社団法人|公益財団法人|社会福祉法人|医療法人(社団|財団)?|学校法人|特定非営利活動法人|NPO法人|\(株\)|\(有\)|㈱|㈲)\s*/i;
+const LEGAL_KANA = /^(カブシキ[ガカ]イシャ|ユウゲン[ガカ]イシャ|ゴウドウ[ガカ]イシャ|ゴウシ[ガカ]イシャ|ゴウメイ[ガカ]イシャ|(イッパン|コウエキ)(シャダン|ザイダン)ホウジン|シャカイフクシホウジン|イリョウホウジン(シャダン|ザイダン)?|ガッコウホウジン|トクテイヒエイリカツドウホウジン|エヌピーオーホウジン)\s*/;
+const toKata = s => s.replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+const cardCo = c => c.company.normalize("NFKC").replace(LEGAL, "").trim();
+const cardKey = c => toKata((c.company_kana || "").normalize("NFKC")).replace(LEGAL_KANA, "").trim() || cardCo(c);
+const KANA_ROWS = [["ァ", "あ"], ["カ", "か"], ["サ", "さ"], ["タ", "た"], ["ナ", "な"], ["ハ", "は"], ["マ", "ま"], ["ャ", "や"], ["ラ", "ら"], ["ヮ", "わ"]];
+function cardIndex(c) {
+  const ch = cardKey(c).charAt(0).toUpperCase();
+  if (/[A-Z]/.test(ch)) return ch;
+  if (ch === "ヴ") return "あ";
+  if (ch === "ヵ" || ch === "ヶ") return "か";
+  if (ch >= "ァ" && ch <= "ン") return KANA_ROWS.filter(([k]) => ch >= k).pop()[1];
+  if (/[0-9]/.test(ch)) return "#";
+  return "他";
+}
+const INDEX_ORDER = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", ..."あかさたなはまやらわ", "#", "他"];
+const INDEX_LABEL = { あ: "あ行", か: "か行", さ: "さ行", た: "た行", な: "な行", は: "は行", ま: "ま行", や: "や行", ら: "ら行", わ: "わ行", "#": "数字", 他: "その他" };
+const cardWho = c => c.name || "名前なし";
+const cardRole = c => [c.department, c.job_title].filter(Boolean).join("　");
+
+async function pageCards() {
+  CARDS = (await api("/api/admin/cards"))?.cards || [];
+  // 頭文字 → 会社（会社名の表記ゆれ・空白・法人の種類を除いて同じなら1社）→ 名刺
+  const idx = new Map();
+  for (const c of CARDS) {
+    const i = cardIndex(c), co = cardCo(c).toLowerCase().replace(/\s+/g, "") || "（会社名なし）";
+    if (!idx.has(i)) idx.set(i, new Map());
+    const g = idx.get(i);
+    if (!g.has(co)) g.set(co, []);
+    g.get(co).push(c);
+  }
+  const used = INDEX_ORDER.filter(i => idx.has(i));
+  const byKey = (a, b) => cardKey(a[0]).localeCompare(cardKey(b[0]), "ja");
+  const byName = (a, b) => (a.name_kana || a.name).localeCompare(b.name_kana || b.name, "ja");
+  const companies = [...idx.values()].reduce((n, g) => n + g.size, 0);
+  return `
+    ${crumb([["今日", "#/today"], ["名刺"]])}
+    <div class="phead">
+      <h1 class="ptitle">${ic("i-card")}名刺</h1>
+      ${CARDS.length ? `<span class="ccount">${companies}社・${CARDS.length}枚</span>` : ""}
+    </div>
+    ${CARDS.length ? `
+    <nav class="cidx" aria-label="頭文字で移動">${used.map(i => `<button type="button" data-cjump="${esc(i)}" aria-label="${esc(INDEX_LABEL[i] || i)}へ">${esc(i)}</button>`).join("")}</nav>
+    ${used.map(i => `<section class="cgroup" id="cg-${esc(i)}" aria-labelledby="cgh-${esc(i)}">
+      <h2 class="cgh" id="cgh-${esc(i)}">${esc(INDEX_LABEL[i] || i)}</h2>
+      ${[...idx.get(i).values()].sort(byKey).map(cs => `<div class="card cco">
+        <h3 class="cco-h">${esc(cs[0].company || "（会社名なし）")}<small>${cs.length}枚</small></h3>
+        <ul class="ccards">${cs.sort(byName).map(c => `<li><button type="button" class="ccard" data-card="${esc(c.id)}">
+          <img src="/api/admin/cards/${encodeURIComponent(c.id)}/image" alt="" loading="lazy">
+          <b>${esc(cardWho(c))}</b>${cardRole(c) ? `<small>${esc(cardRole(c))}</small>` : ""}</button></li>`).join("")}</ul>
+      </div>`).join("")}
+    </section>`).join("")}`
+    : `<section class="card"><p class="empty">まだ名刺はありません。名刺の表（cards）と置き場に入れると、ここに会社ごとに並びます（入れ方は README）。</p></section>`}
+    <p class="drop-hint">${ic("i-lock")}名刺は ${esc(ORG)} だけが見られます。取引先の Guest Room には出ません。</p>`;
+}
+function openCard(id) {
+  const c = CARDS.find(x => x.id === id);
+  if (!c) return;
+  $("cardv-h").textContent = c.company || "（会社名なし）";
+  $("cardv-body").innerHTML = `
+    <img class="cardv-img" src="/api/admin/cards/${encodeURIComponent(c.id)}/image" alt="${esc(c.company)} ${esc(cardWho(c))} の名刺">
+    <dl class="cardv-dl">
+      <dt>名前</dt><dd>${esc(cardWho(c))}${c.name_kana ? `<small>${esc(c.name_kana)}</small>` : ""}</dd>
+      ${c.department ? `<dt>部署</dt><dd>${esc(c.department)}</dd>` : ""}
+      ${c.job_title ? `<dt>肩書き</dt><dd>${esc(c.job_title)}</dd>` : ""}
+      ${c.scanned_on ? `<dt>取り込んだ日</dt><dd>${esc(c.scanned_on.replace(/-/g, "/"))}</dd>` : ""}
+    </dl>`;
+  $("cardv-pdf").hidden = !c.has_pdf;
+  $("cardv-pdf").href = "/api/admin/cards/" + encodeURIComponent(c.id) + "/pdf";
+  $("cardv-del").dataset.delcard = c.id;
+  $("cardv").showModal();
 }
 
 /* ═══════ 取引先 ═══════ */
@@ -1058,6 +1149,19 @@ document.addEventListener("click", async e => {
       $("n-body").removeAttribute("id");   // 離れるときの保存・空のノートの片づけを走らせない
       location.hash = "#/notes";
     }
+    return;
+  }
+
+  // 名刺：頭文字へ移動／1枚を大きく見る／閉じる／消す
+  const cj = t.closest("[data-cjump]");
+  if (cj) { $("cg-" + cj.dataset.cjump)?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  const cd = t.closest("[data-card]");
+  if (cd) { openCard(cd.dataset.card); return; }
+  if (t.closest("[data-cardclose]") || t.id === "cardv") { $("cardv").close(); return; }
+  const dcard = t.closest("[data-delcard]");
+  if (dcard) {
+    if (!confirm("この名刺を消しますか？ 画像も消え、元に戻せません。\n（同じ id でもう一度入れても、この名刺は戻りません）")) return;
+    if (await send("/api/admin/cards/" + encodeURIComponent(dcard.dataset.delcard), "DELETE")) { $("cardv").close(); toast("名刺を消しました"); drawMain(); }
     return;
   }
 

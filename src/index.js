@@ -844,6 +844,46 @@ export default {
         return json({ ok: true });
       }
 
+      // ─────────── 名刺（2026-10-11）───────────
+      // 執務室だけで見る。入れるのは README の手順（wrangler で D1・R2 に直接書く）。ここでは見る・消すだけ。
+
+      // GET /api/admin/cards — 消していない名刺の一覧（並べ方・会社ごとのまとめ方は画面側）
+      if (path === "/api/admin/cards" && request.method === "GET") {
+        const rows = await env.DB.prepare(
+          `SELECT id, company, company_kana, name, name_kana, department, job_title, scanned_on, pdf_key IS NOT NULL AS has_pdf, updated_at
+             FROM cards WHERE deleted_at IS NULL`
+        ).all();
+        return json({ cards: rows.results ?? [] });
+      }
+
+      // GET /api/admin/cards/:id/image・/pdf — 名刺の画像・原本
+      const cfm = path.match(/^\/api\/admin\/cards\/([^/]+)\/(image|pdf)$/);
+      if (cfm && request.method === "GET") {
+        const card = await env.DB.prepare(`SELECT image_key, pdf_key FROM cards WHERE id = ? AND deleted_at IS NULL`).bind(cfm[1]).first();
+        const key = card && (cfm[2] === "image" ? card.image_key : card.pdf_key);
+        const obj = key && await env.DOCS.get(key);
+        if (!obj) return json({ error: "not_found" }, 404);
+        const headers = { "content-type": cfm[2] === "image" ? "image/jpeg" : "application/pdf", "x-content-type-options": "nosniff", "cache-control": "private, max-age=3600" };
+        if (cfm[2] === "image") headers["content-security-policy"] = "sandbox; default-src 'none'";
+        return new Response(obj.body, { headers });
+      }
+
+      // DELETE /api/admin/cards/:id — 名刺を消す。画像と文字は消し、消した印だけ残す（次の取り込みで戻さない）
+      const cdl = path.match(/^\/api\/admin\/cards\/([^/]+)$/);
+      if (cdl && request.method === "DELETE") {
+        const card = await env.DB.prepare(`SELECT image_key, pdf_key FROM cards WHERE id = ? AND deleted_at IS NULL`).bind(cdl[1]).first();
+        if (!card) return json({ error: "not_found" }, 404);
+        if (card.image_key) await env.DOCS.delete(card.image_key);
+        if (card.pdf_key) await env.DOCS.delete(card.pdf_key);
+        const at = now();
+        await env.DB.prepare(
+          `UPDATE cards SET company = '', company_kana = '', name = '', name_kana = '', department = '', job_title = '',
+             image_key = NULL, pdf_key = NULL, updated_at = ?, deleted_at = ? WHERE id = ?`
+        ).bind(at, at, cdl[1]).run();
+        return json({ ok: true });
+      }
+
+
       // POST /api/admin/clients/:id/cases — 案件を作る（Guest Room にそのまま出る）
       const ccm = path.match(/^\/api\/admin\/clients\/([^/]+)\/cases$/);
       if (ccm && request.method === "POST") {
