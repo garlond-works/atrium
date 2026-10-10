@@ -423,18 +423,18 @@ function trashSection() {
   </section>`;
 }
 
-/* 会社名の下のロボの帯（オーナー 2026-10-10）：ロボが吹き出しで自己紹介と役割を話す。
-   ホームでは大きく（質問の例・ボタン・注意つき）、ほかのページは1行に畳む。大きい吹き出しは × で閉じられて、
-   閉じたことはその人のブラウザに覚える（ホームでも1行になり、「ロボの紹介」で開き直せる）。相談の画面には出さない */
-const ROBO_KEY = "atrium-robo-closed";
-const roboClosed = () => { try { return localStorage.getItem(ROBO_KEY) === "1"; } catch { return false; } };
-const roboSet = closed => { try { closed ? localStorage.setItem(ROBO_KEY, "1") : localStorage.removeItem(ROBO_KEY); } catch {} };
+/* 会社名の下のロボの帯（オーナー 2026-10-10）：ロボが吹き出しで話す。
+   ふだんは1行（「資料のことも、お仕事のことも、AIに聞いてみませんか」＋「相談する」）。ホームの「ロボの紹介」を押すと、
+   自己紹介・役割・質問の例・注意つきの大きい吹き出しが開く（× で閉じる）。開いたことはその人のブラウザに覚える。相談の画面には出さない */
+const ROBO_KEY = "atrium-robo-open";
+const roboOpen = () => { try { return localStorage.getItem(ROBO_KEY) === "1"; } catch { return false; } };
+const roboSet = open => { try { open ? localStorage.setItem(ROBO_KEY, "1") : localStorage.removeItem(ROBO_KEY); } catch {} };
 function drawRobobar() {
   const bar = $("robobar"); if (!bar) return;
   const r = route();
   if (r.page === "ask" || !AI) { bar.hidden = true; return; }   // 相談の画面と、相談ロボを切っているときは出さない
   bar.hidden = false;
-  const home = r.page === "home", big = home && !roboClosed();
+  const home = r.page === "home", big = home && roboOpen();
   bar.className = "robobar " + (big ? "big" : "small");
   const door = `<a class="robo-door" href="#/ask" aria-label="相談ロボに聞いてみる"><span class="robo-slot">${ROBOT}</span></a>`;
   bar.innerHTML = big
@@ -965,8 +965,8 @@ document.addEventListener("click", async e => {
     if (!r.ok) { toast("うまく消せませんでした"); return; }
     toast("消しました"); await loadAsk(); return;
   }
-  if (e.target.closest("[data-robo-close]")) { roboSet(true); drawRobobar(); return; }
-  if (e.target.closest("[data-robo-open]")) { roboSet(false); drawRobobar(); return; }
+  if (e.target.closest("[data-robo-close]")) { roboSet(false); drawRobobar(); return; }
+  if (e.target.closest("[data-robo-open]")) { roboSet(true); drawRobobar(); return; }
 
   const st = e.target.closest("[data-ask-start]");
   if (st) { askDraft = st.dataset.askStart; location.hash = "#/ask"; return; }
