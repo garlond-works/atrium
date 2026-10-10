@@ -1671,11 +1671,11 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
    ・墨の線（--ink）は文字の色として明るくなるので、枠の線は --edge で別に持つ
    ・ロボは昼と同じ色（線と目は墨・顔は白）。暗い地の上でシールのように浮かせる
    ・取引先の色（部屋の色相・予定のパステル・部屋の四角）は変えない
-   文字の比（Python）：#e6eded×地 #0e1315 15.77／×カード #151b1d 14.67／#b9c4c5×カード 9.75／#8e9a9c×カード 6.01／#4fe3e3×カード 11.13
+   文字の比（Python）：#e6eded×地 #0e1315 15.77／×カード #151b1d 14.67／#b9c4c5×カード 9.75／#a2aeb0×カード 7.64・×ホバーの地 #113d3e 5.23（#8e9a9c だとホバーで 4.12 に落ちたので上げた）／#4fe3e3×カード 11.13
    ═════════════════════════════════════════════════════════════════ */
 :root[data-look][data-theme="dark"] {
   color-scheme: dark;
-  --ink: #e6eded; --fg1: #e6eded; --fg2: #b9c4c5; --fg3: #8e9a9c; --ink-line: #3a4649; --edge: #3a4649; --on-cyan: #0e1315;
+  --ink: #e6eded; --fg1: #e6eded; --fg2: #b9c4c5; --fg3: #a2aeb0; --ink-line: #3a4649; --edge: #3a4649; --on-cyan: #0e1315;
   --bg: #0e1315; --card: #151b1d; --surface: #1b2326;
   --bg1: #151b1d; --bg2: #12181a; --bg3: #1b2326; --bg5: #243034; --stroke1: #2e393c; --stroke2: #232c2f;
   --t-yellow: rgba(0, 214, 214, .14); --t-blue: rgba(0, 214, 214, .08); --t-green: rgba(90, 200, 150, .12); --t-pink: rgba(0, 214, 214, .14);
@@ -1779,3 +1779,46 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
 :root[data-look][data-theme="dark"] .agenda .dayh.today { background: #aef0f0; box-shadow: inset 0 0 0 1.5px var(--on-cyan); }
 /* 部屋の色を選ぶ丸の「使用中」の点：パステルの上なので黒のまま */
 :root[data-look][data-theme="dark"] .hp.used::before { background: #191919; }
+
+/* ═════════════════════════════════════════════════════════════════
+   ホバー：乗せたら全部ブランドの水色で反応する（オーナー 2026-10-10「ホバーの色の変化が薄すぎて見づらい」）。
+   測ったら、左メニュー（ライトは透明→#f4f4f5）・先方の動きと資料の行・ロボの帯の「相談する」などが、乗せてもほぼ変わらなかった。
+   ・左メニュー・一覧の行：地を淡い水色（ライト #d2f7f7／ダーク #113d3e）＋左に細い水色の線（今いるページの印と同じ形）
+   ・水色のボタン：はっきり一段濃く（主ボタン #00d6d6→#00b8b8 で地の比 1.36・墨の文字 7.16／「相談する」#aef0f0→#5fe4e4）
+   ・枠だけのボタン・札・切り替え：地を淡い水色に、数字の札は枠を水色に
+   ═════════════════════════════════════════════════════════════════ */
+:root[data-look] { --hv-bg: #d2f7f7; --hv-bar: #00d6d6; }
+:root[data-look][data-theme="dark"] { --hv-bg: #113d3e; }
+
+:root[data-look] .nav a:not([aria-current="page"]):hover,
+:root[data-look] .feed a.fi:hover,
+:root[data-look] .lrow:hover { background: var(--hv-bg); box-shadow: inset 3px 0 0 var(--hv-bar); }
+
+:root[data-look] .btn:not(.primary):not(.danger):hover, :root[data-look][data-theme="dark"] .btn:not(.primary):not(.danger):hover,
+:root[data-look] .chip:not([aria-current="true"]):hover, :root[data-look] .suite-btn:hover,
+:root[data-look] .look button[aria-pressed="false"]:hover, :root[data-look] .talk-more:hover { background-color: var(--hv-bg); }
+
+:root[data-look] .hero-next:hover, :root[data-look][data-theme="dark"] .hero-next:hover { background-color: var(--hv-bg); border-color: var(--hv-bar); }
+:root[data-look] a.kpi:hover { border-color: var(--hv-bar); box-shadow: 0 0 0 1px var(--hv-bar); }
+:root[data-look] a.kpi.zero:hover { background-color: var(--hv-bg); }
+
+:root[data-look] .btn.primary:hover, :root[data-look] details.newcase > summary:hover { background: linear-gradient(120deg, #00b8b8 0%, #2fd0d0 100%); }
+:root[data-look] body.room .robobar .btn:hover, :root[data-look][data-theme="dark"] body.room .robobar .btn:hover { background: #5fe4e4; }
+/* アイコンだけのボタン（ダウンロード・ゴミ箱・確認済み・×）、カレンダーの日、案件と取引先の札、選ぶ行も同じ水色で */
+:root[data-look] .iconbtn:hover, :root[data-look] .askdel:hover, :root[data-look] .robobar .bubble-x:hover,
+:root[data-look] .fi-seen:hover, :root[data-look] .ctile-del:hover { background: var(--hv-bg); color: var(--ink); }
+:root[data-look] .fi-seen:hover, :root[data-look] .ctile-del:hover { box-shadow: inset 0 0 0 1.5px var(--hv-bar); }
+:root[data-look] .cell:hover { background: var(--hv-bg); }
+:root[data-look] .tile:hover, :root[data-look] .ctile:hover, :root[data-look] .pickrow:hover { border-color: var(--hv-bar); }
+:root[data-look] .pickrow:not(.on):hover { background: var(--hv-bg); }
+/* 見た目の切り替え：帯の地がほぼ白なので、選んでいない側はもう一段濃い水色で反応させる */
+:root[data-look] .look button[aria-pressed="false"]:hover { background-color: #aef0f0; color: var(--on-cyan, #191919); }
+:root[data-look][data-theme="dark"] .look button[aria-pressed="false"]:hover { background-color: #1d5f61; color: var(--fg1); }
+/* 測り直しで残った所：お知らせの行・右上の Office・「ロボの紹介」・ロボの帯の「相談する」（#5fe4e4 だと地の比 1.21 で弱い → ブランドの #00d6d6・墨の文字 9.70） */
+:root[data-look] .ups a { margin: 0 calc(var(--s-2) * -1); padding-left: var(--s-2); padding-right: var(--s-2); }   /* 地が文字に貼りつかないよう、左右に余白（負の余白で位置は変えない） */
+:root[data-look] .ups a:hover { background: var(--hv-bg); box-shadow: inset 3px 0 0 var(--hv-bar); }
+:root[data-look] .suite-btn:hover { background-color: #aef0f0; color: #191919; }
+:root[data-look][data-theme="dark"] .suite-btn:hover { background-color: #1d5f61; color: var(--fg1); }
+:root[data-look] .linkbtn:hover { background: var(--hv-bg); color: var(--ink); border-radius: var(--r-m, 6px); }
+:root[data-look] body.room .robobar .btn:hover, :root[data-look][data-theme="dark"] body.room .robobar .btn:hover { background: #00d6d6; }
+:root[data-look] a.kpi.zero:hover small { color: var(--fg2); }   /* 淡い水色の地で、灰の小さな文字が 4.34 に落ちていた */
