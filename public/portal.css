@@ -1607,3 +1607,70 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
 /* クールのロボの帯：「相談する」「AIに相談する」のボタンは、濃い水色でなくブランドの薄い版に（オーナー 2026-10-10） */
 :root[data-look="cool"] body.room .robobar .btn { background: #aef0f0; border-color: var(--ink); color: var(--ink); }
 :root[data-look="cool"] body.room .robobar .btn:hover { background: #8cecec; }
+
+/* ═════════════════════════════════════════════════════════════════
+   クールの配色を、ブランド（シアン）の濃淡グラデーション中心にまとめ直す（オーナー 2026-10-10「見やすさと分かりやすさ重視」）。
+   取引先の色（部屋の色相・予定のパステル・部屋の四角）は変えない。やわらかも変えない。
+   ・濃：#00d6d6 → #5fe4e4 … 押す・選ぶ印（主ボタン・選んでいる札・見た目の切り替え・左メニューの印・枠の左の線）
+   ・中：#8cecec → #e3fafa … 要対応の札
+   ・淡：#d2f7f7 → #f5fefe … 今日・次の予定・選んでいる行の地
+   ・灰だった「今日」（--p-blue／--t-blue）をブランドの淡い版へ。
+   ・期限切れも赤を使わずブランドの一番濃い段で示す（オーナー「淡い赤はいらん」）。意味は「期限切れ」の文字で伝わる
+   墨 #191919 の文字は、どの面でも 7.9:1 以上（一番濃い #00d6d6 で 9.70・押したときの #00c2c2 で 7.95。Python で計算）
+   ═════════════════════════════════════════════════════════════════ */
+:root[data-look="cool"] {
+  --p-blue: #aef0f0; --t-blue: #effbfb; --p-pink: #00d6d6; --t-pink: #e3fafa;
+  --g-strong: linear-gradient(120deg, #00d6d6 0%, #5fe4e4 100%);
+  --g-strong-h: linear-gradient(120deg, #00c2c2 0%, #3fdcdc 100%);
+  --g-mid: linear-gradient(120deg, #8cecec 0%, #e3fafa 100%);
+  --g-soft: linear-gradient(120deg, #d2f7f7 0%, #f5fefe 100%);
+  --g-rail: linear-gradient(180deg, #00d6d6 0%, #aef0f0 100%);
+}
+/* 地：上のほうにだけ、ごく淡いブランドのにじみ */
+:root[data-look="cool"] .suite, :root[data-look="cool"] body.office .suite, :root[data-look="cool"] body.room .suite {
+  background: linear-gradient(180deg, #eefafa 0, #fafbfb 520px); }
+
+/* 押す・選ぶ印：濃いグラデーション */
+:root[data-look="cool"] .btn.primary, :root[data-look="cool"] details.newcase > summary,
+:root[data-look="cool"] .chip[aria-current="true"], :root[data-look="cool"] .look button[aria-pressed="true"],
+:root[data-look="cool"] .pickrow.on .ck { background: var(--g-strong); }
+:root[data-look="cool"] .btn.primary:hover, :root[data-look="cool"] details.newcase > summary:hover { background: var(--g-strong-h); }
+:root[data-look="cool"] .nav a[aria-current="page"]::before, :root[data-look="cool"] body.room .nav a[aria-current="page"]::before { background: var(--g-rail); }
+:root[data-look="cool"] .nav a[aria-current="page"], :root[data-look="cool"] body.room .nav a[aria-current="page"] { background: var(--g-soft); }
+
+/* TODAY の帯と、ホームの3つの枠の左の線：ベタの6pxをグラデーションに。帯の地は左から淡いブランド */
+:root[data-look="cool"] .hero { box-shadow: none;
+  background: var(--g-rail) left / 6px 100% no-repeat, linear-gradient(100deg, #e3fafa 0%, #fff 55%); }
+:root[data-look="cool"] .card.rail { box-shadow: none; background: var(--g-rail) left / 6px 100% no-repeat, var(--bg1); }
+:root[data-look="cool"] .hero-next { background-color: #fff; }
+:root[data-look="cool"] .hero-next:hover { background-color: #f2fdfd; }
+
+/* 数字の札：期限切れ＝濃／要対応＝中／今日＝淡。件数ゼロの札は塗らない */
+:root[data-look="cool"] .kpi.hot { background: var(--g-mid); }
+:root[data-look="cool"] .kpi.soft { background: var(--g-soft); }
+:root[data-look="cool"] .kpi.alarm { background: var(--g-strong); }
+:root[data-look="cool"] .kpi .icbox { background: #e3fafa; }
+:root[data-look="cool"] .kpi.zero .icbox { background: var(--bg5); }
+
+/* 濃い水色に文字が乗っていた札・帯は、執務室もゲストルームと同じ淡い版に */
+:root[data-look="cool"] .pill.attn, :root[data-look="cool"] .pill.hot, :root[data-look="cool"] .pill.mail,
+:root[data-look="cool"] .nav .mail, :root[data-look="cool"] .ticker .new, :root[data-look="cool"] .letter .new,
+:root[data-look="cool"] .ups .new { background: #aef0f0; }
+:root[data-look="cool"] .card.attn .card-h { background: var(--g-mid); }
+
+/* 行の地：左の線から右へ淡く抜ける。期限切れ＝濃い線＋やや濃い地／今日まで＝中の線＋淡い地。期限切れの文字は赤でなく墨の太字 */
+:root[data-look="cool"] .titem.is-late { background: linear-gradient(90deg, #c9f5f5, #f2fdfd); box-shadow: inset 4px 0 0 #00d6d6; }
+:root[data-look="cool"] .titem.is-today { background: linear-gradient(90deg, #e3fafa, #f7fefe); box-shadow: inset 4px 0 0 #8cecec; }
+:root[data-look="cool"] .titem .late { color: var(--ink); }
+:root[data-look="cool"] .tgroup.late > h3 { background: var(--g-strong); }
+:root[data-look="cool"] .pickrow.on, :root[data-look="cool"] .memo-body { background: linear-gradient(90deg, #e3fafa, #f7fefe); }
+
+/* ゲストルームの見出しの下の短い印も、濃→淡 */
+:root[data-look="cool"] body.room .card-h::after { background: linear-gradient(90deg, #00d6d6, #aef0f0); }
+
+/* クール：消すときの最後の確定ボタンは、赤でなく黄色に（オーナー 2026-10-10「ちょうどいい黄色でいい」）。墨の文字 12.7:1／押したとき 10.79:1。
+   ゴミ箱の印を指したときの赤も、ほかと揃えて墨に。カレンダーの日曜・祝日の赤は残す（オーナー「今のままでいい」） */
+:root[data-look="cool"] .btn.danger { background: #ffd84a; border-color: var(--ink); color: var(--ink); }
+:root[data-look="cool"] .btn.danger:hover { background: #f5c518; border-color: var(--ink); }
+:root[data-look="cool"] .iconbtn.danger:hover, :root[data-look="cool"] .askdel:hover { color: var(--ink); }
+:root[data-look="cool"] .ctile-del:hover { color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
