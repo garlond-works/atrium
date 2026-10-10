@@ -1432,17 +1432,6 @@ body.room .tile .icbox { background: var(--acc-bg); color: var(--acc-ink); }
 body.room .tile.done .icbox { background: var(--bg3); color: var(--fg3); }
 body.room .nav a[aria-current="page"] { background: var(--acc-bg); }
 
-/* やわらかは執務室のやわらかを軸に（オーナー 2026-09-23）。部屋の色はクールだけで使う。
-   見出しのアイコン＝執務室と同じ青（--brand）／見出しの印＝黄（執務室の選択の印・主ボタンと同じ色）／
-   案件の札のアイコン＝淡い水色の地／左メニューの選択＝執務室と同じ（白い地＋黄の印） */
-:root:not([data-look="cool"]) body.room .card-h > .ic { color: var(--brand); }
-:root:not([data-look="cool"]) body.room .card-h::after { background: var(--p-yellow); box-shadow: 0 0 0 1px var(--ink); height: 4px; bottom: -2px; }
-:root:not([data-look="cool"]) body.room .tile .icbox { background: var(--t-blue); color: var(--ink); }
-:root:not([data-look="cool"]) body.room .nav a[aria-current="page"] { background: var(--bg1); }
-/* やわらか：左メニューの選択の印と、会社名の後ろのにじみも執務室と同じ黄に（部屋の紫などは使わない） */
-:root:not([data-look="cool"]) body.room .nav a[aria-current="page"]::before { background: var(--p-yellow); width: 4px; box-shadow: 0 0 0 1px var(--ink); }
-:root:not([data-look="cool"]) body.room .site { background: radial-gradient(520px 160px at 0% 0%, rgba(241, 200, 70, .30), transparent 70%); }
-
 /* 相談ロボの注意書き：個人情報・プライベートは書かない（会話は オーナーも読めるため）。一番目立つ位置に */
 .ask-caution { display: flex; gap: var(--s-2); align-items: flex-start; margin: var(--s-3) 0 0; padding: var(--s-2) var(--s-3);
   border-radius: var(--r-m); background: var(--t-pink); box-shadow: inset 3px 0 0 var(--danger); color: var(--fg1); font-size: var(--t-200); line-height: 1.7; }
@@ -1674,3 +1663,115 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
 :root[data-look="cool"] .btn.danger:hover { background: #f5c518; border-color: var(--ink); }
 :root[data-look="cool"] .iconbtn.danger:hover, :root[data-look="cool"] .askdel:hover { color: var(--ink); }
 :root[data-look="cool"] .ctile-del:hover { color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+/* ═════════════════════════════════════════════════════════════════
+   ダーク（2026-10-10 オーナー：「やわらか／クール」をやめて「ライト／ダーク」に）。
+   土台はライト（旧クール）と同じブランドの配色。地を青緑がかった黒にして、シアンは「光」として使う。
+   ・明るいシアンの面（主ボタン・NEW・相談する など）に乗る文字は、夜でも黒（白にすると読めない）
+   ・墨の線（--ink）は文字の色として明るくなるので、枠の線は --edge で別に持つ
+   ・ロボは昼と同じ色（線と目は墨・顔は白）。暗い地の上でシールのように浮かせる
+   ・取引先の色（部屋の色相・予定のパステル・部屋の四角）は変えない
+   文字の比（Python）：#e6eded×地 #0e1315 15.77／×カード #151b1d 14.67／#b9c4c5×カード 9.75／#8e9a9c×カード 6.01／#4fe3e3×カード 11.13
+   ═════════════════════════════════════════════════════════════════ */
+:root[data-look][data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e6eded; --fg1: #e6eded; --fg2: #b9c4c5; --fg3: #8e9a9c; --ink-line: #3a4649; --edge: #3a4649; --on-cyan: #0e1315;
+  --bg: #0e1315; --card: #151b1d; --surface: #1b2326;
+  --bg1: #151b1d; --bg2: #12181a; --bg3: #1b2326; --bg5: #243034; --stroke1: #2e393c; --stroke2: #232c2f;
+  --t-yellow: rgba(0, 214, 214, .14); --t-blue: rgba(0, 214, 214, .08); --t-green: rgba(90, 200, 150, .12); --t-pink: rgba(0, 214, 214, .14);
+  --p-blue: #1d5f61; --p-cream: #243034;
+  --brand: #4fe3e3; --brand-hover: #7eeaea; --brand-link: #4fe3e3; --brand-text: #4fe3e3; --warn: #4fe3e3; --ok: #6fd6a3;
+  --g-mid: linear-gradient(120deg, #0f6466 0%, #123236 100%);
+  --g-soft: linear-gradient(120deg, #123c3e 0%, #161e20 100%);
+}
+:root[data-look][data-theme="dark"] body { background: var(--bg); color: var(--fg1); }
+:root[data-look][data-theme="dark"] .suite, :root[data-look][data-theme="dark"] body.office .suite,
+:root[data-look][data-theme="dark"] body.room .suite { background: linear-gradient(180deg, #0f2022 0, #0e1315 520px); }
+
+/* 枠の線：文字色と分ける */
+:root[data-look][data-theme="dark"] .card, :root[data-look][data-theme="dark"] .cmdbar, :root[data-look][data-theme="dark"] .viewer,
+:root[data-look][data-theme="dark"] .tile, :root[data-look][data-theme="dark"] .ctile, :root[data-look][data-theme="dark"] .kase,
+:root[data-look][data-theme="dark"] .hero, :root[data-look][data-theme="dark"] .kpi, :root[data-look][data-theme="dark"] .hero-next,
+:root[data-look][data-theme="dark"] .btn:not(.primary):not(.danger), :root[data-look][data-theme="dark"] .chip:not([aria-current="true"]),
+:root[data-look][data-theme="dark"] .letter.is-fresh, :root[data-look][data-theme="dark"] body.room .robobar .bubble,
+:root[data-look][data-theme="dark"] .look { border-color: var(--edge); }
+:root[data-look][data-theme="dark"] .look { box-shadow: inset 0 0 0 1px var(--edge); }
+:root[data-look][data-theme="dark"] .card { background-color: var(--card); }
+:root[data-look][data-theme="dark"] .card-h { border-bottom-color: var(--stroke1); }
+:root[data-look][data-theme="dark"] .btn:not(.primary):not(.danger) { background-color: transparent; color: var(--fg1); }
+:root[data-look][data-theme="dark"] .btn:not(.primary):not(.danger):hover { background-color: var(--bg3); }
+
+/* TODAY の帯・3つの枠の左の線・次の予定 */
+:root[data-look][data-theme="dark"] .hero { background: var(--g-rail) left / 6px 100% no-repeat, linear-gradient(100deg, #0f3a3c 0%, #151b1d 55%); }
+:root[data-look][data-theme="dark"] .card.rail { background: var(--g-rail) left / 6px 100% no-repeat, var(--card); }
+:root[data-look][data-theme="dark"] .hero-next { background-color: var(--card); }
+:root[data-look][data-theme="dark"] .hero-next:hover { background-color: var(--bg3); }
+
+/* 入力欄・ダイアログ */
+:root[data-look][data-theme="dark"] input, :root[data-look][data-theme="dark"] select, :root[data-look][data-theme="dark"] textarea {
+  background-color: #12181a; color: var(--fg1); border-color: var(--edge); }
+:root[data-look][data-theme="dark"] ::placeholder { color: var(--fg3); }
+:root[data-look][data-theme="dark"] dialog { background: var(--card); color: var(--fg1); border-color: var(--edge); }
+:root[data-look][data-theme="dark"] dialog::backdrop { background: rgba(0, 0, 0, .6); }
+
+/* ゲストルームの会社名の帯・ロボの吹き出し */
+:root[data-look][data-theme="dark"] body.room .site { background: linear-gradient(90deg, #0f3436, transparent 60%); }
+:root[data-look][data-theme="dark"] body.room .robobar .bubble, :root[data-look][data-theme="dark"] body.room .robobar .bubble::before { background-color: var(--card); }
+:root[data-look][data-theme="dark"] body.room .robobar .bubble::before { border-color: var(--edge); }
+:root[data-look][data-theme="dark"] .msg.robo .bubble { background: var(--card); box-shadow: inset 0 0 0 1.5px var(--edge); }
+
+/* 数字の札の丸 */
+:root[data-look][data-theme="dark"] .kpi .icbox { background: rgba(0, 214, 214, .16); color: var(--brand); }
+:root[data-look][data-theme="dark"] .kpi.zero .icbox { background: var(--bg5); color: var(--fg2); }
+:root[data-look][data-theme="dark"] .kpi.zero.clear .icbox { background: transparent; color: var(--fg1); box-shadow: inset 0 0 0 1.5px var(--fg2); }
+:root[data-look][data-theme="dark"] body.room .tile .icbox, :root[data-look][data-theme="dark"] body.room .mb-av { background: rgba(0, 214, 214, .16); color: var(--fg1); }
+
+/* 明るいシアン（と黄色）の面に乗る文字は黒のまま */
+:root[data-look][data-theme="dark"] .btn.primary, :root[data-look][data-theme="dark"] details.newcase > summary,
+:root[data-look][data-theme="dark"] .kpi.alarm, :root[data-look][data-theme="dark"] .kpi.alarm b, :root[data-look][data-theme="dark"] .kpi.alarm small,
+:root[data-look][data-theme="dark"] .pill.attn, :root[data-look][data-theme="dark"] .pill.hot, :root[data-look][data-theme="dark"] .pill.mail,
+:root[data-look][data-theme="dark"] .pill.alarm, :root[data-look][data-theme="dark"] .nav .mail,
+:root[data-look][data-theme="dark"] .ticker .new, :root[data-look][data-theme="dark"] .letter .new, :root[data-look][data-theme="dark"] .ups .new,
+:root[data-look][data-theme="dark"] .look button[aria-pressed="true"], :root[data-look][data-theme="dark"] .tgroup.late > h3,
+:root[data-look][data-theme="dark"] .tgroup.late > h3 .n, :root[data-look][data-theme="dark"] .chip[aria-current="true"],
+:root[data-look][data-theme="dark"] .pickrow.on .ck, :root[data-look][data-theme="dark"] body.room .robobar .btn,
+:root[data-look][data-theme="dark"] .btn.danger, :root[data-look][data-theme="dark"] .agenda .dayh.today,
+:root[data-look][data-theme="dark"] .agenda .dayh.today small { color: var(--on-cyan); border-color: var(--on-cyan); }
+:root[data-look][data-theme="dark"] .kpi.alarm .icbox { background: #fff; color: var(--on-cyan); box-shadow: 0 0 0 2px var(--on-cyan); }
+:root[data-look][data-theme="dark"] .pill.attn, :root[data-look][data-theme="dark"] .pill.hot, :root[data-look][data-theme="dark"] .pill.mail,
+:root[data-look][data-theme="dark"] .pill.alarm, :root[data-look][data-theme="dark"] .nav .mail, :root[data-look][data-theme="dark"] .ticker .new,
+:root[data-look][data-theme="dark"] .letter .new, :root[data-look][data-theme="dark"] .ups .new,
+:root[data-look][data-theme="dark"] .look button[aria-pressed="true"], :root[data-look][data-theme="dark"] .tgroup.late > h3 { box-shadow: inset 0 0 0 1.5px var(--on-cyan); }
+
+/* カレンダーの今日の丸：淡いシアンの地に黒の数字 */
+:root[data-look][data-theme="dark"] .cell.today .dn i { background: #aef0f0; color: var(--on-cyan); box-shadow: 0 0 0 1.5px #aef0f0; }
+
+/* ロボ・封筒：昼と同じ色 */
+:root[data-look][data-theme="dark"] .robot, :root[data-look][data-theme="dark"] .env { --ink: #191919; }
+:root[data-look][data-theme="dark"] .robot .rb-head { fill: #aef0f0; }
+:root[data-look][data-theme="dark"] .env-body { fill: #e9e9ec; }
+:root[data-look][data-theme="dark"] .letter.is-in .env-body { fill: #00d6d6; }
+:root[data-look][data-theme="dark"] .letter.is-out .env-body { fill: #aef0f0; }
+
+/* 右上の GarlondWorks のロゴ（黒い歯車）は白く抜く。色相を半周戻して、中のシアンはシアンのまま */
+:root[data-look][data-theme="dark"] .avatar img { filter: invert(1) hue-rotate(180deg); }
+
+/* ダーク（続き）：自動の測定（文字と地の比 4.5 未満を全画面で洗い出し）で見つかった所 */
+:root[data-look][data-theme="dark"] { --danger: #ff8f85; }   /* カレンダーの日曜・祝日の赤を、暗い地で読める明るさに（×カード 7.89） */
+:root[data-look][data-theme="dark"] .ticker { background: rgba(14, 19, 21, .88); }
+:root[data-look][data-theme="dark"] .kpi.zero b, :root[data-look][data-theme="dark"] .kpi.zero small { color: var(--fg2); }
+:root[data-look][data-theme="dark"] .titem.is-late { background: linear-gradient(90deg, #14474a, #172426); }   /* 墨の文字 8.72 */
+:root[data-look][data-theme="dark"] .titem.is-today { background: linear-gradient(90deg, #123336, #161e20); }
+:root[data-look][data-theme="dark"] .pickrow.on, :root[data-look][data-theme="dark"] .memo-body { background: linear-gradient(90deg, #123336, #161e20); }
+/* 取引先の色の丸・四角（パステル）の上の頭文字は黒 */
+:root[data-look][data-theme="dark"] .ctile .logo:not(.none), :root[data-look][data-theme="dark"] .plogo:not(.none) { color: var(--on-cyan); }
+/* ロボの帯の「相談する」：薄いシアンの面に黒文字（上の「枠だけのボタン」の指定より強く） */
+:root[data-look][data-theme="dark"] body.room .robobar .btn { background: #aef0f0; color: var(--on-cyan); border-color: var(--on-cyan); }
+:root[data-look][data-theme="dark"] body.room .robobar .btn:hover { background: #8cecec; }
+/* 墨の面に白い文字を乗せていた所：ダークでは面が明るくなるので、文字を黒に（見出し右の小さなボタンを指したとき・次の予定の時刻の札・知らせの札） */
+:root[data-look][data-theme="dark"] .card-h .more:hover, :root[data-look][data-theme="dark"] .hero-next b span,
+:root[data-look][data-theme="dark"] .toast { color: var(--on-cyan); }
+/* 予定の「今日」の見出し：カレンダーの今日の丸と同じ、淡いシアンに黒 */
+:root[data-look][data-theme="dark"] .agenda .dayh.today { background: #aef0f0; box-shadow: inset 0 0 0 1.5px var(--on-cyan); }
+/* 部屋の色を選ぶ丸の「使用中」の点：パステルの上なので黒のまま */
+:root[data-look][data-theme="dark"] .hp.used::before { background: #191919; }
