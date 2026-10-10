@@ -1125,10 +1125,6 @@ main { padding-bottom: calc(clamp(96px, 16vh, 160px) + env(safe-area-inset-botto
   width: 84px; padding: 2px 0 0; border-radius: var(--r-xl); text-decoration: none; color: var(--ink);
 }
 .robo-door .robo-slot { width: 64px; height: 64px; transition: transform 200ms ease; }
-.robo-door .robo-tag {
-  font-size: 11px; font-weight: 700; line-height: 1; white-space: nowrap; padding: 4px 8px; border-radius: 999px;
-  background: var(--p-yellow); box-shadow: inset 0 0 0 1.5px var(--ink);
-}
 .robo-door:hover .robo-slot { transform: translateY(-2px) rotate(-6deg); }
 .robo-door:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
 
@@ -1554,21 +1550,14 @@ dialog.dlg .rep-acts { flex-wrap: wrap; }
 /* クールのゲストルーム（続き・オーナー 2026-10-10）：
    ① 見出しの下の短い線は、部屋の色相（ピンクなど）でなくブランドの薄い版（--acc-mid）。
    ② ブランドの濃い水色（#00d6d6）に文字を載せていた札・帯が、濃くて読みづらい → 薄い版（#aef0f0）に、文字は墨のまま。
-      対象：「AIに相談」の札・「ご対応のお願い」の札と見出しの帯・「NEW」の札。主ボタンと、選んでいる絞り込みの札は濃いまま（押す・選ぶ印なので）。 */
-:root[data-look="cool"] body.room .robo-door .robo-tag,
+      対象：「ご対応のお願い」の札と見出しの帯・「NEW」の札。主ボタンと、選んでいる絞り込みの札は濃いまま（押す・選ぶ印なので）。 */
 :root[data-look="cool"] body.room .pill.attn,
 :root[data-look="cool"] body.room .card.attn .card-h,
 :root[data-look="cool"] body.room .ticker .new,
 :root[data-look="cool"] body.room .letter .new,
 :root[data-look="cool"] body.room .ups .new { background: #aef0f0; }
 
-/* ホームの「AIに相談」のカードと、スマホの右下の固定ボタン（オーナー 2026-10-10：帯の隅のロボは目に入りにくく、スクロールすると消える） */
-.askcard { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--s-5); align-items: center; margin: 0 0 var(--s-5); }
-.askcard .askc-robot svg { display: block; width: 96px; height: 96px; }
-.askcard h2 { margin: 0 0 var(--s-1); font-size: var(--t-500); line-height: var(--lh-500); font-weight: 600; }
-.askcard p { margin: 0 0 var(--s-3); color: var(--fg2); }
-.askc-ex { display: flex; flex-wrap: wrap; gap: var(--s-2); margin: 0 0 var(--s-3); }
-.askc-ex .chip { max-width: 100%; height: auto; min-height: 44px; padding-top: var(--s-2); padding-bottom: var(--s-2); text-align: left; white-space: normal; }
+/* スマホの右下の固定ボタン（オーナー 2026-10-10：帯の隅のロボは目に入りにくく、スクロールすると消える） */
 .ask-fab { display: none; }
 @media (max-width: 899px) {
   .ask-fab:not([hidden]) { position: fixed; right: var(--s-4); bottom: calc(var(--s-4) + env(safe-area-inset-bottom, 0px)); z-index: 30;
@@ -1577,4 +1566,40 @@ dialog.dlg .rep-acts { flex-wrap: wrap; }
   .ask-fab .ic { width: 22px; height: 22px; }
   body.room main { padding-bottom: 96px; }   /* 固定ボタンが一番下の中身にかぶらない */
 }
-@media (max-width: 479px) { .askcard { grid-template-columns: minmax(0, 1fr); } .askcard .askc-robot { display: none; } }
+
+/* 会社名の下のロボの帯：ロボ＋吹き出し。ホームは大きく、ほかは1行（オーナー 2026-10-10） */
+body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4); }
+.robobar { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-4); align-items: center; }
+.robobar .robo-door { width: auto; padding: 0; }
+.robobar.big .robo-slot { width: 80px; height: 80px; }
+.robobar.small .robo-slot { width: 44px; height: 44px; }
+.robobar .bubble { position: relative; padding: var(--s-4) var(--s-5); border: 1.5px solid var(--ink); border-radius: var(--r-xl); background: var(--bg1); color: var(--fg1); }
+.robobar .bubble::before { content: ""; position: absolute; left: -8px; top: 26px; width: 14px; height: 14px; background: var(--bg1);
+  border-left: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); transform: rotate(45deg); }
+.robobar.small .bubble { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); padding: var(--s-2) var(--s-4); }
+.robobar.small .bubble::before { top: 50%; margin-top: -7px; }
+.robobar .bubble p { margin: 0 0 var(--s-2); color: var(--fg2); }
+.robobar .bubble p.bubble-hello { color: var(--fg1); font-size: var(--t-400); }
+.robobar .bubble .bubble-line { color: var(--fg1); font-weight: 600; }
+.robobar .bubble .bubble-note { margin: var(--s-3) 0 0; font-size: var(--t-100); color: var(--fg3); }
+.askc-ex { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+.askc-ex .chip { max-width: 100%; height: auto; min-height: 44px; padding-top: var(--s-2); padding-bottom: var(--s-2); text-align: left; white-space: normal; }
+.robobar .bubble .askc-ex { margin: var(--s-3) 0; }
+.robobar .bubble-x { position: absolute; top: var(--s-1); right: var(--s-1); display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; color: var(--fg2); cursor: pointer; }
+.robobar .bubble-x:hover { background: var(--bg5); color: var(--fg1); }
+.robobar .bubble-x .ic { width: 18px; height: 18px; }
+.robobar .bubble:has(.bubble-x) { padding-right: 52px; }
+.linkbtn { margin-left: auto; border: 0; background: none; color: var(--fg2); text-decoration: underline; cursor: pointer; font: inherit; font-size: var(--t-100); }
+@media (max-width: 479px) {
+  .robobar { gap: var(--s-3); align-items: start; }
+  .robobar.small { align-items: center; }
+  .robobar.big .robo-slot { width: 48px; height: 48px; }
+  .robobar.small .robo-slot { width: 36px; height: 36px; }
+  .robobar .bubble { padding: var(--s-3) var(--s-4); }
+  .robobar .bubble::before { top: 18px; }
+  .robobar .bubble:has(.bubble-x) { padding-right: 40px; }
+  .robobar .bubble-x { width: 36px; height: 36px; top: 2px; right: 2px; }
+  .robobar .bubble p.bubble-hello { font-size: var(--t-300); }
+  .robobar .bubble .askc-ex { display: none; }   /* スマホは縦が長くなるので、質問の例は相談の画面で */
+}
