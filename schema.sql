@@ -289,6 +289,8 @@ CREATE TABLE activity_log (
 );
 
 CREATE INDEX idx_activity_room ON activity_log(room_id, created_at);
+-- 「まだ確認していない」先方の動きだけの索引（2026-10-11）。Office のホームが1分ごとに読むので、全件を読まないように
+CREATE INDEX idx_activity_unseen ON activity_log(created_at) WHERE seen_at IS NULL AND actor_side = 'client';
 
 
 -- ─────────────────────────────────────────────
