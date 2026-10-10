@@ -537,6 +537,9 @@ function noteWhen(iso) {
   const t = new Date(iso);
   return t.toDateString() === new Date().toDateString() ? `${pad(t.getHours())}:${pad(t.getMinutes())}` : `${t.getMonth() + 1}/${t.getDate()}`;
 }
+// 書く欄の取引先の選び方：取引先に結びつけないノートは「自分用」（タスクや予定の「（なし）」とは言い方を分ける）
+const noteClientOptions = sel => `<option value="">自分用</option>` +
+  H.clients.map(c => `<option value="${esc(c.id)}"${c.id === sel ? " selected" : ""}>${esc(cname(c))}</option>`).join("");
 const noteFirstLine = n => (n.body || "").split("\n").find(l => l.trim()) || "";
 function noteItem(n, curId) {
   const c = client(n.client_id);
@@ -556,7 +559,7 @@ function noteListHtml(curId) {
 async function pageNotes(id) {
   NOTES = (await api("/api/admin/notes"))?.notes || [];
   const cur = id && NOTES.find(n => n.id === id);
-  const filterOpts = `<option value="">すべての取引先</option><option value="-"${noteClient === "-" ? " selected" : ""}>取引先なし</option>` +
+  const filterOpts = `<option value="">すべての取引先</option><option value="-"${noteClient === "-" ? " selected" : ""}>自分用</option>` +
     H.clients.map(c => `<option value="${esc(c.id)}"${c.id === noteClient ? " selected" : ""}>${esc(cname(c))}</option>`).join("");
   return `
     ${crumb([["今日", "#/today"], ["ノート"]])}
@@ -576,7 +579,7 @@ async function pageNotes(id) {
         <a class="nback" href="#/notes">${ic("i-chevl")}一覧へ</a>
         <input class="in ntitle" id="n-title" value="${esc(cur.title)}" placeholder="タイトル" maxlength="120" autocomplete="off" aria-label="タイトル">
         <div class="nmeta">
-          <label class="nclient">${ic("i-people")}<select class="in" id="n-client" aria-label="結びつける取引先">${clientOptions(cur.client_id)}</select></label>
+          <label class="nclient">${ic("i-people")}<select class="in" id="n-client" aria-label="自分用か、結びつける取引先">${noteClientOptions(cur.client_id)}</select></label>
           <span class="nstat" id="nstat" role="status">保存済み ${noteWhen(cur.updated_at)}</span>
           <button type="button" class="iconbtn danger" data-delnote="${esc(cur.id)}" title="このノートを消す" aria-label="このノートを消す">${ic("i-trash")}</button>
         </div>
