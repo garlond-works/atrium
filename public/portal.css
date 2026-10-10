@@ -1822,3 +1822,55 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
 :root[data-look] .linkbtn:hover { background: var(--hv-bg); color: var(--ink); border-radius: var(--r-m, 6px); }
 :root[data-look] body.room .robobar .btn:hover, :root[data-look][data-theme="dark"] body.room .robobar .btn:hover { background: #00d6d6; }
 :root[data-look] a.kpi.zero:hover small { color: var(--fg2); }   /* 淡い水色の地で、灰の小さな文字が 4.34 に落ちていた */
+
+/* ═════════════════════════════════════════════════════════════════
+   執務室のノート（2026-10-11 オーナー「自分用ノートみたいなメモ機能」）
+   広い画面：左に一覧・右に書く欄の2列。狭い画面：一覧 → 開くと書く欄だけ（「一覧へ」で戻る）
+   ═════════════════════════════════════════════════════════════════ */
+.notes { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: var(--s-4); align-items: start; }
+.nfilter { display: grid; gap: var(--s-2); margin-bottom: var(--s-3); }
+.nlist { list-style: none; margin: 0 calc(var(--s-2) * -1); padding: 0; max-height: calc(100vh - 300px); overflow-y: auto; }
+.nlist li + li { border-top: 1px solid var(--stroke2); }
+.nlist a { display: grid; gap: 2px; padding: var(--s-2) var(--s-3); border-radius: var(--r-m, 6px); color: var(--fg1); text-decoration: none; }
+.nlist a b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nlist a small { display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; color: var(--fg3); font-size: var(--t-100); }
+.nlist a small span { display: inline-flex; align-items: center; gap: 4px; }
+.nlist a .sn { color: var(--fg2); font-size: var(--t-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nlist a .sn:empty { display: none; }
+.nlist a[aria-current="page"] { background: var(--g-soft, var(--bg3)); box-shadow: inset 3px 0 0 #00d6d6; }
+.nlist .empty { padding: var(--s-3); }
+.nedit { display: flex; flex-direction: column; gap: var(--s-3); }
+.nedit .ntitle { font-size: var(--t-500); font-weight: 600; }
+.nmeta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); }
+.nclient { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--fg3); }
+.nclient .in { width: auto; min-width: 180px; }
+.nstat { margin-left: auto; color: var(--fg3); font-size: var(--t-100); }
+.nedit .nbody { min-height: 55vh; resize: vertical; line-height: var(--lh-read, 1.7); font: inherit; padding: var(--s-3) var(--s-4); }
+.nback { display: none; align-items: center; gap: 4px; color: var(--fg2); font-size: var(--t-300); text-decoration: none; min-height: var(--tap); }
+.nnone { min-height: 200px; justify-content: center; }
+@media (max-width: 899px) {
+  .notes { grid-template-columns: minmax(0, 1fr); }
+  .notes.has-cur .nside { display: none; }
+  .notes:not(.has-cur) .nnone { display: none; }
+  .nlist { max-height: none; }
+  .nback { display: inline-flex; }
+  .nedit .nbody { min-height: 60vh; }
+}
+
+/* ホームの小さなノート欄：直近の3枚 */
+.nmini { list-style: none; margin: 0 calc(var(--s-2) * -1); padding: 0; }
+.nmini li + li { border-top: 1px solid var(--stroke2); }
+.nmini a { display: grid; gap: 2px; padding: var(--s-2); border-radius: var(--r-m, 6px); color: var(--fg1); text-decoration: none; }
+.nmini a b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmini a small { display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; color: var(--fg3); font-size: var(--t-100); }
+.nmini a small span { display: inline-flex; align-items: center; gap: 4px; }
+.nmini a .sn { color: var(--fg2); font-size: var(--t-300); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nmini-all { display: inline-flex; align-items: center; gap: 2px; margin-top: var(--s-2); min-height: var(--tap); color: var(--fg2); font-size: var(--t-300); text-decoration: none; }
+.nmini-all:hover { color: var(--fg1); text-decoration: underline; }
+:root[data-look] .nlist a:not([aria-current="page"]):hover, :root[data-look] .nmini a:hover { background: var(--hv-bg); box-shadow: inset 3px 0 0 var(--hv-bar); }
+/* 書く欄の上の行（取引先・保存の表示・ゴミ箱）は1行に収める。狭い画面ではゴミ箱だけ次の行に落ちていた */
+.nmeta { flex-wrap: nowrap; }
+.nclient { flex: 0 1 260px; min-width: 0; }
+.nclient .in { min-width: 0; width: 100%; }
+.nstat { flex: none; white-space: nowrap; }
+@media (max-width: 479px) { .nclient > .ic { display: none; } .nclient { flex: 1 1 auto; } }

@@ -20,6 +20,9 @@
       <path d="M11 20.5H3.5V5h17v6"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M15 18.5h6.5M18.5 15.5l3 3-3 3"/></symbol>
     <symbol id="i-task" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
       <rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M7.5 12l3 3 6-6.5"/></symbol>
+    <!-- 自分用ノート＝角を折ったメモ用紙＋行 -->
+    <symbol id="i-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M5 3.5h10l4 4v13H5Z"/><path d="M15 3.5v4h4"/><path d="M8.5 11.5h7M8.5 15h7M8.5 18.5h4"/></symbol>
     <symbol id="i-case" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
       <rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8.5 7V4.5h7V7"/><path d="M2.5 12.5h19"/><path d="M10.5 12.5v2h3v-2"/></symbol>
     <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -215,6 +218,7 @@ function drawNav() {
       <li><a href="#/today"${cur("today")}>${ic("i-home")}<span class="t">ホーム</span></a></li>
       <li><a href="#/calendar"${cur("calendar")}>${ic("i-cal")}<span class="t">カレンダー</span>${todayEv ? `<span class="n">今日 ${todayEv}</span>` : ""}</a></li>
       <li><a href="#/tasks"${cur("tasks")}>${ic("i-task")}<span class="t">タスク</span>${due ? `<span class="n">${due}</span>` : ""}</a></li>
+      <li><a href="#/notes"${cur("notes")}>${ic("i-note")}<span class="t">ノート</span></a></li>
       <li><a href="#/clients"${cur("clients")}>${ic("i-people")}<span class="t">取引先</span></a></li>
     </ul>
     <h2 class="nav-h">取引先の部屋</h2>
@@ -226,9 +230,10 @@ function drawNav() {
 /* ───────── 中身 ───────── */
 async function drawMain() {
   const r = route();
-  const view = { today: pageToday, calendar: pageCalendar, tasks: pageTasks, clients: pageClients, client: pageClient }[r.page] || pageToday;
+  const view = { today: pageToday, calendar: pageCalendar, tasks: pageTasks, notes: pageNotes, clients: pageClients, client: pageClient }[r.page] || pageToday;
   const html = await view(...r.rest);
   $("main").innerHTML = `<div class="page">${html}</div>`;
+  if (r.page === "notes") noteAfterDraw();
 }
 const crumb = parts => `<nav class="crumb" aria-label="現在地">${parts.map((p, i) =>
   (i ? ic("i-chev") : "") + (p[1] ? `<a href="${p[1]}">${esc(p[0])}</a>` : `<span>${esc(p[0])}</span>`)).join("")}</nav>`;
@@ -377,6 +382,16 @@ function pageToday() {
             ${(H.activity || []).length > 1 ? `<button type="button" class="more" data-seen-all>${ic("i-ok")}すべて確認済み</button>` : ""}</header>
           ${(H.activity || []).length ? `<ul class="feed">${H.activity.map(feedRow).join("")}</ul>` : '<p class="empty">まだ動きはありません。</p>'}
         </section>
+        <section class="card" aria-labelledby="h-nt">
+          <header class="card-h">${ic("i-note")}<h2 id="h-nt">ノート</h2>
+            <button type="button" class="more" data-newnote>${ic("i-plus")}書く</button></header>
+          ${(H.notes || []).length ? `<ul class="nmini">${H.notes.map(n => `<li><a href="#/notes/${encodeURIComponent(n.id)}">
+              <b>${esc(n.title || "無題のノート")}</b>
+              <small>${noteWhen(n.updated_at)}${client(n.client_id) ? `<span>${swatch(client(n.client_id))}${esc(cname(client(n.client_id)))}</span>` : ""}</small>
+              ${n.snippet ? `<span class="sn">${esc(n.snippet)}</span>` : ""}</a></li>`).join("")}</ul>
+            <a class="nmini-all" href="#/notes">すべてのノート${ic("i-chev")}</a>`
+            : '<p class="empty">自分だけのメモを残せます（取引先には見えません）。</p>'}
+        </section>
       </aside>
       <div class="col">
         <section class="card rail" aria-labelledby="h-ag">
@@ -511,6 +526,103 @@ function pageTasks() {
         : '<p class="empty">残っているタスクはありません。</p>'}
       <p class="drop-hint">${ic("i-door")}「先方にも見えています」は Guest Room の「やること」です。済みにすると先方の画面でも終わった表示になります。</p>
     </section>`;
+}
+
+/* ═══════ ノート（自分用のメモ。取引先には出さない） ═══════ */
+let NOTES = [];                         // 一覧（本文ごと。探すのは画面側）
+let noteQ = "", noteClient = "";        // 探す言葉・取引先の絞り込み（"" = すべて／"-" = 取引先なし）
+let noteTimer = null, noteDirty = false, noteFocusNew = false;
+
+function noteWhen(iso) {
+  const t = new Date(iso);
+  return t.toDateString() === new Date().toDateString() ? `${pad(t.getHours())}:${pad(t.getMinutes())}` : `${t.getMonth() + 1}/${t.getDate()}`;
+}
+const noteFirstLine = n => (n.body || "").split("\n").find(l => l.trim()) || "";
+function noteItem(n, curId) {
+  const c = client(n.client_id);
+  return `<li><a href="#/notes/${encodeURIComponent(n.id)}" data-nid="${esc(n.id)}"${n.id === curId ? ' aria-current="page"' : ""}>
+    <b>${esc(n.title || "無題のノート")}</b>
+    <small><span class="nw">${noteWhen(n.updated_at)}</span>${c ? `<span>${swatch(c)}${esc(cname(c))}</span>` : ""}</small>
+    <span class="sn">${esc(noteFirstLine(n).slice(0, 60))}</span></a></li>`;
+}
+function noteListHtml(curId) {
+  const q = noteQ.trim().toLowerCase();
+  const list = NOTES.filter(n => (noteClient === "" || (noteClient === "-" ? !n.client_id : n.client_id === noteClient))
+    && (!q || (n.title + "\n" + n.body).toLowerCase().includes(q)));
+  if (!list.length) return `<li class="empty">${NOTES.length ? "当てはまるノートはありません。" : "まだノートはありません。"}</li>`;
+  return list.map(n => noteItem(n, curId)).join("");
+}
+
+async function pageNotes(id) {
+  NOTES = (await api("/api/admin/notes"))?.notes || [];
+  const cur = id && NOTES.find(n => n.id === id);
+  const filterOpts = `<option value="">すべての取引先</option><option value="-"${noteClient === "-" ? " selected" : ""}>取引先なし</option>` +
+    H.clients.map(c => `<option value="${esc(c.id)}"${c.id === noteClient ? " selected" : ""}>${esc(cname(c))}</option>`).join("");
+  return `
+    ${crumb([["今日", "#/today"], ["ノート"]])}
+    <div class="phead">
+      <h1 class="ptitle">${ic("i-note")}ノート</h1>
+      <button type="button" class="btn primary" data-newnote>${ic("i-plus")}新しいノート</button>
+    </div>
+    <div class="notes${cur ? " has-cur" : ""}">
+      <section class="card nside" aria-label="ノートの一覧">
+        <div class="nfilter">
+          <input class="in" id="nq" type="search" placeholder="ノートを探す" value="${esc(noteQ)}" autocomplete="off" aria-label="ノートを探す">
+          <select class="in" id="nc" aria-label="取引先で絞り込む">${filterOpts}</select>
+        </div>
+        <ul class="nlist" id="nlist">${noteListHtml(cur?.id)}</ul>
+      </section>
+      ${cur ? `<section class="card nedit" aria-label="ノートを書く">
+        <a class="nback" href="#/notes">${ic("i-chevl")}一覧へ</a>
+        <input class="in ntitle" id="n-title" value="${esc(cur.title)}" placeholder="タイトル" maxlength="120" autocomplete="off" aria-label="タイトル">
+        <div class="nmeta">
+          <label class="nclient">${ic("i-people")}<select class="in" id="n-client" aria-label="結びつける取引先">${clientOptions(cur.client_id)}</select></label>
+          <span class="nstat" id="nstat" role="status">保存済み ${noteWhen(cur.updated_at)}</span>
+          <button type="button" class="iconbtn danger" data-delnote="${esc(cur.id)}" title="このノートを消す" aria-label="このノートを消す">${ic("i-trash")}</button>
+        </div>
+        <textarea class="in nbody" id="n-body" data-id="${esc(cur.id)}" placeholder="ここに書くと、手を止めたときに自動で保存されます">${esc(cur.body)}</textarea>
+      </section>`
+      : `<section class="card nedit nnone"><p class="empty">${id ? "このノートは見つかりませんでした（消したか、別の画面で消されたかもしれません）。" : "左の一覧からノートを選ぶか、「新しいノート」で書き始めます。"}</p></section>`}
+    </div>
+    <p class="drop-hint">${ic("i-lock")}ノートは ${esc(ORG)} だけが見られます。取引先の Guest Room には出ません。</p>`;
+}
+function noteAfterDraw() {
+  if (noteFocusNew) { noteFocusNew = false; $("n-title")?.focus(); }
+}
+
+/* 自動保存：手を止めて 0.7 秒で保存。画面を離れるとき・タブを隠すときにも書きかけを保存する */
+function noteSchedule() {
+  noteDirty = true;
+  if ($("nstat")) $("nstat").textContent = "保存待ち…";
+  clearTimeout(noteTimer); noteTimer = setTimeout(noteSave, 700);
+}
+function noteFields() {
+  const ed = $("n-body");
+  return ed && { id: ed.dataset.id, body: { title: $("n-title").value, body: ed.value, client_id: $("n-client").value || null } };
+}
+async function noteSave() {
+  clearTimeout(noteTimer);
+  const f = noteFields();
+  if (!noteDirty || !f) return;
+  noteDirty = false;
+  if ($("nstat")) $("nstat").textContent = "保存中…";
+  const r = await send("/api/admin/notes/" + encodeURIComponent(f.id), "PATCH", f.body);
+  if (!r) { noteDirty = true; if ($("nstat")) $("nstat").textContent = "保存できませんでした"; return; }
+  const n = NOTES.find(x => x.id === f.id);
+  if (n) { Object.assign(n, f.body, { updated_at: r.updated_at }); NOTES.sort((a, b) => b.updated_at.localeCompare(a.updated_at)); }
+  if ($("nlist")) $("nlist").innerHTML = noteListHtml(f.id);
+  if ($("nstat") && !noteDirty) $("nstat").textContent = "保存しました " + noteWhen(r.updated_at);
+}
+// ノートの画面を離れる前に呼ぶ。何も書かずに離れた新しいノートは、空のまま残さず消す
+async function noteLeave() {
+  const f = noteFields();
+  if (!f) return;
+  if (!f.body.title.trim() && !f.body.body.trim() && !f.body.client_id) {
+    clearTimeout(noteTimer); noteDirty = false;
+    await fetch("/api/admin/notes/" + encodeURIComponent(f.id), { method: "DELETE" });
+    return;
+  }
+  await noteSave();
 }
 
 /* ═══════ 取引先 ═══════ */
@@ -926,6 +1038,26 @@ document.addEventListener("click", async e => {
   const td = t.closest("[data-tdel]");
   if (td) { if (await send("/api/admin/todos/" + td.dataset.tdel, "DELETE")) { toast("タスクを消しました"); refresh(); } return; }
 
+  // ノート：新しく作る（絞り込み中の取引先があれば、最初から結びつけておく）／消す
+  if (t.closest("[data-newnote]")) {
+    await noteLeave();
+    const cid = route().page === "notes" && noteClient && noteClient !== "-" ? noteClient : null;
+    const r = await send("/api/admin/notes", "POST", { client_id: cid });
+    if (r) { noteFocusNew = true; location.hash = "#/notes/" + encodeURIComponent(r.id); }
+    return;
+  }
+  const dn = t.closest("[data-delnote]");
+  if (dn) {
+    if (!confirm("このノートを消しますか？ 元に戻せません。")) return;
+    clearTimeout(noteTimer); noteDirty = false;
+    if (await send("/api/admin/notes/" + encodeURIComponent(dn.dataset.delnote), "DELETE")) {
+      toast("ノートを消しました");
+      $("n-body").removeAttribute("id");   // 離れるときの保存・空のノートの片づけを走らせない
+      location.hash = "#/notes";
+    }
+    return;
+  }
+
   const up = t.closest("[data-upload]");
   if (up) { $("picker").dataset.client = up.dataset.upload; $("picker").click(); return; }
 
@@ -1015,7 +1147,31 @@ document.addEventListener("submit", async e => {
   }
 });
 
-window.addEventListener("hashchange", () => { setNav(false); drawNav(); drawMain(); window.scrollTo(0, 0); });
+// ノートの入力：書いたら自動保存の予約／一覧の探す・絞り込みは一覧だけ描き直す
+document.addEventListener("input", e => {
+  const id = e.target.id;
+  if (id === "n-title" || id === "n-body") noteSchedule();
+  else if (id === "nq") { noteQ = e.target.value; $("nlist").innerHTML = noteListHtml($("n-body")?.dataset.id); }
+});
+document.addEventListener("change", e => {
+  const id = e.target.id;
+  if (id === "n-client") { noteDirty = true; noteSave(); }
+  else if (id === "nc") { noteClient = e.target.value; $("nlist").innerHTML = noteListHtml($("n-body")?.dataset.id); }
+});
+// ⌘S／Ctrl+S：ブラウザの「ページを保存」ではなく、ノートをすぐ保存する
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "s" && $("n-body")) { e.preventDefault(); noteDirty = true; noteSave(); }
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden && noteDirty) noteSave(); });
+// タブを閉じる・再読み込みのとき：書きかけがあれば、ページが消えても届く送り方（keepalive）で保存する
+window.addEventListener("pagehide", () => {
+  const f = noteFields();
+  if (!noteDirty || !f) return;
+  fetch("/api/admin/notes/" + encodeURIComponent(f.id), { method: "PATCH", keepalive: true,
+    headers: { "content-type": "application/json" }, body: JSON.stringify(f.body) });
+});
+
+window.addEventListener("hashchange", async () => { await noteLeave(); setNav(false); drawNav(); drawMain(); window.scrollTo(0, 0); });
 $("menuBtn").addEventListener("click", () => setNav(!document.body.classList.contains("nav-open")));
 $("scrim").addEventListener("click", () => setNav(false));
 document.addEventListener("keydown", e => { if (e.key === "Escape") setNav(false); });

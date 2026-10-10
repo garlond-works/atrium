@@ -152,6 +152,15 @@ function cleanEvent(b) {
            place: opt(b.place), memo: opt(b.memo), client_id: opt(b.client_id) };
 }
 
+/** 自分用ノートを整える。長すぎれば null。空のノートは許す（作ってから書き始めるため）。 */
+const NOTE_TITLE_MAX = 120, NOTE_BODY_MAX = 50000;
+const NOTE_TOO_LONG = `タイトルは${NOTE_TITLE_MAX}字、本文は${NOTE_BODY_MAX}字までです`;
+function cleanNote(b) {
+  const title = String(b?.title ?? "").trim(), body = String(b?.body ?? "");
+  if (title.length > NOTE_TITLE_MAX || body.length > NOTE_BODY_MAX) return null;
+  return { title, body, client_id: (b?.client_id && String(b.client_id).trim()) || null };
+}
+
 async function getRoomBySlug(env, slug) {
   return env.DB.prepare(
     `SELECT r.id, r.client_id, r.name, r.slug, r.is_open, r.theme_hue, r.memo, r.memo_updated_at, c.name AS client_name
@@ -702,12 +711,19 @@ export default {
             ORDER BY a.created_at DESC LIMIT 12`
         ).all();
 
+        // ホームの小さなノート欄：直近に直した3枚
+        const notes = await env.DB.prepare(
+          `SELECT id, title, substr(body, 1, 80) AS snippet, client_id, updated_at
+             FROM notes ORDER BY updated_at DESC LIMIT 3`
+        ).all();
+
         return json({
           clients: (clients.results ?? []).map(c => ({ ...c, hue: c.slug ? hueOf(c) : null })),
           milestones: milestones.results ?? [],
           todos: todos.results ?? [],
           events: events.results ?? [],
           activity: activity.results ?? [],
+          notes: notes.results ?? [],
         });
       }
 
@@ -786,6 +802,45 @@ export default {
       }
       if (tdm && request.method === "DELETE") {
         await env.DB.prepare(`DELETE FROM todos WHERE id = ?`).bind(tdm[1]).run();
+        return json({ ok: true });
+      }
+
+      // ─────────── 自分用ノート（2026-10-11）───────────
+      // 執務室だけのメモ。取引先には出さない。本文は自動保存なので、少しずつ何度も PATCH が来る。
+
+      // GET /api/admin/notes — 一覧（新しく直した順）。件数は手で書く量なので、本文ごと返して画面側で探す
+      if (path === "/api/admin/notes" && request.method === "GET") {
+        const rows = await env.DB.prepare(
+          `SELECT id, title, body, client_id, created_at, updated_at FROM notes ORDER BY updated_at DESC`
+        ).all();
+        return json({ notes: rows.results ?? [] });
+      }
+
+      // POST /api/admin/notes — 新しいノート（空のまま作って、画面で書き始める）
+      if (path === "/api/admin/notes" && request.method === "POST") {
+        const n = cleanNote(await request.json().catch(() => ({})));
+        if (!n) return json({ error: "too_long", detail: NOTE_TOO_LONG }, 400);
+        const id = crypto.randomUUID();
+        await env.DB.prepare(
+          `INSERT INTO notes (id, title, body, client_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`
+        ).bind(id, n.title, n.body, n.client_id, now(), now()).run();
+        return json({ id }, 201);
+      }
+
+      // PATCH・DELETE /api/admin/notes/:id
+      const ntm = path.match(/^\/api\/admin\/notes\/([^/]+)$/);
+      if (ntm && request.method === "PATCH") {
+        const n = cleanNote(await request.json().catch(() => ({})));
+        if (!n) return json({ error: "too_long", detail: NOTE_TOO_LONG }, 400);
+        const at = now();
+        const r = await env.DB.prepare(
+          `UPDATE notes SET title = ?, body = ?, client_id = ?, updated_at = ? WHERE id = ?`
+        ).bind(n.title, n.body, n.client_id, at, ntm[1]).run();
+        return r.meta?.changes ? json({ ok: true, updated_at: at }) : json({ error: "not_found" }, 404);
+      }
+      if (ntm && request.method === "DELETE") {
+        // 自分だけのメモなので、予定・タスクと同じく本当に消す（画面で確認してから呼ぶ）
+        await env.DB.prepare(`DELETE FROM notes WHERE id = ?`).bind(ntm[1]).run();
         return json({ ok: true });
       }
 

@@ -329,3 +329,14 @@ CREATE TABLE document_texts (
   source_updated_at  TEXT NOT NULL,
   created_at         TEXT NOT NULL
 );
+
+-- 執務室の自分用ノート（2026-10-11）。GarlondWorks だけが見る。取引先への結びつけは任意。
+CREATE TABLE notes (
+  id          TEXT PRIMARY KEY,
+  title       TEXT NOT NULL DEFAULT '',
+  body        TEXT NOT NULL DEFAULT '',
+  client_id   TEXT REFERENCES clients(id),
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL
+);
+CREATE INDEX idx_notes_updated ON notes(updated_at);
