@@ -141,6 +141,7 @@ CREATE TABLE documents (
   withdrawn_at      TEXT,                         -- ゴミ箱に入れた日時（双方・誰が置いた資料でも入れられる）
   withdrawn_by      TEXT,                         -- ゴミ箱に入れた人のメールアドレス
   purged_at         TEXT,                         -- ゴミ箱から完全に消した日時（実体は R2 から消す・台帳の行は残す）
+  note              TEXT,                         -- 資料の短い説明（任意・双方が書ける・300字まで）
 
   -- 内部限定の資料は、応接室に出すこと自体を DB が拒否する。
   -- room_id を埋める UPDATE ひとつで原価や与信が相手に見える事故を、

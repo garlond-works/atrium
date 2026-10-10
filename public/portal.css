@@ -607,6 +607,7 @@ dialog.dlg .acts { display: flex; justify-content: flex-end; gap: var(--s-2); ma
 @container (max-width: 680px) {
   .addbar { grid-template-columns: 1fr 1fr; }
   .addbar > :first-child { grid-column: 1 / -1; }
+}
 .tgroup + .tgroup { margin-top: var(--s-5); }
 .tgroup > h3 { display: flex; align-items: center; gap: var(--s-2); margin: 0 0 var(--s-1); font-size: var(--t-300); font-weight: 600; color: var(--fg2); }
 .tgroup.late > h3 { color: var(--danger); }
@@ -1532,3 +1533,31 @@ body.room .nav a[aria-current="page"] { background: var(--acc-bg); }
 
 /* ゴミ箱の欄：上の資料の枠とくっつかないように */
 .card.trash { margin-top: var(--s-5); }
+
+/* 資料の検索・並べ替え／一覧の説明の行／差し替えの確認／資料の説明 */
+.filebar { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: var(--s-2); margin: 0 0 var(--s-3); }
+.lrow .c-note { display: block; margin-top: 2px; color: var(--fg2); font-size: var(--t-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+dialog.dlg .rep-acts { flex-wrap: wrap; }
+.card.notebox { margin: 0 0 var(--s-4); }
+.card.notebox .note-text { margin: 0 0 var(--s-3); white-space: pre-wrap; line-height: var(--lh-400); }
+.card.notebox label { display: block; margin: 0 0 var(--s-2); font-weight: 600; }
+.card.notebox .acts { display: flex; justify-content: flex-end; gap: var(--s-2); margin-top: var(--s-3); }
+@media (max-width: 479px) { .filebar { grid-template-columns: 1fr; } }
+
+/* クールのゲストルーム：面の色は、部屋ごとの色相（ピンクなど）でなく、ブランド（シアン）の薄い版にする（オーナー 2026-10-10）。
+   左メニューの選択の地・相談ロボの丸の背景・会社名の後ろの帯・案件の札のアイコンの地と、選択の印。
+   部屋の色は、見出しの下の短い印と、左メニューの部屋の四角（身元）に残す。やわらかは変えない。 */
+:root[data-look="cool"] body.room { --acc-bg: #e3fafa; --acc-ink: var(--ink); --acc-mid: #8cecec; }
+:root[data-look="cool"] body.room .site { background: linear-gradient(90deg, #e3fafa, #fff 60%); }
+:root[data-look="cool"] body.room .nav a[aria-current="page"]::before { background: #00d6d6; }
+
+/* クールのゲストルーム（続き・オーナー 2026-10-10）：
+   ① 見出しの下の短い線は、部屋の色相（ピンクなど）でなくブランドの薄い版（--acc-mid）。
+   ② ブランドの濃い水色（#00d6d6）に文字を載せていた札・帯が、濃くて読みづらい → 薄い版（#aef0f0）に、文字は墨のまま。
+      対象：「AIに相談」の札・「ご対応のお願い」の札と見出しの帯・「NEW」の札。主ボタンと、選んでいる絞り込みの札は濃いまま（押す・選ぶ印なので）。 */
+:root[data-look="cool"] body.room .robo-door .robo-tag,
+:root[data-look="cool"] body.room .pill.attn,
+:root[data-look="cool"] body.room .card.attn .card-h,
+:root[data-look="cool"] body.room .ticker .new,
+:root[data-look="cool"] body.room .letter .new,
+:root[data-look="cool"] body.room .ups .new { background: #aef0f0; }

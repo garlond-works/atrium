@@ -168,6 +168,9 @@ async function log(env, roomId, email, side, action, targetType, targetId) {
 }
 
 
+// 資料の説明（任意）の長さの上限
+const DOC_NOTE_MAX = 300;
+
 // 資料を完全に消す：R2 の実体と、ロボ用の文字の控えを消し、台帳には消した日時だけ残す。
 // 台帳の行と操作の記録は残す（伝言や記録が指している先を壊さない）。
 async function purgeDocument(env, doc) {
@@ -300,7 +303,7 @@ ${now}
 - 「いま何をお願いされていますか？」のような質問には、上の内容をもとに答える。ここにないことは「Guest Room のホームか案件のページをご確認ください」と案内する。
 
 # Atrium（Guest Room）の使い方を聞かれたら
-- 資料を置く：案件のページの「資料を置く」、またはファイルをドラッグ。置いた資料は ${ORG} から見える。資料はゴミ箱に入れられる（こちら側も相手側も、誰が置いた資料でも）。ゴミ箱から戻すことも、完全に消すこともできる。完全に消すと元に戻せない。
+- 資料を置く：案件のページの「資料を置く」、またはファイルをドラッグ。置いた資料は ${ORG} から見える。資料はゴミ箱に入れられる（こちら側も相手側も、誰が置いた資料でも）。置くときは、まとめて置ける。同じ名前の資料は、新しい版に差し替えられる。資料の画面で、説明（一言）を添えられる。ゴミ箱から戻すことも、完全に消すこともできる。完全に消すと元に戻せない。
 - 伝える：案件のページの下の欄に書いて送る。${ORG} に届く。
 - お便り：${ORG} からの新しい伝言は、封筒のマークと「お便りが届いています」で知らせる。
 - やること：${ORG} からのお願い。期限つきのものは期限を確認する。
@@ -935,7 +938,7 @@ export default {
         ).bind(room.id).all();
 
         const docs = await env.DB.prepare(
-          `SELECT id, title, category, mime_type, size_bytes, case_id,
+          `SELECT id, title, category, mime_type, size_bytes, case_id, note,
                   uploaded_by, uploaded_by_side, created_at, updated_at
              FROM documents
             WHERE room_id = ? AND withdrawn_at IS NULL
@@ -944,7 +947,7 @@ export default {
 
         // ゴミ箱：入れた資料（完全に消したものは出さない）。双方に見える
         const trash = await env.DB.prepare(
-          `SELECT id, title, category, mime_type, size_bytes, case_id,
+          `SELECT id, title, category, mime_type, size_bytes, case_id, note,
                   uploaded_by, uploaded_by_side, created_at, withdrawn_at, withdrawn_by
              FROM documents
             WHERE room_id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL
@@ -1059,6 +1062,18 @@ export default {
           ? (await env.DB.prepare(`SELECT id FROM cases WHERE id = ? AND room_id = ?`).bind(String(wantCase), room.id).first())?.id ?? null
           : null;
 
+        // 差し替え：同じ部屋の、生きている資料だけ。新しい資料を置いたあとで、古いほうをゴミ箱に入れる
+        // （古いほうは戻せる）。案件・説明は、新しい側で決めていなければ古いほうを引き継ぐ。
+        const wantReplace = form.get("replaces");
+        const old = wantReplace
+          ? await env.DB.prepare(
+              `SELECT id, case_id, note FROM documents WHERE id = ? AND room_id = ? AND withdrawn_at IS NULL`
+            ).bind(String(wantReplace), room.id).first()
+          : null;
+        if (wantReplace && !old) return json({ error: "replace_target_not_found" }, 404);
+        const caseFinal = caseId ?? old?.case_id ?? null;
+        const noteFinal = String(form.get("note") || "").trim().slice(0, DOC_NOTE_MAX) || old?.note || null;
+
         const id = crypto.randomUUID();
         const key = `${room.client_id}/${id}`;
         await env.DOCS.put(key, file.stream(), {
@@ -1068,16 +1083,22 @@ export default {
         await env.DB.prepare(
           `INSERT INTO documents
              (id, client_id, room_id, title, r2_key, mime_type, size_bytes, category,
-              uploaded_by, uploaded_by_side, confidential, case_id, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`
+              uploaded_by, uploaded_by_side, confidential, case_id, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`
         ).bind(
           id, room.client_id, room.id, docTitle(form, file),
           key, file.type || null, file.size ?? null, String(form.get("category") || "").slice(0, 50) || null,
-          email, side, caseId, now(), now()
+          email, side, caseFinal, noteFinal, now(), now()
         ).run();
 
         await log(env, room.id, email, side, "upload", "document", id);
-        return json({ id, title: docTitle(form, file) }, 201);
+        if (old) {
+          await env.DB.prepare(
+            `UPDATE documents SET withdrawn_at = ?, withdrawn_by = ?, updated_at = ? WHERE id = ?`
+          ).bind(now(), email, now(), old.id).run();
+          await log(env, room.id, email, side, "withdraw", "document", old.id);
+        }
+        return json({ id, title: docTitle(form, file), replaced: old ? old.id : null }, 201);
       }
 
       // 相談ロボを使わない設定なら、ロボの入口はすべて「無い」
@@ -1278,6 +1299,24 @@ export default {
       // 画像・テキストはスクリプトの動かない箱で開く（PDF はブラウザの PDF 表示が壊れるので付けない）
       if (inline && mt !== "application/pdf") headers["content-security-policy"] = "sandbox; default-src 'none'; img-src 'self'; style-src 'unsafe-inline'";
       return new Response(obj.body, { headers });
+    }
+
+    // PATCH /api/documents/:id — 資料の説明を書く・直す（双方・誰が置いた資料でも）
+    const ntMatch = path.match(/^\/api\/documents\/([^/]+)$/);
+    if (ntMatch && request.method === "PATCH") {
+      const doc = await env.DB.prepare(
+        `SELECT id, room_id FROM documents WHERE id = ? AND withdrawn_at IS NULL`
+      ).bind(ntMatch[1]).first();
+      const side = doc?.room_id ? await resolveActor(env, email, doc.room_id) : null;
+      if (!doc || !side) return json({ error: "not_found" }, 404);
+
+      const b = await request.json().catch(() => ({}));
+      if (typeof b.note !== "string") return json({ error: "bad_request" }, 400);
+      const note = b.note.trim().slice(0, DOC_NOTE_MAX) || null;
+
+      await env.DB.prepare(`UPDATE documents SET note = ?, updated_at = ? WHERE id = ?`).bind(note, now(), doc.id).run();
+      await log(env, doc.room_id, email, side, "note", "document", doc.id);
+      return json({ ok: true, note });
     }
 
     // POST /api/documents/:id/withdraw — ゴミ箱に入れる（双方・誰が置いた資料でも）

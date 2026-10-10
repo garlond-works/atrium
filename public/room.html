@@ -116,6 +116,17 @@
   <main id="main" aria-live="polite"></main>
 </div>
 
+<dialog class="dlg" id="repdlg" aria-labelledby="repdlg-h">
+  <h2 id="repdlg-h"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg>同じ名前の資料があります</h2>
+  <p id="repdlg-p"></p>
+  <p class="note">「差し替える」と、いまの資料はゴミ箱に入ります（ゴミ箱から戻せます）。</p>
+  <div class="acts rep-acts">
+    <button class="btn" data-rep="skip">置かない</button>
+    <button class="btn" data-rep="both">別の資料として置く</button>
+    <button class="btn primary" data-rep="replace" autofocus>新しい版に差し替える</button>
+  </div>
+</dialog>
+
 <dialog class="dlg" id="askdlg" aria-labelledby="askdlg-h">
   <h2 id="askdlg-h"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg><span id="askdlg-t">この質問を消しますか？</span></h2>
   <p id="askdlg-p"></p>
@@ -126,7 +137,7 @@
   </div>
 </dialog>
 
-<input type="file" id="picker" hidden>
+<input type="file" id="picker" multiple hidden>
 <input type="file" id="askpicker" hidden>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -211,7 +222,7 @@ async function load() {
   if (first) drawFrame();
   drawNav(); drawTicker();
   // 伝言を書きかけているときは中身を描き直さない。書いた文字が消えるため
-  const typing = document.activeElement && ["body", "askq", "rt-title", "memo-in"].includes(document.activeElement.id) && document.activeElement.value;
+  const typing = document.activeElement && ["body", "askq", "rt-title", "memo-in", "fq", "note-in"].includes(document.activeElement.id) && document.activeElement.value;
   if (!typing) drawMain();
 }
 
@@ -366,7 +377,8 @@ function docTable(docs, withCase, emptyText) {
       return `<div class="lrow" role="row">
         <span role="cell">${ficon(x)}</span>
         <a class="c-name" role="cell" href="#/doc/${x.id}" title="${esc(x.title)}"><span>${esc(x.title)}</span>
-          <small class="c-sub">${withCase && c ? esc(c.title) + "・" : ""}${by(x)}・${day(x.created_at)}</small></a>
+          <small class="c-sub">${withCase && c ? esc(c.title) + "・" : ""}${by(x)}・${day(x.created_at)}</small>
+          ${x.note ? `<small class="c-note">${esc(x.note)}</small>` : ""}</a>
         ${withCase ? (c ? `<a class="c-case" role="cell" href="#/case/${c.id}">${esc(c.title)}</a>` : '<span class="c-case" role="cell">—</span>') : ""}
         <span class="c-by" role="cell">${by(x)}</span>
         <span class="c-date" role="cell" title="${when(x.created_at)}">${day(x.created_at)}</span>
@@ -474,13 +486,32 @@ function pageHome() {
     </div>`;
 }
 
+/* すべての資料：検索と並べ替え（画面の中だけ・記憶しない） */
+let fileQ = "", fileSort = "new";
+const SORTS = { new: "新しい順", old: "古い順", name: "名前順" };
+function filesDocs(filter) {
+  let docs = d.documents;
+  if (filter === "none") docs = docsOf(null);
+  else if (filter && caseOf(filter)) docs = docsOf(filter);
+  const q = fileQ.trim().toLowerCase();
+  if (q) docs = docs.filter(x => [x.title, x.note, x.case_id && caseOf(x.case_id)?.title, x.uploaded_by_side === "us" ? ORG : sideName("client")]
+    .some(v => v && String(v).toLowerCase().includes(q)));
+  const by = { new: (a, b) => b.created_at.localeCompare(a.created_at), old: (a, b) => a.created_at.localeCompare(b.created_at),
+               name: (a, b) => a.title.localeCompare(b.title, "ja") }[fileSort];
+  return docs.slice().sort(by);
+}
+function filesList(filter) {
+  const docs = filesDocs(filter);
+  return docTable(docs, !filter, fileQ.trim() ? `「${esc(fileQ.trim())}」に合う資料はありません。` : "");
+}
+
 /* すべての資料：案件で絞り込める1本の棚 */
 function pageFiles(filter) {
   const cases = d.cases || [];
   const loose = docsOf(null);
-  let docs = d.documents, target = null;
-  if (filter === "none") { docs = loose; target = ""; }
-  else if (filter && caseOf(filter)) { docs = docsOf(filter); target = filter; }
+  let target = null;
+  if (filter === "none") target = "";
+  else if (filter && caseOf(filter)) target = filter;
   const chip = (href, label, n, on) => `<a class="chip" href="${href}" aria-current="${on}">${label}<span class="n">${n}</span></a>`;
   return `
     ${crumb([["ホーム", "#/home"], ["すべての資料"]])}
@@ -494,8 +525,14 @@ function pageFiles(filter) {
         ${cases.map(c => chip("#/files/" + c.id, esc(c.title), docsOf(c.id).length, filter === c.id)).join("")}
         ${loose.length ? chip("#/files/none", "どの案件でもない", loose.length, filter === "none") : ""}
       </div>
-      ${docTable(docs, !filter)}
-      <p class="drop-hint only-wide">${ic("i-upload")}ここにファイルをドラッグしても置けます</p>
+      <div class="filebar" role="search">
+        <label class="sr" for="fq">資料を探す</label>
+        <input class="in" id="fq" type="search" placeholder="名前・説明・案件で探す" value="${esc(fileQ)}" autocomplete="off">
+        <label class="sr" for="fsort">並べ替え</label>
+        <select class="in" id="fsort">${Object.entries(SORTS).map(([k, v]) => `<option value="${k}"${fileSort === k ? " selected" : ""}>${v}</option>`).join("")}</select>
+      </div>
+      <div id="doclist">${filesList(filter)}</div>
+      <p class="drop-hint only-wide">${ic("i-upload")}ここにファイルをドラッグしても置けます（まとめて置けます）</p>
     </section>
     ${trashSection()}`;
 }
@@ -765,6 +802,18 @@ function letter(talk) {
   return `<div class="letter is-out">${ENVELOPE}<p><b>お返事待ち</b><small>${when(last.created_at)} に送りました</small></p></div>`;
 }
 
+/* 資料の説明：双方が書ける・直せる（300字まで） */
+let noteEditing = false;
+function noteBlock(x) {
+  if (noteEditing) return `<form class="card notebox" data-noteform="${x.id}" aria-label="資料の説明">
+    <label for="note-in">説明 <small>任意・300字まで</small></label>
+    <textarea class="in" id="note-in" maxlength="300" placeholder="この資料がどういうものか、一言添えられます">${esc(x.note || "")}</textarea>
+    <div class="acts"><button class="btn" type="button" data-note-cancel>やめる</button><button class="btn primary" type="submit">${ic("i-ok")}保存する</button></div></form>`;
+  return `<section class="card notebox" aria-label="資料の説明">
+    ${x.note ? `<p class="note-text">${esc(x.note)}</p>` : '<p class="empty">説明はまだありません。</p>'}
+    <button type="button" class="btn" data-note-edit>${x.note ? "説明を直す" : "説明を書く"}</button></section>`;
+}
+
 /* 資料を画面の中で開く（別タブに飛ばさない・原則4） */
 function pageDoc(id) {
   const x = d.documents.find(v => v.id === id);
@@ -783,6 +832,7 @@ function pageDoc(id) {
       <a class="cmd" href="/api/documents/${x.id}" download>${ic("i-download")}ダウンロード</a>
       <button class="cmd" data-pull="${x.id}">${ic("i-trash")}ゴミ箱に入れる</button>
     </div>
+    ${noteBlock(x)}
     <div class="viewer">
       ${inline
         ? `<div class="viewer-body"><iframe src="/api/documents/${x.id}" title="${esc(x.title)}"></iframe></div>`
@@ -803,15 +853,44 @@ function setNav(open) {
   $("menuBtn").setAttribute("aria-expanded", open);
 }
 
-async function upload(file, caseId) {
-  const fd = new FormData();
-  fd.append("file", file);
-  if (caseId) fd.append("case_id", caseId);
-  const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/documents", { method: "POST", body: fd });
-  if (!r.ok) { alert("置けませんでした。もう一度お試しください。"); return; }
-  toast("「" + file.name + "」を置きました");
+// 同じ名前の資料があるときの確認（置かない／別の資料として置く／差し替える）。Esc は「置かない」
+function askReplace(name) {
+  return new Promise(resolve => {
+    const dlg = $("repdlg");
+    $("repdlg-p").textContent = "「" + name + "」と同じ名前の資料が、すでにあります。";
+    const done = v => { dlg.removeEventListener("click", on); dlg.removeEventListener("close", onClose); if (dlg.open) dlg.close(); resolve(v); };
+    const on = e => { const b = e.target.closest("[data-rep]"); if (b) done(b.dataset.rep); };
+    const onClose = () => done("skip");
+    dlg.addEventListener("click", on); dlg.addEventListener("close", onClose, { once: true });
+    dlg.showModal();
+  });
+}
+
+// 1つずつ順に置く。同じ名前があれば聞く。最後にまとめて知らせる
+async function uploadMany(files, caseId) {
+  const ok = [], failed = [];
+  for (const file of files) {
+    let replaces = "";
+    const dup = d.documents.find(x => x.title.toLowerCase() === file.name.toLowerCase());
+    if (dup) {
+      const a = await askReplace(file.name);
+      if (a === "skip") continue;
+      if (a === "replace") replaces = dup.id;
+    }
+    if (file.size > 50 * 1024 * 1024) { failed.push(file.name + "（50MB を超えています）"); continue; }
+    const fd = new FormData();
+    fd.append("file", file);
+    if (caseId) fd.append("case_id", caseId);
+    if (replaces) fd.append("replaces", replaces);
+    const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/documents", { method: "POST", body: fd }).catch(() => null);
+    if (r && r.ok) { ok.push(file.name); if (replaces) d.documents = d.documents.filter(x => x.id !== replaces); }
+    else failed.push(file.name);
+  }
+  if (ok.length) toast(ok.length === 1 ? "「" + ok[0] + "」を置きました" : ok.length + " 件の資料を置きました");
+  if (failed.length) alert("置けなかった資料があります。もう一度お試しください。\n\n" + failed.join("\n"));
   load();
 }
+const upload = (file, caseId) => uploadMany([file], caseId);
 
 window.addEventListener("hashchange", () => { setNav(false); drawNav(); drawMain(); window.scrollTo(0, 0); if (route().page === "ask" && AI) loadAsk(); });
 $("menuBtn").addEventListener("click", () => setNav(!document.body.classList.contains("nav-open")));
@@ -896,6 +975,9 @@ document.addEventListener("click", async e => {
     load(); return;
   }
 
+  if (e.target.closest("[data-note-edit]")) { noteEditing = true; drawMain(); $("note-in")?.focus(); return; }
+  if (e.target.closest("[data-note-cancel]")) { noteEditing = false; drawMain(); return; }
+
   const rst = e.target.closest("[data-restore]");
   if (rst) {
     const r = await fetch("/api/documents/" + rst.dataset.restore + "/restore", { method: "POST" });
@@ -928,9 +1010,10 @@ $("askpicker").addEventListener("change", e => {
 });
 
 $("picker").addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (file) upload(file, e.target.dataset.case);
+  const files = [...e.target.files];
+  const c = e.target.dataset.case;
   e.target.value = "";
+  if (files.length) uploadMany(files, c);
 });
 
 // ドラッグして置く
@@ -944,11 +1027,24 @@ document.addEventListener("dragleave", e => {
 document.addEventListener("drop", e => {
   const z = e.target.closest("[data-drop]"); if (!z) return;
   e.preventDefault(); z.classList.remove("over");
-  const file = e.dataTransfer.files[0];
-  if (file) upload(file, z.dataset.drop);
+  const files = [...e.dataTransfer.files];
+  if (files.length) uploadMany(files, z.dataset.drop);
 });
 
+// 検索・並べ替え：一覧だけ描き直す（入力中の文字カーソルを動かさない）
+function redrawFiles() { const l = $("doclist"); if (l) l.innerHTML = filesList(route().arg); }
+document.addEventListener("input", e => { if (e.target.id === "fq") { fileQ = e.target.value; redrawFiles(); } });
+document.addEventListener("change", e => { if (e.target.id === "fsort") { fileSort = e.target.value; redrawFiles(); } });
+
 document.addEventListener("submit", async e => {
+  if (e.target.dataset.noteform) {
+    e.preventDefault();
+    const id = e.target.dataset.noteform;
+    const r = await fetch("/api/documents/" + id, { method: "PATCH", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ note: $("note-in").value }) });
+    if (!r.ok) { alert("保存できませんでした。もう一度お試しください。"); return; }
+    noteEditing = false; toast("説明を保存しました"); load(); return;
+  }
   if (e.target.id === "memoform") {
     e.preventDefault();
     const r = await fetch("/api/rooms/" + encodeURIComponent(slug) + "/memo", {
