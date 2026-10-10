@@ -96,6 +96,9 @@
   <span class="avatar" id="avatar"><img src="/logo.svg" alt=""></span>
 </header>
 
+<!-- スマホ：右下に固定の「AIに相談」。スクロールしてもいつでも押せる（相談の画面と、相談ロボを切っているときは隠す） -->
+<a class="btn primary ask-fab" id="askfab" href="#/ask" aria-label="AIに相談する" hidden><svg class="ic" aria-hidden="true"><use href="#i-robot"/></svg>AIに相談</a>
+
 <!-- サイトの見出し：どこの部屋か -->
 <div class="site">
   <a class="robo-door" href="#/ask" title="相談ロボに聞いてみる">
@@ -354,6 +357,8 @@ function memoCard() {
 /* ───────── 中身 ───────── */
 function drawMain() {
   const r = route();
+  const fab = $("askfab"); if (fab) fab.hidden = r.page === "ask" || !AI;
+  if (r.page !== "ask") askDraft = "";
   const view = { home: pageHome, files: pageFiles, case: pageCase, doc: pageDoc, ...(AI ? { ask: pageAsk } : {}) }[r.page] || pageHome;
   $("main").innerHTML = `<div class="page">${view(r.arg)}</div>`;
 }
@@ -420,6 +425,20 @@ function trashSection() {
   </section>`;
 }
 
+/* ホームの一番上の「AIに相談」：帯の隅のロボだけだと飾りに見えて、押せると気づかれない（オーナー 2026-10-10）。
+   質問の例を押すと、その文が入った相談の画面が開く */
+function askCard() {
+  return `<section class="card askcard" aria-labelledby="h-askc">
+    <div class="askc-robot" aria-hidden="true">${ROBOT}</div>
+    <div class="askc-body">
+      <h2 id="h-askc">AIに気軽に聞いてみませんか</h2>
+      <p>資料のこと、お仕事のこと、メールの下書きまで。資料を渡すと、その中身をもとに答えます。</p>
+      <div class="askc-ex" role="group" aria-label="聞き方の例">${ASK_EXAMPLES.slice(0, 3).map(t => `<button type="button" class="chip" data-ask-start="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+      <a class="btn primary" href="#/ask">${ic("i-robot")}AIに相談する</a>
+    </div>
+  </section>`;
+}
+
 /* ホーム：SharePoint のサイトのトップ。「情報は向こうから来る」（原則7）を一番上に */
 function pageHome() {
   const cases = d.cases || [];
@@ -440,6 +459,7 @@ function pageHome() {
 
   // 知らせを DOM の先頭に置く。スマホでは一番上に来て、PC では右の列に回る（原則7）
   return `
+    ${AI ? askCard() : ""}
     <div class="cols side-first">
       <aside class="col">
         ${letters.length ? `
@@ -640,6 +660,10 @@ function mdLite(t) {
   return esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^\s*[-*]\s+/gm, "・").replace(/^#{1,4}\s*/gm, "");
 }
 
+// 相談の欄に書いている文（ホームの例を押して来たときの最初の文も）。画面が描き直されても消えないよう覚えておく。
+// 送ったとき・相談の画面を離れたときに空にする
+let askDraft = "";
+
 const ASK_EXAMPLES = [
   "この資料を3行でまとめてください",
   "この資料で、こちらが確認・準備すべきことは？",
@@ -700,7 +724,7 @@ function pageAsk() {
             ${askDocs.size || askFile ? `<div class="ask-with">ロボに渡すもの：
               ${[...askDocs].filter(docName).map(id => `<span class="ref">${ic("i-files")}<span>${esc(docName(id))}</span><button type="button" class="x" data-undoc="${id}" title="渡すのをやめる" aria-label="${esc(docName(id))} を渡すのをやめる">×</button></span>`).join("")}
               ${askFile ? `<span class="ref">${ic("i-clip")}<span>${esc(askFile.name)}</span><button type="button" class="x" data-unfile title="渡すのをやめる" aria-label="${esc(askFile.name)} を渡すのをやめる">×</button></span>` : ""}</div>` : ""}
-            <textarea id="askq" required maxlength="4000" placeholder="例）この見積もりの前提をわかりやすく教えて" ${left ? "" : "disabled"}></textarea>
+            <textarea id="askq" required maxlength="4000" placeholder="例）この見積もりの前提をわかりやすく教えて" ${left ? "" : "disabled"}>${esc(askDraft)}</textarea>
             <div class="row">
               <button type="button" class="btn" data-goto-give>${ic("i-files")}資料を選ぶ</button>
               <button class="btn primary" type="submit" ${left && !askBusy ? "" : "disabled"}>${ic("i-send")}${left ? "聞いてみる" : "今日の分は終わりました"}</button>
@@ -746,6 +770,7 @@ const isPdf = (name, type) => /pdf/i.test(type || "") || /\.pdf$/i.test(name || 
 
 async function sendAsk(q) {
   if (askBusy) return;
+  askDraft = "";
   const fd = new FormData();
   fd.append("question", q);
   fd.append("document_ids", JSON.stringify([...askDocs]));
@@ -930,8 +955,11 @@ document.addEventListener("click", async e => {
     if (!r.ok) { toast("うまく消せませんでした"); return; }
     toast("消しました"); await loadAsk(); return;
   }
+  const st = e.target.closest("[data-ask-start]");
+  if (st) { askDraft = st.dataset.askStart; location.hash = "#/ask"; return; }
+
   const ex = e.target.closest("[data-example]");
-  if (ex) { const t = $("askq"); t.value = ex.dataset.example; t.focus(); return; }
+  if (ex) { const t = $("askq"); t.value = ex.dataset.example; askDraft = t.value; t.focus(); return; }
   const ad = e.target.closest("[data-askdoc]");
   if (ad) {
     const id = ad.dataset.askdoc;
@@ -1033,7 +1061,10 @@ document.addEventListener("drop", e => {
 
 // 検索・並べ替え：一覧だけ描き直す（入力中の文字カーソルを動かさない）
 function redrawFiles() { const l = $("doclist"); if (l) l.innerHTML = filesList(route().arg); }
-document.addEventListener("input", e => { if (e.target.id === "fq") { fileQ = e.target.value; redrawFiles(); } });
+document.addEventListener("input", e => {
+  if (e.target.id === "fq") { fileQ = e.target.value; redrawFiles(); }
+  if (e.target.id === "askq") askDraft = e.target.value;
+});
 document.addEventListener("change", e => { if (e.target.id === "fsort") { fileSort = e.target.value; redrawFiles(); } });
 
 document.addEventListener("submit", async e => {
