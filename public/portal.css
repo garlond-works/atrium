@@ -1603,3 +1603,7 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
   .robobar .bubble p.bubble-hello { font-size: var(--t-300); }
   .robobar .bubble .askc-ex { display: none; }   /* スマホは縦が長くなるので、質問の例は相談の画面で */
 }
+
+/* クールのロボの帯：「相談する」「AIに相談する」のボタンは、濃い水色でなくブランドの薄い版に（オーナー 2026-10-10） */
+:root[data-look="cool"] body.room .robobar .btn { background: #aef0f0; border-color: var(--ink); color: var(--ink); }
+:root[data-look="cool"] body.room .robobar .btn:hover { background: #8cecec; }
