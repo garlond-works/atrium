@@ -169,11 +169,17 @@ async function getRoomBySlug(env, slug) {
   ).bind(slug).first();
 }
 
+// 執務室の「先方の動き」に出す動き。それ以外（見た・取り出した・相談など）は、記録した時点で「確認済み」にしておく。
+// 印のない行は「まだ確認していない」の索引（idx_activity_unseen）に溜まり、毎回読む行が増えるため。
+const FEED_ACTIONS = ["upload", "message", "withdraw", "purge"];
+
 async function log(env, roomId, email, side, action, targetType, targetId) {
-  await env.DB.prepare(
-    `INSERT INTO activity_log (room_id, actor_email, actor_side, action, target_type, target_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).bind(roomId, email, side, action, targetType ?? null, targetId ?? null, now()).run();
+  const at = now();
+  const r = await env.DB.prepare(
+    `INSERT INTO activity_log (room_id, actor_email, actor_side, action, target_type, target_id, created_at, seen_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`
+  ).bind(roomId, email, side, action, targetType ?? null, targetId ?? null, at, FEED_ACTIONS.includes(action) ? null : at).first();
+  return r?.id;
 }
 
 
@@ -188,8 +194,16 @@ async function purgeDocument(env, doc) {
   await env.DB.prepare(`UPDATE documents SET purged_at = ?, updated_at = ? WHERE id = ?`).bind(now(), now(), doc.id).run();
 }
 
+// オーナーがゴミ箱に入れた資料か。入れた人の記録（withdrawn_by）が無い古い行は、置いた側が入れたものとして読む（画面の表示と同じ）
+const ownerTrashed = (doc, env) => doc.withdrawn_by
+  ? String(doc.withdrawn_by).toLowerCase() === env.OWNER_EMAIL.toLowerCase() : doc.uploaded_by_side === "us";
+const OWNER_TRASHED_SQL = "(lower(COALESCE(withdrawn_by, '')) = lower(?) OR (withdrawn_by IS NULL AND uploaded_by_side = 'us'))";
+
 // 置ける資料の大きさの上限と、題名（長すぎる題名は切る）
 const DOC_MAX = 50 * 1024 * 1024;
+// 取引先が1部屋に置ける資料の上限（ゴミ箱の中も、完全に消すまでは数える）。置き場の無料枠を1社で使い切らせないため
+const ROOM_DOC_COUNT_MAX = 500;
+const ROOM_DOC_BYTES_MAX = 2 * 1024 * 1024 * 1024;
 const docTitle = (form, file) => String(form.get("title") || file.name || "資料").slice(0, 200);
 
 // ブラウザの中で開いてよい資料の種類（画面側の room.html にも同じ一覧がある）
@@ -312,7 +326,7 @@ ${now}
 - 「いま何をお願いされていますか？」のような質問には、上の内容をもとに答える。ここにないことは「Guest Room のホームか案件のページをご確認ください」と案内する。
 
 # Atrium（Guest Room）の使い方を聞かれたら
-- 資料を置く：案件のページの「資料を置く」、またはファイルをドラッグ。置いた資料は ${ORG} から見える。資料はゴミ箱に入れられる（こちら側も相手側も、誰が置いた資料でも）。置くときは、まとめて置ける。同じ名前の資料は、新しい版に差し替えられる。資料の画面で、説明（一言）を添えられる。ゴミ箱から戻すことも、完全に消すこともできる。完全に消すと元に戻せない。
+- 資料を置く：案件のページの「資料を置く」、またはファイルをドラッグ。置いた資料は ${ORG} から見える。資料は誰が置いたものでもゴミ箱に入れられ、ゴミ箱から戻せる。置くときは、まとめて置ける。同じ名前の資料は、新しい版に差し替えられる。資料の画面で、説明（一言）を添えられる。完全に消せるのは自分たちが置いた資料だけ（${ORG} が置いた資料は消せない）。完全に消すと元に戻せない。${ORG} がゴミ箱に入れた資料は、相手側のゴミ箱には出ない。
 - 伝える：案件のページの下の欄に書いて送る。${ORG} に届く。
 - お便り：${ORG} からの新しい伝言は、封筒のマークと「お便りが届いています」で知らせる。
 - やること：${ORG} からのお願い。期限つきのものは期限を確認する。
@@ -332,7 +346,7 @@ ${now}
 - パスワードやカード番号などの大事な情報は、ここに書かないよう案内する（書かれても繰り返さない）。`;
 }
 
-export default {
+const app = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -1040,14 +1054,16 @@ export default {
             ORDER BY created_at DESC`
         ).bind(room.id).all();
 
-        // ゴミ箱：入れた資料（完全に消したものは出さない）。双方に見える
+        // ゴミ箱：入れた資料（完全に消したものは出さない）。
+        // オーナーがゴミ箱に入れた資料は取引先には出さない（間違えて出した資料を引っ込めたとき、戻して開けないように）
         const trash = await env.DB.prepare(
           `SELECT id, title, category, mime_type, size_bytes, case_id, note,
                   uploaded_by, uploaded_by_side, created_at, withdrawn_at, withdrawn_by
              FROM documents
             WHERE room_id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL
+              AND (? = 'us' OR NOT ${OWNER_TRASHED_SQL})
             ORDER BY withdrawn_at DESC`
-        ).bind(room.id).all();
+        ).bind(room.id, side, env.OWNER_EMAIL).all();
 
         const msgs = await env.DB.prepare(
           `SELECT id, body, author_email, author_side, document_id, case_id, created_at, withdrawn_at
@@ -1074,7 +1090,8 @@ export default {
              FROM room_members m WHERE m.room_id = ? AND m.revoked_at IS NULL ORDER BY m.invited_at`
         ).bind(room.id).all();
 
-        await log(env, room.id, email, side, "view", null, null);
+        // 入室の記録は、画面を開いたときだけ。15秒ごとの読み直し（?poll=1）では書かない（記録が溜まり続けるため）
+        if (url.searchParams.get("poll") !== "1") await log(env, room.id, email, side, "view", null, null);
 
         return json({
           room: { slug: room.slug, name: room.name, client_name: room.client_name, hue: hueOf(room),
@@ -1087,20 +1104,26 @@ export default {
             // 入れた人の記録がない古い分（以前は置いた本人だけが引き取れた）は、置いた側が入れたもの
             ...x, withdrawn_by_side: !x.withdrawn_by ? x.uploaded_by_side
               : x.withdrawn_by.toLowerCase() === env.OWNER_EMAIL.toLowerCase() ? "us" : "client",
+            // 完全に消せるのは、自分の側が置いた資料だけ（オーナーは全部）
+            can_purge: side === "us" || x.uploaded_by_side === side,
           })),
           messages: msgs.results ?? [],
           tasks: tasks.results ?? [],
           announcements: news.results ?? [],
-          members: (members.results ?? []).map(m => ({
-            name: m.display_name || m.email.split("@")[0], email: m.email, joined_at: m.joined_at })),
+          // まだ入っていない招待者は、取引先には渡さない（別の会社の人を招いたとき、入る前からアドレスが見えないように）
+          members: (members.results ?? [])
+            .filter(m => side === "us" || m.joined_at || m.email.toLowerCase() === email.toLowerCase())
+            .map(m => ({ name: m.display_name || m.email.split("@")[0], email: m.email, joined_at: m.joined_at })),
         });
       }
 
       // POST /api/rooms/:slug/trash/empty — ゴミ箱を空にする（双方・完全に消す）
       if (rest === "/trash/empty" && request.method === "POST") {
+        // 取引先が消せるのは、取引先が置いた資料のうち、オーナーが入れたもの以外だけ（ゴミ箱に見えているもの）
         const rows = await env.DB.prepare(
-          `SELECT id, r2_key FROM documents WHERE room_id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
-        ).bind(room.id).all();
+          `SELECT id, r2_key FROM documents WHERE room_id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL
+              AND (? = 'us' OR (uploaded_by_side = ? AND NOT ${OWNER_TRASHED_SQL}))`
+        ).bind(room.id, side, side, env.OWNER_EMAIL).all();
         for (const doc of rows.results ?? []) {
           await purgeDocument(env, doc);
           await log(env, room.id, email, side, "purge", "document", doc.id);
@@ -1149,6 +1172,14 @@ export default {
         const file = form.get("file");
         if (!file || typeof file === "string") return json({ error: "no_file" }, 400);
         if (file.size > DOC_MAX) return json({ error: "file_too_big", detail: "1ファイル50MBまでです" }, 400);
+        if (side === "client") {
+          const used = await env.DB.prepare(
+            `SELECT COUNT(*) AS n, COALESCE(SUM(size_bytes), 0) AS bytes FROM documents WHERE room_id = ? AND purged_at IS NULL AND uploaded_by_side = 'client'`
+          ).bind(room.id).first();
+          if (used.n >= ROOM_DOC_COUNT_MAX || used.bytes + file.size > ROOM_DOC_BYTES_MAX) {
+            return json({ error: "room_full", detail: `この Guest Room に置ける資料の上限（500件・合計2GB）に達しました。ゴミ箱を空にするか、${orgName(env)} にご相談ください` }, 400);
+          }
+        }
 
         // 案件のページから置いたときは、その案件に結びつける（この部屋の案件だけ受け付ける）。
         // 2026-09-23 本番テストで発覚：以前は case_id を捨てていて、置いた資料が案件の中に出なかった
@@ -1186,6 +1217,18 @@ export default {
           email, side, caseFinal, noteFinal, now(), now()
         ).run();
 
+        // 同時に何本も置かれたときのために、置いたあとにもう一度数える。超えていたら、いま置いた分を取り消す
+        if (side === "client") {
+          const after = await env.DB.prepare(
+            `SELECT COUNT(*) AS n, COALESCE(SUM(size_bytes), 0) AS bytes FROM documents WHERE room_id = ? AND purged_at IS NULL AND uploaded_by_side = 'client'`
+          ).bind(room.id).first();
+          if (after.n > ROOM_DOC_COUNT_MAX || after.bytes > ROOM_DOC_BYTES_MAX) {
+            await env.DB.prepare(`DELETE FROM documents WHERE id = ?`).bind(id).run();
+            await env.DOCS.delete(key);
+            return json({ error: "room_full", detail: `この Guest Room に置ける資料の上限（500件・合計2GB）に達しました。ゴミ箱を空にするか、${orgName(env)} にご相談ください` }, 400);
+          }
+        }
+
         await log(env, room.id, email, side, "upload", "document", id);
         if (old) {
           await env.DB.prepare(
@@ -1218,6 +1261,18 @@ export default {
         const question = String(form.get("question") ?? "").trim();
         if (!question) return json({ error: "empty_question" }, 400);
         if (question.length > 4000) return json({ error: "too_long" }, 400);
+
+        const f0 = form.get("file");
+        if (f0 && typeof f0 !== "string" && f0.size > ASK_FILE_MAX) return json({ error: "file_too_big" }, 400);
+
+        // 回数を先に1つ予約してから数える。答えのあとで記録すると、同時に何本も送られたとき全部が「まだ0回」で通ってしまう。
+        // 予約は消さない（ファイルが読めなかった・答えられなかった回も、AI を使ったので1回に数える）
+        const qid = crypto.randomUUID();
+        const askLogId = await log(env, room.id, email, side, "ask", "ask", qid);
+        if ((await askUsedToday(env, room.id)) > ASK_PER_DAY) {
+          await env.DB.prepare(`DELETE FROM activity_log WHERE id = ?`).bind(askLogId).run();
+          return json({ error: "limit" }, 429);
+        }
 
         // 読ませる資料：この部屋で共有中のものだけ。ID を偽っても他の部屋・非公開は出てこない。
         let ids = [];
@@ -1276,7 +1331,6 @@ export default {
           { role: "user", content: question },
         ];
 
-        const qid = crypto.randomUUID();
         const t0 = now();
         await env.DB.prepare(
           `INSERT INTO ask_messages (id, room_id, author_email, author_side, role, body, document_ids, file_name, file_text, created_at)
@@ -1304,7 +1358,6 @@ export default {
            VALUES (?, ?, ?, ?, 'assistant', ?, ?)`
         ).bind(aid, room.id, email, side, answer, now()).run();
 
-        await log(env, room.id, email, side, "ask", "ask", qid);
         const used = await askUsedToday(env, room.id);
         return json({ question_id: qid, answer_id: aid, answer, left: askLeft(env, used) }, 201);
       }
@@ -1436,10 +1489,12 @@ export default {
     const rsMatch = path.match(/^\/api\/documents\/([^/]+)\/restore$/);
     if (rsMatch && request.method === "POST") {
       const doc = await env.DB.prepare(
-        `SELECT id, room_id FROM documents WHERE id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
+        `SELECT id, room_id, uploaded_by_side, withdrawn_by FROM documents WHERE id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
       ).bind(rsMatch[1]).first();
       const side = doc?.room_id ? await resolveActor(env, email, doc.room_id) : null;
       if (!doc || !side) return json({ error: "not_found" }, 404);
+      // オーナーがゴミ箱に入れた資料は、取引先からは「無い」（ゴミ箱にも出していない）
+      if (side !== "us" && ownerTrashed(doc, env)) return json({ error: "not_found" }, 404);
 
       await env.DB.prepare(
         `UPDATE documents SET withdrawn_at = NULL, withdrawn_by = NULL, updated_at = ? WHERE id = ?`
@@ -1454,10 +1509,13 @@ export default {
     const pgMatch = path.match(/^\/api\/documents\/([^/]+)\/purge$/);
     if (pgMatch && request.method === "POST") {
       const doc = await env.DB.prepare(
-        `SELECT id, room_id, r2_key FROM documents WHERE id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
+        `SELECT id, room_id, r2_key, uploaded_by_side, withdrawn_by FROM documents WHERE id = ? AND withdrawn_at IS NOT NULL AND purged_at IS NULL`
       ).bind(pgMatch[1]).first();
       const side = doc?.room_id ? await resolveActor(env, email, doc.room_id) : null;
       if (!doc || !side) return json({ error: "not_found" }, 404);
+      // 取引先が消せるのは、取引先が置いた資料だけ（1人のアカウントが乗っ取られても、オーナーの原本は消えない）
+      if (side !== "us" && ownerTrashed(doc, env)) return json({ error: "not_found" }, 404);
+      if (side !== "us" && doc.uploaded_by_side !== side) return json({ error: "forbidden", detail: `${orgName(env)} が置いた資料は、完全に消すことはできません` }, 403);
 
       await purgeDocument(env, doc);
       await log(env, doc.room_id, email, side, "purge", "document", doc.id);
@@ -1466,4 +1524,23 @@ export default {
 
     return json({ error: "not_found" }, 404);
   },
+};
+
+// どの応答にも、ブラウザ向けの守りを付ける。
+// ・よそのサイトの中に埋め込ませない（透明に重ねて押させる攻撃＝クリックジャッキングを防ぐ）。自分のサイトの中だけは許す
+// ・種類の申告を推測で読み替えさせない／よそへ移るときに URL の続き（?r= など）を渡さない
+// 静的な画面（room.html など Worker を通らないもの）は public/_headers で同じものを付ける。
+function withSecurityHeaders(res) {
+  const h = new Headers(res.headers);
+  h.set("X-Frame-Options", "SAMEORIGIN");
+  const csp = h.get("content-security-policy");
+  if (!csp) h.set("Content-Security-Policy", "frame-ancestors 'self'");
+  else if (!/frame-ancestors/.test(csp)) h.set("Content-Security-Policy", csp + "; frame-ancestors 'self'");
+  h.set("X-Content-Type-Options", "nosniff");
+  h.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+}
+
+export default {
+  fetch: async (request, env, ctx) => withSecurityHeaders(await app.fetch(request, env, ctx)),
 };

@@ -1,0 +1,6 @@
+# 静的な画面・ファイルに付けるブラウザ向けの守り（Worker を通る応答は src/index.js の withSecurityHeaders が付ける）
+/*
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
