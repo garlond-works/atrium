@@ -1753,8 +1753,12 @@ body.room .site { flex-direction: column; align-items: stretch; gap: var(--s-4);
 :root[data-look][data-theme="dark"] .letter.is-in .env-body { fill: #00d6d6; }
 :root[data-look][data-theme="dark"] .letter.is-out .env-body { fill: #aef0f0; }
 
-/* 右上の GarlondWorks のロゴ（黒い歯車）は白く抜く。色相を半周戻して、中のシアンはシアンのまま */
-:root[data-look][data-theme="dark"] .avatar img { filter: invert(1) hue-rotate(180deg); }
+/* 右上のロゴ：ダークは暗い地で見える版（logo-dark.svg）に差し替える。色を反転するやり方だと、シアンが緑がかってしまった（オーナー 2026-10-10） */
+.avatar .lg-dark { display: none; }
+:root[data-look][data-theme="dark"] .avatar .lg-light { display: none; }
+:root[data-look][data-theme="dark"] .avatar .lg-dark { display: block; }
+/* ロゴを少し小さく（40px → 32px・オーナー 2026-10-10） */
+.avatar { width: 32px; height: 32px; }
 
 /* ダーク（続き）：自動の測定（文字と地の比 4.5 未満を全画面で洗い出し）で見つかった所 */
 :root[data-look][data-theme="dark"] { --danger: #ff8f85; }   /* カレンダーの日曜・祝日の赤を、暗い地で読める明るさに（×カード 7.89） */
