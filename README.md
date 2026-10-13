@@ -31,7 +31,7 @@ Atrium は3つの部屋でできています。名前は古代ローマの邸宅
 - 資料は案件に結びつけて置けます。取引先も資料を置けて、自分が置いたものは自分で引き取れます
 - 「いまどちらが動く番か」（先方／こちら）を案件ごとに持てます
 - **ノート**：執務室だけの自分用メモ。何枚でも作れて自動で保存されます。取引先に結びつけて絞り込めます（取引先には見えません）
-- **名刺**：執務室だけで見る名刺の一覧。会社名の読みで頭文字（A〜Z・あ〜わ）ごと・会社ごとにまとまり、押すと画像を大きく見られます（取引先には見えません）。入れ方は下の「名刺の入れ方」
+- **名刺**：執務室だけで見る名刺の一覧。会社名の読みで頭文字（あ〜わ・A〜Z）ごと・会社ごとにまとまり、押すと画像を大きく見られます。読み取りの間違いは「直す」で手直しできます（取引先には見えません）。入れ方は下の「名刺の入れ方」
 - 見た目はライト／ダーク。最初は端末の設定に合わせ、右上で切り替えられます
 - **相談ロボ（任意）**：取引先が、応接室の資料をもとに AI へ質問できます（Workers AI）
 
@@ -227,10 +227,12 @@ MIT License です。自由に使って、改造して、配ってかまいま�
    ON CONFLICT(id) DO UPDATE SET company = excluded.company, company_kana = excluded.company_kana, name = excluded.name,
      name_kana = excluded.name_kana, department = excluded.department, job_title = excluded.job_title,
      image_key = excluded.image_key, pdf_key = excluded.pdf_key, updated_at = excluded.updated_at
-   WHERE cards.deleted_at IS NULL;
+   WHERE cards.deleted_at IS NULL AND cards.edited_at IS NULL;
    ```
 
-   `npx wrangler d1 execute <DB名> --remote --file cards.sql` で流します。末尾の `WHERE` は、Office で消した名刺を入れ直さないための条件です。
+   `npx wrangler d1 execute <DB名> --remote --file cards.sql` で流します。末尾の `WHERE` は、Office で消した名刺と、Office で手直しした名刺を入れ直さないための条件です。
 
 - 並びは `company_kana`（カナ・ひらがなどちらでも可）で決まります。空なら会社名の1文字目（英字はその文字、漢字は「その他」）。
 - Office で消した名刺は画像と文字が消え、`deleted_at` だけが残ります。
+- Office の「直す」で手直しした名刺には `edited_at` が付き、上の入れ直しでは上書きされません。
+- すでに Atrium を使っている場合は、先に `npx wrangler d1 execute <DB名> --remote --file migrations/2026-10-13_cards_edited.sql` を1回流してください（`edited_at` の列を足します）。

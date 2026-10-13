@@ -859,12 +859,12 @@ const app = {
       }
 
       // ─────────── 名刺（2026-10-11）───────────
-      // 執務室だけで見る。入れるのは README の手順（wrangler で D1・R2 に直接書く）。ここでは見る・消すだけ。
+      // 執務室だけで見る。入れるのは README の手順（wrangler で D1・R2 に直接書く）。ここでは見る・直す・消す。
 
       // GET /api/admin/cards — 消していない名刺の一覧（並べ方・会社ごとのまとめ方は画面側）
       if (path === "/api/admin/cards" && request.method === "GET") {
         const rows = await env.DB.prepare(
-          `SELECT id, company, company_kana, name, name_kana, department, job_title, scanned_on, pdf_key IS NOT NULL AS has_pdf, updated_at
+          `SELECT id, company, company_kana, name, name_kana, department, job_title, scanned_on, pdf_key IS NOT NULL AS has_pdf, edited_at IS NOT NULL AS edited, updated_at
              FROM cards WHERE deleted_at IS NULL`
         ).all();
         return json({ cards: rows.results ?? [] });
@@ -882,8 +882,26 @@ const app = {
         return new Response(obj.body, { headers });
       }
 
-      // DELETE /api/admin/cards/:id — 名刺を消す。画像と文字は消し、消した印だけ残す（次の取り込みで戻さない）
       const cdl = path.match(/^\/api\/admin\/cards\/([^/]+)$/);
+      // PATCH /api/admin/cards/:id — 読み取りの間違いを手で直す。直した名刺には edited_at を付け、入れ直しても上書きしない
+      if (cdl && request.method === "PATCH") {
+        const b = await request.json().catch(() => ({}));
+        const v = [];
+        for (const k of ["company", "company_kana", "name", "name_kana", "department", "job_title"]) {
+          if (typeof b[k] !== "string") return json({ error: "bad_request", detail: "入力が正しくありません" }, 400);
+          const t = b[k].trim();
+          if (t.length > 200) return json({ error: "too_long", detail: "長すぎます（1項目200文字まで）" }, 400);
+          v.push(t);
+        }
+        const at = now();
+        const r = await env.DB.prepare(
+          `UPDATE cards SET company = ?, company_kana = ?, name = ?, name_kana = ?, department = ?, job_title = ?, edited_at = ?, updated_at = ?
+            WHERE id = ? AND deleted_at IS NULL RETURNING id`
+        ).bind(...v, at, at, cdl[1]).first();
+        return r ? json({ ok: true }) : json({ error: "not_found" }, 404);
+      }
+
+      // DELETE /api/admin/cards/:id — 名刺を消す。画像と文字は消し、消した印だけ残す（次の取り込みで戻さない）
       if (cdl && request.method === "DELETE") {
         const card = await env.DB.prepare(`SELECT image_key, pdf_key FROM cards WHERE id = ? AND deleted_at IS NULL`).bind(cdl[1]).first();
         if (!card) return json({ error: "not_found" }, 404);

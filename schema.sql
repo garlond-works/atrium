@@ -358,5 +358,6 @@ CREATE TABLE cards (
   pdf_key          TEXT,
   created_at       TEXT NOT NULL,
   updated_at       TEXT NOT NULL,
-  deleted_at       TEXT
+  deleted_at       TEXT,
+  edited_at        TEXT   -- Office で手直しした印。付いた名刺は、入れ直しても上書きしない
 );

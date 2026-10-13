@@ -1640,6 +1640,12 @@ dialog.cardv { width: min(640px, calc(100vw - 32px)); }
 .cardv-dl dd { margin: 0; }
 .cardv-dl dd small { margin-left: var(--s-2); color: var(--fg3); font-size: var(--t-100); }
 dialog.cardv .acts { flex-wrap: wrap; }
+.cardv-img.edit { max-height: 26vh; }
+.cardv-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
+.cardv-form .field { margin: 0; }
+.cardv-form .note, .cardv-form .acts { grid-column: 1 / -1; }
+.cardv-form .acts { margin-top: var(--s-2); }
+@media (max-width: 520px) { .cardv-form { grid-template-columns: 1fr; } }
 dialog.cardv .acts .iconbtn { margin-right: auto; }
 
 /* ══════════════════════════════════════════════════════════════════

@@ -123,9 +123,10 @@
 <dialog class="dlg cardv" id="cardv" aria-labelledby="cardv-h">
   <h2 id="cardv-h"></h2>
   <div id="cardv-body"></div>
-  <div class="acts">
+  <div class="acts" id="cardv-acts">
     <button class="iconbtn danger" id="cardv-del" title="この名刺を消す" aria-label="この名刺を消す"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg></button>
     <a class="btn" id="cardv-pdf" target="_blank" rel="noopener">原本を開く（PDF・裏面も）</a>
+    <button class="btn" id="cardv-edit" type="button">直す</button>
     <button class="btn primary" data-cardclose autofocus>閉じる</button>
   </div>
 </dialog>
@@ -661,7 +662,7 @@ function cardIndex(c) {
   if (/[0-9]/.test(ch)) return "#";
   return "他";
 }
-const INDEX_ORDER = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", ..."あかさたなはまやらわ", "#", "他"];
+const INDEX_ORDER = [..."あかさたなはまやらわ", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#", "他"];
 const INDEX_LABEL = { あ: "あ行", か: "か行", さ: "さ行", た: "た行", な: "な行", は: "は行", ま: "ま行", や: "や行", ら: "ら行", わ: "わ行", "#": "数字", 他: "その他" };
 const cardWho = c => c.name || "名前なし";
 const cardRole = c => [c.department, c.job_title].filter(Boolean).join("　");
@@ -704,6 +705,10 @@ async function pageCards() {
 function openCard(id) {
   const c = CARDS.find(x => x.id === id);
   if (!c) return;
+  drawCard(c);
+  $("cardv").showModal();
+}
+function drawCard(c) {
   $("cardv-h").textContent = c.company || "（会社名なし）";
   $("cardv-body").innerHTML = `
     <img class="cardv-img" src="/api/admin/cards/${encodeURIComponent(c.id)}/image" alt="${esc(c.company)} ${esc(cardWho(c))} の名刺">
@@ -712,11 +717,30 @@ function openCard(id) {
       ${c.department ? `<dt>部署</dt><dd>${esc(c.department)}</dd>` : ""}
       ${c.job_title ? `<dt>肩書き</dt><dd>${esc(c.job_title)}</dd>` : ""}
       ${c.scanned_on ? `<dt>取り込んだ日</dt><dd>${esc(c.scanned_on.replace(/-/g, "/"))}</dd>` : ""}
-    </dl>`;
+    </dl>
+    ${c.edited ? `<p class="note">手で直した名刺です。あとから台帳に入れ直しても、この内容は上書きされません。</p>` : ""}`;
+  $("cardv-acts").hidden = false;
   $("cardv-pdf").hidden = !c.has_pdf;
   $("cardv-pdf").href = "/api/admin/cards/" + encodeURIComponent(c.id) + "/pdf";
   $("cardv-del").dataset.delcard = c.id;
-  $("cardv").showModal();
+  $("cardv-edit").dataset.editcard = c.id;
+}
+// 読み取りの間違いを手で直す（名刺の画像を見ながら）
+function editCard(id) {
+  const c = CARDS.find(x => x.id === id);
+  if (!c) return;
+  const f = (k, label, hint) => `<div class="field"><label for="ce-${k}">${label}${hint ? ` <small>${hint}</small>` : ""}</label><input class="in" id="ce-${k}" value="${esc(c[k])}" maxlength="200" autocomplete="off"></div>`;
+  $("cardv-body").innerHTML = `
+    <img class="cardv-img edit" src="/api/admin/cards/${encodeURIComponent(c.id)}/image" alt="${esc(c.company)} ${esc(cardWho(c))} の名刺">
+    <form id="cardedit" class="cardv-form" data-id="${esc(c.id)}">
+      ${f("company", "会社名")}${f("company_kana", "会社名のふりがな", "並ぶ順に使います")}
+      ${f("name", "名前")}${f("name_kana", "名前のふりがな")}
+      ${f("department", "部署")}${f("job_title", "肩書き")}
+      <p class="note">直した名刺は、あとから台帳に入れ直しても上書きされません。</p>
+      <div class="acts"><button class="btn" type="button" data-cardeditcancel="${esc(c.id)}">やめる</button><button class="btn primary" type="submit">保存する</button></div>
+    </form>`;
+  $("cardv-acts").hidden = true;
+  $("ce-company").focus();
 }
 
 /* ═══════ 取引先 ═══════ */
@@ -1158,6 +1182,10 @@ document.addEventListener("click", async e => {
   const cd = t.closest("[data-card]");
   if (cd) { openCard(cd.dataset.card); return; }
   if (t.closest("[data-cardclose]") || t.id === "cardv") { $("cardv").close(); return; }
+  const ecard = t.closest("[data-editcard]");
+  if (ecard) { editCard(ecard.dataset.editcard); return; }
+  const ecancel = t.closest("[data-cardeditcancel]");
+  if (ecancel) { const c = CARDS.find(x => x.id === ecancel.dataset.cardeditcancel); if (c) drawCard(c); return; }
   const dcard = t.closest("[data-delcard]");
   if (dcard) {
     if (!confirm("この名刺を消しますか？ 画像も消え、元に戻せません。\n（同じ id でもう一度入れても、この名刺は戻りません）")) return;
@@ -1204,6 +1232,18 @@ document.addEventListener("drop", e => {
 });
 
 document.addEventListener("submit", async e => {
+  if (e.target.id === "cardedit") {
+    e.preventDefault();
+    const id = e.target.dataset.id, body = {};
+    for (const k of ["company", "company_kana", "name", "name_kana", "department", "job_title"]) body[k] = $("ce-" + k).value;
+    if (await send("/api/admin/cards/" + encodeURIComponent(id), "PATCH", body)) {
+      toast("直しました");
+      await drawMain();                                   // 会社ごとのまとまりと頭文字も、直した内容で並べ直す
+      const c = CARDS.find(x => x.id === id);
+      if (c) drawCard(c); else $("cardv").close();
+    }
+    return;
+  }
   if (e.target.id === "newclient") {
     e.preventDefault();
     const r = await send("/api/admin/clients", "POST", { name: $("nc-name").value, short_name: $("nc-short").value, slug: $("nc-slug").value });
