@@ -840,11 +840,12 @@ async function pageDeletedClients() {
   return `
     ${crumb([["今日", "#/today"], ["取引先", "#/clients"], ["消した取引先"]])}
     <h1 class="ptitle" style="margin-bottom:var(--s-2)">${ic("i-trash")}消した取引先</h1>
-    <p class="psum" style="margin-bottom:var(--s-4)">戻すと一覧と左のメニューに戻り、Guest Room も開き直します。招いていた人はまた入れるようになります。</p>
+    <p class="psum" style="margin-bottom:var(--s-4)">戻すと一覧と左のメニューに戻り、Guest Room も開き直します。招いていた人はまた入れるようになります。「完全に消す」は資料のファイルごと消え、元に戻せません。</p>
     <section class="card" style="max-width:760px">
       ${xs.length ? `<ul class="guests">${xs.map(c => `<li class="guest">
           <span class="g-who"><b>${esc(c.name)}</b><small>消した日 ${md(ymd(new Date(c.deleted_at)))}・招いている人 ${c.members}人</small></span>
-          <span class="g-act"><button class="btn" data-restore="${esc(c.id)}" data-name="${esc(c.name)}">${ic("i-undo")}戻す</button></span></li>`).join("")}</ul>`
+          <span class="g-act"><button class="btn" data-restore="${esc(c.id)}" data-name="${esc(c.name)}">${ic("i-undo")}戻す</button>
+            <button class="btn danger" data-purge="${esc(c.id)}" data-name="${esc(c.name)}" data-docs="${c.documents}" data-msgs="${c.messages}" data-cases="${c.cases}" data-members="${c.members}">${ic("i-trash")}完全に消す</button></span></li>`).join("")}</ul>`
         : '<p class="empty">消した取引先はありません。</p>'}
     </section>`;
 }
@@ -1075,6 +1076,18 @@ document.addEventListener("click", async e => {
     if (await send("/api/admin/clients/" + encodeURIComponent(rs.dataset.restore) + "/restore", "POST")) {
       toast(rs.dataset.name + " を戻しました"); await refresh();
     } else rs.disabled = false;
+    return;
+  }
+  const pg = t.closest("[data-purge]");
+  if (pg) {
+    const d = pg.dataset, name = d.name;
+    const typed = prompt(`「${name}」を完全に消します。元に戻せません。\n\n消えるもの\n・資料 ${d.docs}件（ファイルの実体ごと）\n・伝言 ${d.msgs}件・案件 ${d.cases}件\n・招いていた人の名簿（${d.members}人）・Guest Room・やりとりの記録\n\n残るもの\n・予定・やること・ノート（取引先とのひもづけだけ外れます）\n\nCloudflare Access に入れている、この取引先のポリシーは自動では消えません。不要なら Access 側で外してください。\n\n続けるには、取引先の名前を入力してください：\n${name}`);
+    if (typed === null) return;
+    if (typed.trim() !== name) { toast("名前が合わなかったので、消していません"); return; }
+    pg.disabled = true;
+    if (await send("/api/admin/clients/" + encodeURIComponent(d.purge) + "/purge", "DELETE", { name })) {
+      toast(name + " を完全に消しました"); await refresh();
+    } else pg.disabled = false;
     return;
   }
   const dc = t.closest("[data-delclient]");

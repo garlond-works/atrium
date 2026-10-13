@@ -484,7 +484,10 @@ const app = {
         const rows = await env.DB.prepare(
           `SELECT c.id, c.name, c.short_name, c.updated_at AS deleted_at,
                   (SELECT COUNT(*) FROM room_members m JOIN rooms r ON r.id = m.room_id
-                    WHERE r.client_id = c.id AND m.revoked_at IS NULL) AS members
+                    WHERE r.client_id = c.id AND m.revoked_at IS NULL) AS members,
+                  (SELECT COUNT(*) FROM documents d WHERE d.client_id = c.id AND d.purged_at IS NULL) AS documents,
+                  (SELECT COUNT(*) FROM messages g JOIN rooms r ON r.id = g.room_id WHERE r.client_id = c.id) AS messages,
+                  (SELECT COUNT(*) FROM cases k JOIN rooms r ON r.id = k.room_id WHERE r.client_id = c.id) AS cases
              FROM clients c WHERE c.status = 'deleted' ORDER BY c.updated_at DESC`
         ).all();
         return json({ clients: rows.results ?? [] });
@@ -500,6 +503,42 @@ const app = {
         if (!r.meta?.changes) return json({ error: "not_found" }, 404);
         await env.DB.prepare(`UPDATE rooms SET is_open = 1 WHERE client_id = ?`).bind(rsm[1]).run();
         return json({ ok: true });
+      }
+
+      // DELETE /api/admin/clients/:id/purge — 消した取引先を完全に消す（戻せない）
+      // ふだんの「消す」は行を残す（物理削除はしない）。これは「消した取引先」の画面で、取引先名を打って確かめたときだけ通る。
+      // 消すもの：資料（R2 の実体ごと）・伝言・案件・やること・お知らせ・相談ロボの会話・名簿・動きの記録・Guest Room・取引先。
+      // 残すもの：予定・自分のやること・ノート（取引先とのひもづけだけ外す）。
+      const pgm = path.match(/^\/api\/admin\/clients\/([^/]+)\/purge$/);
+      if (pgm && request.method === "DELETE") {
+        const client = await env.DB.prepare(`SELECT id, name FROM clients WHERE id = ? AND status = 'deleted'`).bind(pgm[1]).first();
+        if (!client) return json({ error: "not_found" }, 404);
+        const b = await request.json().catch(() => ({}));
+        if (String(b.name ?? "").trim() !== client.name) return json({ error: "name_mismatch", detail: "取引先の名前が合いません" }, 400);
+        const id = client.id;
+        // 実体（R2）を先に消す。このあと台帳の削除が失敗しても、もう一度押せばやり直せる（R2 は無いキーを消しても失敗しない）
+        const keys = ((await env.DB.prepare(`SELECT r2_key FROM documents WHERE client_id = ?`).bind(id).all()).results ?? []).map(r => r.r2_key);
+        for (let i = 0; i < keys.length; i += 1000) await env.DOCS.delete(keys.slice(i, i + 1000));
+        const inRooms = `room_id IN (SELECT id FROM rooms WHERE client_id = ?1)`;
+        const q = sql => env.DB.prepare(sql).bind(id);
+        // 外部キーがあるので、参照している側（子）から先に消す。1回のまとめ処理なので、途中で止まったら全部やり直しになる
+        await env.DB.batch([
+          q(`DELETE FROM document_texts WHERE document_id IN (SELECT id FROM documents WHERE client_id = ?1)`),
+          q(`DELETE FROM messages WHERE ${inRooms}`),
+          q(`DELETE FROM ask_messages WHERE ${inRooms}`),
+          q(`DELETE FROM activity_log WHERE ${inRooms}`),
+          q(`DELETE FROM announcements WHERE ${inRooms}`),
+          q(`DELETE FROM milestones WHERE client_id = ?1 OR ${inRooms}`),
+          q(`DELETE FROM documents WHERE client_id = ?1`),
+          q(`DELETE FROM cases WHERE ${inRooms}`),
+          q(`DELETE FROM room_members WHERE ${inRooms}`),
+          q(`UPDATE events SET client_id = NULL WHERE client_id = ?1`),
+          q(`UPDATE todos SET client_id = NULL WHERE client_id = ?1`),
+          q(`UPDATE notes SET client_id = NULL WHERE client_id = ?1`),
+          q(`DELETE FROM rooms WHERE client_id = ?1`),
+          q(`DELETE FROM clients WHERE id = ?1 AND status = 'deleted'`),
+        ]);
+        return json({ ok: true, documents: keys.length });
       }
 
       // DELETE /api/admin/clients/:id — 取引先を消す
