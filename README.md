@@ -89,7 +89,7 @@ R2 を初めて使うときは、Cloudflare のダッシュボードで R2 を�
 | `ACCESS_TEAM_DOMAIN` | 手順 6 で確認します |
 | `ACCESS_AUD` | 手順 6 で確認します |
 
-ロゴは `public/logo.svg`（ライト）と `public/logo-dark.svg`（ダーク・暗い地で見える版）を差し替えてください（右上に 32×32 で出ます）。
+ロゴは `public/logo.svg`（ライト）と `public/logo-dark.svg`（ダーク・暗い地で見える版）を差し替えてください（右上に 32×32 で出ます）。ブラウザのタブのアイコンは `public/atrium-icon.svg` です。こちらも自分用に差し替えてください。
 
 ### 5. 公開する
 
@@ -169,6 +169,7 @@ npm run dev
 - 色・書体・余白：`public/tokens.css`（デザインの約束）と `public/portal.css`
 - 取引先ごとの色：執務室の取引先ページで12色から選べます
 - ロゴ：`public/logo.svg`・`public/logo-dark.svg`
+- タブのアイコン：`public/atrium-icon.svg`
 
 ---
 
